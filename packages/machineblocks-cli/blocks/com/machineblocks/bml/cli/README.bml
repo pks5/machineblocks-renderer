@@ -1,0 +1,31 @@
+<!--MachineBlocks CLI — README
+  FQN: com.machineblocks.bml.cli.README-->
+<mbcli:README xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:mbcli="com.machineblocks.bml.cli"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+
+  <baseType>
+    core:ReadMe
+  </baseType>
+  <is>
+    Reading entry for the MachineBlocks host CLI library
+  </is>
+  <documentation>
+    @machineblocks/cli is the command MachineBlocks users run. It is not a second
+    compiler. It calls the same @blockml/cli and @blockml/compiler packages, with
+    the SCAD target already registered and with paths that match a MachineBlocks
+    project.
+
+    People who have not used BlockML can render .bml files to .scad without
+    learning toolchain target names, blockdoc, or xsd. People who want the full
+    toolchain still use the blockml command from @blockml/cli.
+
+    Start at com.machineblocks.bml.cli.documentation.Introduction.
+  </documentation>
+  <references>
+    <see type="clidoc:Introduction" relation="ReadFirst" />
+    <see type="clidoc:DualCliModel" relation="SeeAlso" />
+    <see type="clidoc:Commands" relation="SeeAlso" />
+  </references>
+</mbcli:README>

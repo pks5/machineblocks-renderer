@@ -1,0 +1,55 @@
+<!--MachineBlocks Render Target Library
+  FQN: com.machineblocks.bml.target.render.Library-->
+<render:Library xmlns="http://blockml.org/bml"
+  xmlns:blockml="org.blockml.bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:mb="com.machineblocks.bml"
+  xmlns:engine="org.blockml.bml.engine.blockrender"
+  xmlns:render="com.machineblocks.bml.target.render">
+
+  <baseType>
+    core:BlockLibrary
+  </baseType>
+  <is>
+    The MachineBlocks SCAD render target library catalog
+  </is>
+  <version>
+    0.1.0
+  </version>
+  <documentation>
+    Publishable compiler-target library (com.machineblocks.bml.target.render.Library).
+    Registry name machineblocks-v3-scad. npm package @machineblocks/render-target.
+    Serializes MBOM blocks into MachineBlocks V3 OpenSCAD compatible with
+    @machineblocks/core.
+
+    Formerly @machineblocks/machineblocks-v3-scad-target. Registry name unchanged.
+    Engine dependency is @blockml/block-render-engine (formerly MakerEngine).
+
+    Membership is the file tree under this Library.bml.
+  </documentation>
+  <references>
+    <see type="render:README" relation="ReadFirst" />
+  </references>
+  <language>
+    <blockml:language.English />
+  </language>
+  <properties>
+    <description override="true">
+      <value>MachineBlocks BML to SCAD render target</value>
+    </description>
+  </properties>
+  <aggregations>
+    <readMe override="true">
+      <composition>
+        <render:README />
+      </composition>
+    </readMe>
+    <dependencies override="true">
+      <composition>
+        <blockml:Library />
+        <mb:Library />
+        <engine:Library />
+      </composition>
+    </dependencies>
+  </aggregations>
+</render:Library>

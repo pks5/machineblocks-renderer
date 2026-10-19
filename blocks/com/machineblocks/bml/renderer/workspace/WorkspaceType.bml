@@ -1,0 +1,20 @@
+<!--Workspace — WorkspaceType
+  FQN: com.machineblocks.bml.renderer.workspace.WorkspaceType-->
+<workspace:WorkspaceType xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:workspace="com.machineblocks.bml.renderer.workspace">
+
+  <baseType>
+    core:Block
+  </baseType>
+  <is>
+    Abstract marker for workspace hub documentation blocks
+  </is>
+  <documentation>
+    Marker for com.machineblocks.bml.renderer.workspace.* hub types. This library
+    is documentation-only. Package contracts live in the publishable libraries.
+  </documentation>
+  <abstract>
+    true
+  </abstract>
+</workspace:WorkspaceType>

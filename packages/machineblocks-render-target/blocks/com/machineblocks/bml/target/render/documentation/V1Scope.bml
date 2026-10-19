@@ -1,0 +1,44 @@
+<!--Render Target Documentation — V1Scope
+  FQN: com.machineblocks.bml.target.render.documentation.V1Scope-->
+<rdoc:V1Scope xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    V1 base types handled by this target
+  </is>
+  <documentation>
+    V1 supports exactly two base types:
+
+    - com.machineblocks.bml.core.Block — ScadBlockProcessor
+      Standard SCAD block module.
+    - com.machineblocks.bml.core.Set — ScadSetProcessor
+      STEPS-based set with view submodules.
+
+    User types that inherit either base type use the same processor.
+    ScadSetProcessor is registered first because it is more specific.
+    ScadBlockProcessor is the fallback for Block.
+
+    A block whose baseType chain does not include
+    com.machineblocks.bml.core.Block is not supported. The compiler emits
+    BML_NO_TARGET for that block.
+
+    isSubtypeOf walks the baseType chain in the BOM type registry.
+
+    Later processors (copy of built-in service files, capability implementation
+    transpilation) may be added. They are not required for V1 block and set emit.
+    The engine allows them to use a different strategy in the same target.
+
+    ScadBlockProcessor emits a leaf, a composite module, or a preset JSON file.
+    ScadSetProcessor emits a SCAD file with a STEPS array and four view
+    submodules. A composition that carries bml:each, bml:if, or bml:with
+    returns files: [] and diagnostic BML_DIRECTIVE_DEFERRED.
+
+  </documentation>
+  <references>
+    <see type="rdoc:TargetRegistration" relation="ReadNext" />
+  </references>
+</rdoc:V1Scope>

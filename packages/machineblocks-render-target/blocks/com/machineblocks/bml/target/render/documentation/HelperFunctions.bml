@@ -1,0 +1,57 @@
+<!--Render Target Documentation — HelperFunctions
+  FQN: com.machineblocks.bml.target.render.documentation.HelperFunctions-->
+<rdoc:HelperFunctions xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Which values are computed in SCAD versus in the compiler
+  </is>
+  <documentation>
+    Some helpers run at SCAD render time instead of being precomputed.
+
+    Decided — SCAD runtime:
+    - mb_set_bounding_box(STEPS)
+    - mb_assembly(config, settings, size, direction)
+    - mb_assembly_tongue(assembly, renderGroups, group)
+    - mb_assembly_groove(assembly, renderGroups, group)
+    - mb_assembly_offset(offset, assembly, renderGroups, group)
+    - mb_group_render(renderGroups, group)
+    - mb_block_id(blockId, partId)
+    - mb_parts_total_size(parts)
+
+    The assembly helpers and mb_group_render read assembly mode or
+    renderGroups.
+
+    mb_block_id is str(blockId, "/", part). blockId comes from
+    mb_param_id(config, settings, fqn) and can be overridden from outside, so
+    the renderer emits the call. NativeBlock documents the part id as
+    "blockId/partName".
+
+    Decided — mb_params_filter(baseAdjustment, namespace, overrides?):
+    The parameter name is baseAdjustment. Core 3.0.0 renamed it from
+    baseSideAdjustment. When the map is the runtime parameter (config or
+    customizer), emit the call. When the map is a static literal, emit the
+    filtered pseudo-map. The optional third argument applies fixed overrides
+    after the namespace filter. Entries without a namespace and entries with
+    numeric keys are ignored.
+
+    mb_parts_total_size(parts) is the SCAD bounding box of the parts after
+    direction resolution. Each entry is [id, size, direction, offset], the
+    same layout as a STEPS row. id is required. size, direction, and offset
+    are indexes 1, 2, and 3. The renderer emits the call:
+
+        size = mb_parts_total_size(parts);
+
+    Rule: render-dependent values (assembly, renderGroups, overridable
+    blockId) resolve at SCAD runtime. Structural and static values are
+    precomputed in MBOM.
+
+  </documentation>
+  <references>
+    <see type="rdoc:SerializationRules" relation="ReadNext" />
+  </references>
+</rdoc:HelperFunctions>

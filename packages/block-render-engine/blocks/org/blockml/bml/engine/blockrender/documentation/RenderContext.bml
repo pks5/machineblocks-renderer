@@ -1,0 +1,55 @@
+<!--Engine Documentation — RenderContext
+  FQN: org.blockml.bml.engine.blockrender.documentation.RenderContext-->
+<edoc:RenderContext xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:edoc="org.blockml.bml.engine.blockrender.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Per-block state passed into compile and callLLM
+  </is>
+  <documentation>
+    RenderContext is internal. It is not part of the public compiler facade.
+    compile and callLLM receive it. Template and copy methods identify files by
+    path; they do not take a RenderContext in the V1 signature.
+
+    Session fields (from CompileOptions):
+
+        RenderSession
+          typeRegistry
+          sourceFilePath
+          outputBasePath
+          targetName
+          documentKind
+          activeConfig     optional
+          mbLibPath        optional — domain library root for relative imports
+
+    Per-node fields:
+
+        RenderContext
+          session
+          blockFqn
+          outputRelativePath
+          parentPartId     optional
+          partId           optional
+          instance         optional
+          withScope        readonly map of bml:with bindings
+          loopScope        optional readonly map
+          activePresetId   optional
+          child(overrides) forked context without replacing session
+
+    Composition rendering forks context via child(). Property values are resolved
+    on demand by the processor (PropertyResolver). V1 does not cache them on the
+    context.
+
+    Canonical BOM stays immutable. expandDirectives and auto-ids, when a processor
+    needs them, run on a working copy before compile. The engine does not write
+    those ids back to the BomDocument.
+
+  </documentation>
+  <references>
+    <see type="edoc:RenderOutput" relation="ReadNext" />
+  </references>
+</edoc:RenderContext>

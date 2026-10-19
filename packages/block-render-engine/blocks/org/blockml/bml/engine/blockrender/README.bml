@@ -1,0 +1,34 @@
+<!--Block Render Engine — README
+  FQN: org.blockml.bml.engine.blockrender.README-->
+<engine:README xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:engine="org.blockml.bml.engine.blockrender"
+  xmlns:edoc="org.blockml.bml.engine.blockrender.documentation">
+
+  <baseType>
+    core:ReadMe
+  </baseType>
+  <is>
+    Reading entry for the block render engine library
+  </is>
+  <documentation>
+    @blockml/block-render-engine is the first CompilerEngine implementation.
+    BlockML BOM Core names the contract RenderEngine. This package implements it.
+
+    A BlockProcessor picks a method: compile, renderTemplate, renderTemplates,
+    copyTemplate, or (later) callLLM. Several processors in the same RenderTarget
+    may pick different methods. The engine is infrastructure; processors decide
+    the strategy.
+
+    This library does not register a compiler target and does not mention
+    MachineBlocks types. Domain targets such as @machineblocks/render-target
+    construct the engine and pass it to their processors.
+
+    Start at org.blockml.bml.engine.blockrender.documentation.Introduction.
+  </documentation>
+  <references>
+    <see type="edoc:Introduction" relation="ReadFirst" />
+    <see type="edoc:RenderEngineContract" relation="SeeAlso" />
+    <see type="edoc:Strategies" relation="SeeAlso" />
+  </references>
+</engine:README>

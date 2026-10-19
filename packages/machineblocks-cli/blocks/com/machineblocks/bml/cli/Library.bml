@@ -1,0 +1,52 @@
+<!--MachineBlocks CLI Library
+  FQN: com.machineblocks.bml.cli.Library-->
+<mbcli:Library xmlns="http://blockml.org/bml"
+  xmlns:blockml="org.blockml.bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:ucli="org.blockml.bml.cli"
+  xmlns:render="com.machineblocks.bml.target.render"
+  xmlns:mbcli="com.machineblocks.bml.cli">
+
+  <baseType>
+    core:BlockLibrary
+  </baseType>
+  <is>
+    The MachineBlocks host CLI library catalog
+  </is>
+  <version>
+    0.1.0
+  </version>
+  <documentation>
+    Publishable host-CLI library (com.machineblocks.bml.cli.Library).
+    Thin layer over @blockml/cli that registers the MachineBlocks SCAD target
+    and supplies MachineBlocks defaults. Recommended entry for MachineBlocks
+    users who want BML rendered to SCAD.
+
+    Membership is the file tree under this Library.bml.
+  </documentation>
+  <references>
+    <see type="mbcli:README" relation="ReadFirst" />
+  </references>
+  <language>
+    <blockml:language.English />
+  </language>
+  <properties>
+    <description override="true">
+      <value>MachineBlocks host CLI library</value>
+    </description>
+  </properties>
+  <aggregations>
+    <readMe override="true">
+      <composition>
+        <mbcli:README />
+      </composition>
+    </readMe>
+    <dependencies override="true">
+      <composition>
+        <blockml:Library />
+        <ucli:Library />
+        <render:Library />
+      </composition>
+    </dependencies>
+  </aggregations>
+</mbcli:Library>

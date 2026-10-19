@@ -1,0 +1,47 @@
+<!--Engine Documentation — Introduction
+  FQN: org.blockml.bml.engine.blockrender.documentation.Introduction-->
+<edoc:Introduction xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:edoc="org.blockml.bml.engine.blockrender.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Purpose of the block render engine
+  </is>
+  <documentation>
+    CompilerEngine is the generic term for the processing infrastructure that
+    BlockProcessors use. BOM Core defines that contract as the TypeScript
+    interface RenderEngine. This package is the V1 implementation.
+
+    It was designed around MakerUniverse use cases — physical blocks, electronics,
+    services — and was first named maker-engine / MakerEngine / @blockml/engine-maker.
+    The behaviour is unchanged. The name is block-render-engine because the job
+    is to host several render strategies in one project, not to be a MachineBlocks
+    product.
+
+    V1 covers the strategies those use cases need:
+
+    - engine.compile — deterministic code transformation
+    - engine.renderTemplate / engine.renderTemplates — template file plus substitution
+    - engine.copyTemplate — file copy, no transformation
+    - engine.callLLM — LLM generation, specified, not implemented in V1
+
+    New engines can be published as other packages that implement the same
+    interface. Examples of that shape (not this package): an XSLT engine, a Rust
+    codegen engine. There is no fixed set of engines.
+
+    The engine is browser and Node compatible. No Node-only APIs.
+
+    BlockProcessors and RenderTarget dispatch live with each target. This library
+    specifies only what those processors may call, and the context/output shapes
+    the call expects. Dispatch order (exact FQN, then baseType chain, then
+    delegates, else BML_NO_TARGET) is target behaviour; a delegate-only target
+    may omit the engine entirely.
+
+  </documentation>
+  <references>
+    <see type="edoc:Naming" relation="ReadNext" />
+  </references>
+</edoc:Introduction>

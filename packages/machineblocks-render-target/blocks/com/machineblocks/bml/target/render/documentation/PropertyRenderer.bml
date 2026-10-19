@@ -1,0 +1,50 @@
+<!--Render Target Documentation — PropertyRenderer
+  FQN: com.machineblocks.bml.target.render.documentation.PropertyRenderer-->
+<rdoc:PropertyRenderer xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    MBOM properties to settings entries
+  </is>
+  <documentation>
+    The property renderer fills a SettingsBundle. V1 emission is a pseudo-map
+    pair ["paramName", value] per entry.
+
+    Native parameter inventory and scad:value defaults come from NativeBlock.bml
+    in @machineblocks/core. There is no hardcoded parameter list in this
+    package. The old 09_mbom_properties.yml file is a pointer stub only.
+
+    Each property definition supplies:
+
+    - name — MBOM property name, camelCase
+    - scadName — SCAD parameter name, camelCase, usually identical
+    - type — MBOM type FQN
+    - serializer — rule from SerializationRules
+    - default — default value
+
+    V1 reads property values from memberValues and definition defaults, not via
+    accessor capabilities.
+
+    Native properties (those declared on the NativeBlock set) map to dedicated
+    getters in the generated module body:
+
+        size      = mb_param_size(config, settings, [1, 8, 9]);
+        baseColor = mb_param_baseColor(config, settings);
+
+    Custom properties map to the generic getter:
+
+        wallThickness  = mb_param(config, settings, "wallThickness", 1);
+        cornerRounding = mb_param(config, settings, "cornerRounding", 0.5);
+
+    Native versus custom is decided from the domain TypeRegistry (the
+    NativeBlock property set), not from a list in this package.
+
+  </documentation>
+  <references>
+    <see type="rdoc:ExpressionRenderer" relation="ReadNext" />
+  </references>
+</rdoc:PropertyRenderer>

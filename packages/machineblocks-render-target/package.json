@@ -1,0 +1,43 @@
+{
+  "name": "@machineblocks/render-target",
+  "version": "0.1.0",
+  "description": "MachineBlocks BlockML compiler target — render BML to MachineBlocks V3 OpenSCAD",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "blockml": {
+    "library": "./blocks/com/machineblocks/bml/target/render/Library.bml"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "blocks"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run --root ../.. packages/machineblocks-render-target/test"
+  },
+  "dependencies": {
+    "@blockml/block-render-engine": "^0.1.0",
+    "@blockml/bom": "^0.9.13",
+    "@blockml/compiler": "^0.9.13",
+    "@blockml/core": "^1.4.2",
+    "@machineblocks/core": "^3.0.0-A4"
+  },
+  "devDependencies": {
+    "@blockml/framework": "^0.9.13",
+    "@blockml/parser": "^0.9.13"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

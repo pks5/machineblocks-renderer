@@ -1,0 +1,48 @@
+<!--CLI Documentation — DualCliModel
+  FQN: com.machineblocks.bml.cli.documentation.DualCliModel-->
+<clidoc:DualCliModel xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Universal CLI versus the MachineBlocks host
+  </is>
+  <documentation>
+    Two commands, one compiler.
+
+    @blockml/cli (command: blockml), library org.blockml.bml.cli.*:
+    - Universal toolchain: validate, compile blockdoc or xsd or fatblock, search,
+      graph, inspect, transform, new, init.
+    - Domain-agnostic. No MachineBlocks paths, no machineblocks-v3-scad built-in.
+    - Reads blockml.config.json targets[] for toolchain targets.
+    - Scope exclusions in that library list machineblocks-v3-scad registration
+      as out of scope on purpose.
+
+    @machineblocks/cli (this package), library com.machineblocks.bml.cli.*:
+    - Thin host. Recommended entry for MachineBlocks users.
+    - Registers machineblocks-v3-scad by constructing the render target with a
+      BlockRenderEngine.
+    - Same validate and compile facade underneath. Defaults differ.
+    - Does not reimplement parse, validate, or emit.
+
+    Interop: a later plugin load (targetPackages in blockml.config.json mapping
+    machineblocks-v3-scad to @machineblocks/render-target) may let the universal
+    CLI see the target. Product UX stays on this host either way. The universal
+    CLI must keep working for projects that never install MachineBlocks.
+
+    Ownership:
+    - This package owns the host bin, MachineBlocks defaults, and target registration.
+    - @blockml/compiler owns compileToOutput, CompileRequest, and the registry API.
+    - @machineblocks/render-target owns processors and SCAD emit.
+    - @blockml/block-render-engine owns strategy infrastructure.
+    - Thumbnail generation (OpenSCAD plus image tooling) is a host concern when
+      it is built; it is not part of @blockml/cli V1.
+
+  </documentation>
+  <references>
+    <see type="clidoc:Responsibilities" relation="ReadNext" />
+  </references>
+</clidoc:DualCliModel>

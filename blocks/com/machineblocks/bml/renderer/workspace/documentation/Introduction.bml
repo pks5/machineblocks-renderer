@@ -1,0 +1,46 @@
+<!--Workspace Documentation — Introduction
+  FQN: com.machineblocks.bml.renderer.workspace.documentation.Introduction-->
+<wsdocumentation:Introduction xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:wsdocumentation="com.machineblocks.bml.renderer.workspace.documentation"
+  xmlns:engine="org.blockml.bml.engine.blockrender"
+  xmlns:render="com.machineblocks.bml.target.render"
+  xmlns:mbcli="com.machineblocks.bml.cli">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Purpose and scope of the MachineBlocks Renderer workspace library
+  </is>
+  <documentation>
+    This repository is the MachineBlocks Renderer monorepo. It authors the
+    compiler target that renders MachineBlocks BML to OpenSCAD, the thin host
+    CLI for that target, and the block render engine those processors call.
+
+    Domain BML, the SCAD library, and example pairs live in @machineblocks/core
+    (sibling repository machineblocks, npm @machineblocks/core). This repo
+    consumes that package. It does not re-author NativeBlock, bricks, or the
+    scad-lib.
+
+    The BlockML toolchain (parser, validator, compiler, universal CLI) stays in
+    the blockml repository. This repo depends on the published @blockml/* packages.
+
+    Historical holding text in blockml/docs called the SCAD target
+    @machineblocks/machineblocks-v3-scad-target and the engine
+    @blockml/engine-maker (MakerEngine, maker-engine). Those names are retired
+    here: the packages are @machineblocks/render-target and
+    @blockml/block-render-engine. The compiler registry name stays
+    machineblocks-v3-scad so existing target-matrix notes still match.
+
+    Root README.md points here.
+
+  </documentation>
+  <references>
+    <see type="wsdocumentation:PackageMap" relation="ReadNext" />
+    <see type="wsdocumentation:TransferredSources" relation="SeeAlso" />
+    <see type="render:Library" relation="SeeAlso" />
+    <see type="mbcli:Library" relation="SeeAlso" />
+    <see type="engine:Library" relation="SeeAlso" />
+  </references>
+</wsdocumentation:Introduction>

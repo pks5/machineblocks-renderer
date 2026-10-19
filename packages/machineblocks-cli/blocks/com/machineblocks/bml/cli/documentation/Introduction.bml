@@ -1,0 +1,39 @@
+<!--CLI Documentation — Introduction
+  FQN: com.machineblocks.bml.cli.documentation.Introduction-->
+<clidoc:Introduction xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Purpose of the MachineBlocks host CLI
+  </is>
+  <documentation>
+    MachineBlocks users want BML turned into OpenSCAD that matches the V3 SCAD
+    library. They should not have to install the BlockML toolchain repository or
+    learn every compiler target.
+
+    This package is that simplified view:
+
+    - It depends on published @blockml/* packages (universal CLI and compiler).
+    - It depends on @machineblocks/render-target and therefore on
+      @blockml/block-render-engine and @machineblocks/core.
+    - It registers registry name machineblocks-v3-scad.
+    - It fills MachineBlocks defaults: where the SCAD library lives, where
+      OpenSCAD is, where .scad files are written.
+
+    The universal command remains blockml from @blockml/cli. That command must
+    not hardcode MachineBlocks. Product UX for this domain is this package.
+
+    Analogy: tsc is the language tool; a product CLI can wrap it. MachineBlocks
+    users install this CLI. They do not clone blockml.
+
+    V1 of this library is the contract. The bin follows these blocks.
+
+  </documentation>
+  <references>
+    <see type="clidoc:DualCliModel" relation="ReadNext" />
+  </references>
+</clidoc:Introduction>

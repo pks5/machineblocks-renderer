@@ -1,0 +1,45 @@
+<!--CLI Documentation — TargetBootstrap
+  FQN: com.machineblocks.bml.cli.documentation.TargetBootstrap-->
+<clidoc:TargetBootstrap xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    How the host registers machineblocks-v3-scad
+  </is>
+  <documentation>
+    Before compile, the host performs the equivalent of:
+
+        import { registerTarget } from "@blockml/compiler";
+        import { BlockRenderEngine } from "@blockml/block-render-engine";
+        import { MachineBlocksRenderTarget } from "@machineblocks/render-target";
+
+        registerTarget(new MachineBlocksRenderTarget(new BlockRenderEngine()));
+
+    The target name property is the string machineblocks-v3-scad.
+    Registration is idempotent for the process.
+
+    The universal CLI's bootstrapTargets loads blockdoc, xsd, and fatblock only.
+    It throws on an unknown name in targets[]. This host must not add
+    machineblocks-v3-scad to that built-in list inside @blockml/cli. It calls
+    registerTarget directly (or registerTargetFactory from the host API).
+
+    validate and inspect do not register the target.
+
+    Browser callers and tests that use the render target without this CLI call
+    registerTarget themselves with the same constructor pair.
+
+    CompileOptions passed into the compiler set outputBasePath to the real path
+    of srcDir. targetOptions["machineblocks-v3-scad"] carries mbLibPath,
+    settingsFormat when set, and, for an explicit mapping, sourcePackage and
+    targetPackage. Automatic mapping omits those two keys. activeConfig is
+    unused by compile.
+
+  </documentation>
+  <references>
+    <see type="clidoc:Installation" relation="ReadNext" />
+  </references>
+</clidoc:TargetBootstrap>

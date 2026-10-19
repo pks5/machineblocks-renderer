@@ -1,0 +1,58 @@
+<!--Render Target Documentation — ExpressionRenderer
+  FQN: com.machineblocks.bml.target.render.documentation.ExpressionRenderer-->
+<rdoc:ExpressionRenderer xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Expression values to SCAD expressions
+  </is>
+  <documentation>
+    Canonical BOM stores expressions as ExpressionValue { raw }. The expression
+    renderer obtains a typed AST via parseExpression() (a working-model utility,
+    not a canonical BOM field) and serializes it to SCAD.
+
+    Static: if the expression has no runtime-dependent roots, emit the resolved
+    value. ${ [1, 1, 1] } becomes [1, 1, 1].
+
+    Dynamic: if it references block properties or bml:with variables, emit a
+    SCAD expression. StructType members are addressed by name in BML. The
+    expression language rejects a numeric index on a StructType (size[0]).
+    A collection index (items[0]) stays an index.
+
+    When the property's SCAD form is a positional array, a named member becomes
+    the declaration-order index of that field. That is the default StructType
+    serialization and the V1 path. SizeXYZ declares x, y, z, so:
+
+        ${ [size.x, size.y, size.z - 1] }
+          -> [size[0], size[1], size[2] - 1]
+        ${ #math.max(size.z - 1, 0) }
+          -> max(size[2] - 1, 0)
+
+    When the property's SCAD form is an OpenSCAD object, the member stays
+    name.member. That form belongs to the future object() settings emitter.
+
+    Root mapping:
+
+    - myProperty -> SCAD local variable of that name
+    - myProperty.member on an array-form value -> name[declarationOrdinal]
+    - myProperty.member on an object-form value -> name.member
+    - items[i] on a collection -> items[i]
+    - withVariable -> SCAD local from the bml:with scope
+    - #math.min(a, b) / #math.max(a, b) -> min / max via the native map
+
+    V1 does not execute @bean calls or model bindings as SCAD. A TypeScript
+    implementation whose arguments are all literals is evaluated at compile
+    time and emitted as that literal. Any other @bean call is not emitted;
+    the diagnostic is BML_FUNCTION_NO_RUNTIME_IMPL. OpenSCAD capability
+    implementations (FQN-prefixed functions) are a later processor and are
+    not required for V1 block and set emit.
+
+  </documentation>
+  <references>
+    <see type="rdoc:AssemblyPatterns" relation="ReadNext" />
+  </references>
+</rdoc:ExpressionRenderer>

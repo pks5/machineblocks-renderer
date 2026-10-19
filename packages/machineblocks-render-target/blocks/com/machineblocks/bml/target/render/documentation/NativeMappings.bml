@@ -1,0 +1,58 @@
+<!--Render Target Documentation — NativeMappings
+  FQN: com.machineblocks.bml.target.render.documentation.NativeMappings-->
+<rdoc:NativeMappings xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Declarative map from built-in capabilities to native SCAD functions
+  </is>
+  <documentation>
+    ScadBlockProcessor reads a declarative JSON file, scad-native-mappings.json,
+    shipped with this package. It maps #built-in capability calls to native SCAD
+    functions when a 1:1 equivalent exists, so trivial calls do not import a
+    helper.
+
+    Location: package root of @machineblocks/render-target, file
+    scad-native-mappings.json.
+
+    Format: service FQN to function name to { native, arity }.
+    native null means no direct SCAD equivalent: emit the FQN-prefixed function
+    and add a use import. arity -1 means variadic.
+
+    Initial map:
+
+        org.blockml.bml.service.Math
+          min max floor ceil round abs pow sqrt — native of the same name, arity 1 or 2
+          round_n clamp — native null
+        org.blockml.bml.service.Strings
+          length — native len, arity 1
+          concat — native str, arity -1
+
+    Resolution for each #built-in in ${ } expressions or in embedded expressions
+    inside SCAD implementations:
+
+        #math.min(a, b)       -> min(a, b), no import
+        #math.round_n(x, 1)   -> bom__org__blockml__service__Math__round_n(x, 1)
+                                 plus use of Math.scad
+        #strings.length(s)    -> len(s), no import
+
+    Functions inside the service SCAD files use the bom__ prefix and __ separators:
+
+        function bom__org__blockml__service__Math__round_n(x, n) =
+          round(x * pow(10, n)) / pow(10, n);
+        function bom__org__blockml__service__Math__clamp(x, lo, hi) =
+          min(max(x, lo), hi);
+
+    The same prefix pattern applies to the other Math helpers (min, max, floor,
+    ceil, round, abs, pow, sqrt) even when the native map also emits the short
+    SCAD name. The service file remains the fallback implementation.
+
+  </documentation>
+  <references>
+    <see type="rdoc:FileStructure" relation="ReadNext" />
+  </references>
+</rdoc:NativeMappings>

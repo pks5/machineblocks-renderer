@@ -1,0 +1,33 @@
+<!--Render Target Documentation — SourceMaps
+  FQN: com.machineblocks.bml.target.render.documentation.SourceMaps-->
+<rdoc:SourceMaps xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Source Map V3 beside each SCAD file
+  </is>
+  <documentation>
+    The renderer writes a Source Map V3 file next to each SCAD output:
+
+        Wall.scad
+        Wall.scad.map
+
+    The map records BML source file, line, and column for every generated SCAD
+    line, so diagnostics can point at the BML position rather than the generated
+    SCAD.
+
+    Source Map V3 is the language-agnostic format (version 3, sources, mappings).
+    Each generated SCAD line is one mappings group. This implementation points
+    every line at the block definition's BML position. The map is the optional
+    sourceMap field on the RenderOutput file. The host writes Wall.scad.map
+    when that field is present.
+
+  </documentation>
+  <references>
+    <see type="rdoc:HelperFunctions" relation="ReadNext" />
+  </references>
+</rdoc:SourceMaps>

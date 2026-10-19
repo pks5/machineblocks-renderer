@@ -1,0 +1,49 @@
+<!--Render Target Documentation — Imports
+  FQN: com.machineblocks.bml.target.render.documentation.Imports-->
+<rdoc:Imports xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    use and include paths emitted into each SCAD file
+  </is>
+  <documentation><![CDATA[
+    Every generated file imports the MachineBlocks V3 library and the project
+    config. Paths are relative to the output file, using mbLibPath from
+    targetOptions under the key machineblocks-v3-scad. The compiler
+    RenderSession has no mbLibPath field. When mbLibPath is absent this slice
+    returns files: [] and diagnostic BML_MB_LIB_PATH_MISSING.
+
+    Standard imports (angle brackets are SCAD include syntax):
+
+        use <{relative_path_to_scad_lib}/lib/block.scad>;
+        include <{relative_path_to_scad_lib}/config/mb_config.scad>;
+
+    Ordinary composite compositions render leaf instances as mb_block()
+    (NativeBlock). They do not use-import dependency block SCAD files.
+
+    Sets (com.machineblocks.bml.core.Set) reference typed block modules by the
+    placed part's type FQN. The set processor emits a use import for each
+    distinct type file, for example use <../wall/Wall.scad>, and each instance
+    module calls that type's manifestation module.
+
+    When expressions reference a #built-in call that is not a native SCAD
+    mapping, the processor adds a use import for that service file, and only
+    when the service is actually used:
+
+        use <{relative}/blocks/org/blockml/bml/service/Math.scad>;
+        use <{relative}/blocks/org/blockml/bml/service/Strings.scad>;
+
+    Service SCAD files live in @machineblocks/core at
+    blocks/org/blockml/bml/service/ (Math.scad, Strings.scad, Numbers.scad,
+    Lists.scad, Bools.scad). They are pre-rendered artifacts. BML service
+    definitions in @blockml/core are the SSOT. Import paths are always relative
+    to the output file directory.
+  ]]></documentation>
+  <references>
+    <see type="rdoc:NativeMappings" relation="ReadNext" />
+  </references>
+</rdoc:Imports>

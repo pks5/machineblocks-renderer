@@ -1,0 +1,47 @@
+<!--Render Target Documentation — AssemblyPatterns
+  FQN: com.machineblocks.bml.target.render.documentation.AssemblyPatterns-->
+<rdoc:AssemblyPatterns xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Semantic MBOM values to SCAD assembly helper calls
+  </is>
+  <documentation>
+    Assembly patterns exist in SCAD and have no BML equivalent. The renderer
+    inserts them from the semantic MBOM value and the composition structure.
+    The mapping table is declarative and configurable, not hardcoded in
+    processor control flow.
+
+    MBOM semantic value to SCAD output:
+
+    - baseCutoutType = "groove" on a top part
+      -> mb_assembly_groove(assembly, renderGroups, group_top)
+    - tongue = true on a bottom part
+      -> mb_assembly_tongue(assembly, renderGroups, group_bottom)
+    - offset on an assembly-dependent part
+      -> mb_assembly_offset([x, y, z], assembly, renderGroups, group_top)
+    - render per part
+      -> mb_group_render(renderGroups, group_bottom)
+    - id per part
+      -> mb_block_id(blockId, part_bottom)
+    - baseAdjustment, namespace-filtered
+      -> mb_params_filter(baseAdjustment, ns_bottom)
+
+    For each composition child the renderer emits part variables inside the
+    wrapper children block:
+
+        part_bottom  = "bottom";
+        group_bottom = part_bottom;
+        ns_bottom    = part_bottom;
+
+    The part name is the composition child id.
+
+  </documentation>
+  <references>
+    <see type="rdoc:LeafOptimization" relation="ReadNext" />
+  </references>
+</rdoc:AssemblyPatterns>

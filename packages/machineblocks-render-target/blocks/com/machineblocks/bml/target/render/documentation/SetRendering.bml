@@ -1,0 +1,77 @@
+<!--Render Target Documentation — SetRendering
+  FQN: com.machineblocks.bml.target.render.documentation.SetRendering-->
+<rdoc:SetRendering xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Set processor: STEPS, bounding box, and view submodules
+  </is>
+  <documentation>
+    A block whose baseType chain includes com.machineblocks.bml.core.Set is
+    rendered by ScadSetProcessor as a SCAD file with a STEPS array and four
+    view submodules.
+
+    A MachineBlocks set uses three aggregations. _presets and _parts are
+    inherited. _steps is declared on Set.
+
+    - _presets — palette; configurations referenced by appliedPresets on _parts
+    - _parts — placed instances (direction, offset, appliedPresets; id becomes
+      the SCAD instance id)
+    - _steps — assembly order; optional; default is _parts document order
+
+    STEPS is generated from the placement list. Each entry:
+
+        [instanceId, boundingBox, direction, offset]
+
+    - [0] instanceId — string from the placed instance id
+    - [1] boundingBox — [x, y, z] from merged preset/configuration size
+    - [2] direction — "west" | "north" | "east" | "south"
+    - [3] offset — [x, y, z]
+
+    Example:
+
+        STEPS = [
+            ["00001", [16, 16, 1], "west", [0, 0, 0]],
+            ["00002", [4, 4, 9], "west", [0, 0, 1]]
+        ];
+
+    The set bounding box is computed at SCAD render time, not by the compiler:
+
+        ["size", mb_set_bounding_box(STEPS)]
+
+    Four submodules, PascalCase suffixes of the set module:
+
+        ...DefaultEnclosure__Total
+        ...DefaultEnclosure__Print
+        ...DefaultEnclosure__Step
+        ...DefaultEnclosure__Instance
+
+    The Instance submodule dispatches with if / else if on instanceId to
+    per-instance modules named with the id appended by underscore
+    (...__Instance_00001). Each of those modules calls the manifestation
+    module of the placed part's type FQN.
+
+    Total and Print call every instance module in STEPS order. Step calls the
+    prefix of that list whose index is less than or equal to the customizer
+    variable step. When _steps is absent, STEPS follows _parts document order.
+    A missing direction defaults to "west". A missing offset defaults to
+    [0, 0, 0]. A missing id or size returns files: [] and diagnostic
+    BML_SET_PART_INCOMPLETE.
+
+    Set customizer variables:
+
+        mode       = "total"; // [total:Total, print:3D Print, step:Step, instance:Instance]
+        step       = 0;       // [0:9]
+        instanceId = "00001";
+        assembly   = "merged"; // [unassembled:Unassembled, assembled:Assembled, merged:Merged]
+        baseColor  = "#EAC645";
+
+  </documentation>
+  <references>
+    <see type="rdoc:Customizer" relation="ReadNext" />
+  </references>
+</rdoc:SetRendering>

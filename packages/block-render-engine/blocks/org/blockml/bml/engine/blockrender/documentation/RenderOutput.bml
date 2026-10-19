@@ -1,0 +1,38 @@
+<!--Engine Documentation — RenderOutput
+  FQN: org.blockml.bml.engine.blockrender.documentation.RenderOutput-->
+<edoc:RenderOutput xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:edoc="org.blockml.bml.engine.blockrender.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    What engine methods return
+  </is>
+  <documentation>
+    Every engine method returns RenderOutput. The compiler treats that value as
+    opaque. BlockML requires no file and no 1:1 input-to-output mapping. A call
+    may produce zero files, one file, many files, or side effects only.
+
+    File-based targets conventionally use:
+
+        interface FilesRenderOutput {
+          files: { path: string; content: string; sourceMap?: string }[]
+          sideEffects?: RenderSideEffect[]
+        }
+
+    files may be empty when the only result is a side effect. The side-effect
+    shape is target-defined. This package does not invent a MachineBlocks file
+    layout; the SCAD target specifies .scad paths and optional .scad.map entries.
+
+    copyTemplate's output is the copied file recorded in files (or an equivalent
+    side effect the host writes). renderTemplate's output is the substituted
+    template text. compile's output is whatever the processor's compile callback
+    produced — the engine wraps that result; it does not parse SCAD.
+
+  </documentation>
+  <references>
+    <see type="edoc:Introduction" relation="SeeAlso" />
+  </references>
+</edoc:RenderOutput>

@@ -1,0 +1,61 @@
+<!--Render Target Documentation — TargetRegistration
+  FQN: com.machineblocks.bml.target.render.documentation.TargetRegistration-->
+<rdoc:TargetRegistration xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Registry name and how a host constructs the target
+  </is>
+  <documentation>
+    Registry / CLI target name: machineblocks-v3-scad
+    npm package: @machineblocks/render-target
+    TypeScript class (when implemented): MachineBlocksRenderTarget
+
+    Host wiring:
+
+        import { registerTarget } from "@blockml/compiler";
+        import { BlockRenderEngine } from "@blockml/block-render-engine";
+        import { MachineBlocksRenderTarget } from "@machineblocks/render-target";
+
+        registerTarget(new MachineBlocksRenderTarget(new BlockRenderEngine()));
+
+    Shape:
+
+        class MachineBlocksRenderTarget implements RenderTarget {
+          name = "machineblocks-v3-scad"
+          engine = new BlockRenderEngine()
+          processors = [
+            new ScadSetProcessor(),
+            new ScadBlockProcessor()
+          ]
+          delegates = []
+        }
+
+    Both V1 processors use the engine compile strategy.
+    delegates stays empty. Other domain targets may list this target as a
+    delegate and ship no processors of their own.
+
+    @blockml/cli does not register this name. @machineblocks/cli does.
+    Tests and browser callers call registerTarget directly.
+
+    Stage-3 RenderTarget also carries accepts scopes
+    (document, library, corpus, auto) and render(request, ctx). This product
+    target is a document target: one BML file in, one or more SCAD files out.
+    The host requires a file argument unless --all loops srcDir.
+
+    render finds the BomDocument whose source.filePath equals the session
+    sourceFilePath. No match returns files: [] and diagnostic
+    BML_RENDER_DOCUMENT_NOT_FOUND.
+
+    targetOptions.machineblocks-v3-scad carries mbLibPath and settingsFormat
+    (pseudo-map or object).
+
+  </documentation>
+  <references>
+    <see type="rdoc:RendererPipeline" relation="ReadNext" />
+  </references>
+</rdoc:TargetRegistration>

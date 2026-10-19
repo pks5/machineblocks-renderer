@@ -1,0 +1,45 @@
+<!--Engine Documentation — Naming
+  FQN: org.blockml.bml.engine.blockrender.documentation.Naming-->
+<edoc:Naming xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:edoc="org.blockml.bml.engine.blockrender.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Current names and retired aliases
+  </is>
+  <documentation>
+    Current:
+
+    - npm package: @blockml/block-render-engine
+    - BML library: org.blockml.bml.engine.blockrender.Library
+    - TypeScript class (when implemented): BlockRenderEngine
+    - import path: @blockml/block-render-engine
+
+    Retired, do not use in new text or code:
+
+    - maker-engine (folder and prose name)
+    - MakerEngine (class)
+    - @blockml/engine-maker (npm name)
+
+    Registration example a host used to write:
+
+        import { MakerEngine } from "@blockml/engine-maker";
+        registerTarget(new SomeTarget(new MakerEngine()));
+
+    The same wiring with this package:
+
+        import { BlockRenderEngine } from "@blockml/block-render-engine";
+        registerTarget(new SomeTarget(new BlockRenderEngine()));
+
+    Who calls registerTarget is the host CLI or the test/browser caller.
+    @blockml/compiler exposes registerTarget and getTarget and registers no
+    targets by itself. This package does not call registerTarget.
+
+  </documentation>
+  <references>
+    <see type="edoc:RenderEngineContract" relation="ReadNext" />
+  </references>
+</edoc:Naming>

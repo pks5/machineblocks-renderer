@@ -1,0 +1,49 @@
+<!--Workspace Documentation — ArchitectureOverview
+  FQN: com.machineblocks.bml.renderer.workspace.documentation.ArchitectureOverview-->
+<wsdocumentation:ArchitectureOverview xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:wsdocumentation="com.machineblocks.bml.renderer.workspace.documentation"
+  xmlns:engine="org.blockml.bml.engine.blockrender"
+  xmlns:render="com.machineblocks.bml.target.render"
+  xmlns:mbcli="com.machineblocks.bml.cli">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    How the engine, render target, and host CLI compose
+  </is>
+  <documentation>
+    Three packages, one product path: BML in, MachineBlocks V3 SCAD out.
+
+    @blockml/block-render-engine implements the RenderEngine contract (the
+    CompilerEngine). It does not know MachineBlocks. Processors call
+    compile, renderTemplate, renderTemplates, copyTemplate, or callLLM.
+    One target may mix those strategies. callLLM is specified and deferred.
+
+    @machineblocks/render-target is a RenderTarget named machineblocks-v3-scad.
+    It depends on the engine and on @machineblocks/core. V1 processors cover
+    com.machineblocks.bml.core.Block and com.machineblocks.bml.core.Set.
+    Mappings are declarative. The target is browser and Node compatible: no
+    Node-only APIs.
+
+    @machineblocks/cli depends on @blockml/cli and on the render target. It
+    registers machineblocks-v3-scad, applies MachineBlocks defaults (library
+    path, OpenSCAD path, output), and is the command MachineBlocks users run.
+    @blockml/cli stays domain-agnostic and does not register this target.
+
+    A content project holds BML sources and generated SCAD. It installs
+    @machineblocks/cli (and through it the target, the engine, and
+    @machineblocks/core). It does not need the blockml source repository.
+
+    Delegate-only targets (for example a domain that only adds Block types)
+    may list this render target as a delegate and ship no engine of their own.
+
+  </documentation>
+  <references>
+    <see type="wsdocumentation:ReadingOrder" relation="ReadNext" />
+    <see type="engine:README" relation="SeeAlso" />
+    <see type="render:README" relation="SeeAlso" />
+    <see type="mbcli:README" relation="SeeAlso" />
+  </references>
+</wsdocumentation:ArchitectureOverview>

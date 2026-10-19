@@ -1,0 +1,48 @@
+<!--Engine Documentation — MixedStrategies
+  FQN: org.blockml.bml.engine.blockrender.documentation.MixedStrategies-->
+<edoc:MixedStrategies xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:edoc="org.blockml.bml.engine.blockrender.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Several strategies inside one RenderTarget
+  </is>
+  <documentation>
+    One RenderTarget holds one engine instance (or none, if it only delegates)
+    and many processors. Each processor calls the method it needs. The target is
+    not labelled atomic or composite; processors plus delegates define it:
+
+    - only own processors — the target handles matching blocks itself
+    - only delegates — no engine, no processors
+    - both — some blocks handled here, others forwarded
+
+    Illustrative mix on the MachineBlocks SCAD target (the processors are owned
+    by @machineblocks/render-target; V1 of that target ships the first two):
+
+        machineblocks-v3-scad
+          ScadBlockProcessor                 compile   com.machineblocks.bml.core.Block
+          ScadSetProcessor                   compile   com.machineblocks.bml.core.Set
+          MathBuiltInProcessor               copy      org.blockml.bml.service.Math
+          CapabilityImplementationProcessor  compile   capability implementations
+
+    Dispatch, applied by the target using the engine only after a processor matches:
+
+    1. Own processors: exact FQN match.
+    2. Own processors: baseType-chain fallback. The most specific match wins.
+    3. Delegates: the same two steps, recursively.
+    4. No match: diagnostic BML_NO_TARGET.
+
+    More specific processors win over generic ones.
+
+    A delegate-only target (example: a domain library that adds Block types and
+    no new emit rules) sets engine unset, processors empty, and delegates to
+    the target that already knows how to render. It does not depend on this package.
+
+  </documentation>
+  <references>
+    <see type="edoc:RenderContext" relation="ReadNext" />
+  </references>
+</edoc:MixedStrategies>

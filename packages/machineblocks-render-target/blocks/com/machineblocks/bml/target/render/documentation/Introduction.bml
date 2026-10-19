@@ -1,0 +1,43 @@
+<!--Render Target Documentation — Introduction
+  FQN: com.machineblocks.bml.target.render.documentation.Introduction-->
+<rdoc:Introduction xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Purpose and place of the MachineBlocks SCAD render target
+  </is>
+  <documentation>
+    This target serializes MBOM blocks into MachineBlocks V3 SCAD files.
+    It is a product render target, separate from @machineblocks/core and from
+    the BlockML toolchain targets (blockdoc, xsd, fatblock).
+
+    @machineblocks/core holds the domain BML, documentation, the SCAD runtime
+    (lib/block.scad and related files), and example pairs such as
+    com.machineblocks.bml.examples.Cross with
+    blocks/com/machineblocks/scad/examples/Cross.scad. This package reads that
+    library; it does not vendor it.
+
+    Output is MachineBlocks World interpretation: SCAD mb_block() calls. That is
+    not a BlockML platform rule. Other targets may emit React, KiCad, or Python
+    with no block concept. Mapping used here:
+
+    - BML NativeBlock — mb_block() at the leaf (explicit 1:1)
+    - BML composition — nested mb_block() tree
+    - Domain types such as Wall — lowered to mb_block() settings
+    - BML Set — STEPS array plus view submodules
+
+    All MBOM-to-SCAD mappings are declarative. Processors do not hardcode
+    parameter inventories. Native parameters come from NativeBlock.bml.
+
+    The target is browser and Node compatible. No Node-only APIs.
+    Host entry for users is @machineblocks/cli.
+
+  </documentation>
+  <references>
+    <see type="rdoc:V1Scope" relation="ReadNext" />
+  </references>
+</rdoc:Introduction>

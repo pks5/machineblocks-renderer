@@ -1,0 +1,80 @@
+<!--Render Target Documentation — SettingsFormat
+  FQN: com.machineblocks.bml.target.render.documentation.SettingsFormat-->
+<rdoc:SettingsFormat xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    SettingsBundle plus emitter, pseudo-map in V1
+  </is>
+  <documentation>
+    The V3 library passes instance parameters via a settings argument on
+    mb_block and reads them with mb_param(config, settings, key, default) and
+    mb_param_size (and the other mb_param_* getters). The renderer supports two
+    emission formats. Only one is active at runtime.
+
+    V1 — pseudo-map (the only format the current library understands):
+
+        mb_block(
+            config = mb_config,
+            settings = [
+                ["size", size],
+                ["brick1SizeY", brick1SizeY]
+            ]
+        );
+
+    Future — OpenSCAD native object() when that type is stable:
+
+        settings = object(
+            size = size,
+            brick1SizeY = brick1SizeY
+        )
+
+    Nested composition settings would become nested objects. Today's equivalent
+    is separate mb_block() calls with a flat settings list per call, not nested
+    pair arrays.
+
+    Two layers, so composition logic never hardcodes pseudo-map syntax:
+
+    1. Resolve properties to a SettingsBundle (renderer-neutral).
+       Map of scadName to SCAD expression text.
+       Built from PropertyResolver: inline, then preset, then config, then default.
+    2. SettingsEmitter turns the bundle into the settings argument expression.
+       PseudoMapSettingsEmitter is the V1 default.
+       ObjectSettingsEmitter is future.
+
+        interface SettingsBundle {
+          entries: ReadonlyMap of string to string
+        }
+        interface SettingsEmitter {
+          emit(bundle: SettingsBundle): string
+        }
+
+    Rules:
+
+    - Property resolution is format-agnostic. The same bundle feeds both emitters.
+    - Only the emitter changes when the format changes.
+    - The composition renderer calls emitter.emit(childBundle) per mb_block().
+    - Nested mb_block() trees stay structurally identical.
+    - The switch is target-level config, not per property.
+
+        interface ScadRenderOptions {
+          settingsFormat?: "pseudo-map" | "object"
+        }
+
+    Wired from CompileOptions / targetOptions.machineblocks-v3-scad.
+    V1 rejects object with diagnostic BML_SETTINGS_FORMAT_UNSUPPORTED and
+    writes no file while the SCAD library cannot read it.
+
+    Migration when object() is stable: the SCAD library gains object-aware
+    getters; ObjectSettingsEmitter lands in this package; settingsFormat object
+    is opt-in, then default; PseudoMapSettingsEmitter stays for older OpenSCAD.
+
+  </documentation>
+  <references>
+    <see type="rdoc:PropertyRenderer" relation="ReadNext" />
+  </references>
+</rdoc:SettingsFormat>

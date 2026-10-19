@@ -1,0 +1,85 @@
+<!--Render Target Documentation — FqnNaming
+  FQN: com.machineblocks.bml.target.render.documentation.FqnNaming-->
+<rdoc:FqnNaming xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    FQN to SCAD module name and file path
+  </is>
+  <documentation>
+    Every MBOM block class is identified by its definition FQN. This target
+    maps that FQN to a manifestation FQN, then to a module name and a file path.
+    The mapping is a MachineBlocks convention, not a BlockML platform rule.
+    Other targets do not replace a bml segment and do not emit one file per block.
+
+    Automatic mapping applies when targetOptions omit sourcePackage and
+    targetPackage. Split the FQN on "." and replace the one segment whose text
+    is exactly bml with scad. The match is case-sensitive and segment-wide.
+    mybml and bmlmodels are not bml. The replacement is not a substring search
+    and does not prefer the first or last segment.
+
+        Definition FQN:    com.machineblocks.bml.examples.Cross
+        Manifestation FQN: com.machineblocks.scad.examples.Cross
+        SCAD module:       mb__com__machineblocks__scad__examples__Cross
+        Output file:       {srcDir}/com/machineblocks/scad/examples/Cross.scad
+
+    Zero bml segments: MB_TARGET_PACKAGE_UNDETERMINED. The message names the
+    source FQN and tells the caller to pass --target-package and, if needed,
+    --source-package. More than one bml segment: MB_TARGET_PACKAGE_AMBIGUOUS.
+    The message names the source FQN. Neither case writes a file.
+
+    Explicit mapping applies when both sourcePackage and targetPackage are set.
+    A definition FQN equal to the source package, or starting with that package
+    plus a dot, keeps the remainder and swaps the root:
+
+        sourcePackage com.example.models
+        targetPackage com.example.scad
+        com.example.models.bricks.MyBrick
+          -> com.example.scad.bricks.MyBrick
+
+    The bml-to-scad replacement is not applied on top. A selected block outside
+    the source package is MB_SOURCE_OUTSIDE_ROOT. A referenced FQN outside the
+    source package (an import or a child module) uses automatic mapping instead.
+    If that automatic mapping fails, the compile fails and the host writes nothing.
+
+    Preset JSON uses the same manifestation with extension .json.
+    The output root is the configured blocks directory (srcDir), not a guessed
+    dist, build, or scad directory.
+
+    Name rules:
+
+    - Segments separated by double underscore (__)
+    - Packages lowercase
+    - Class names PascalCase
+    - Subclasses: additional PascalCase segment
+    - Private helpers: __help__camelCase (not a block)
+    - Private functions: __func__camelCase (not a block)
+
+    Examples:
+
+        com.machineblocks.bml.bricks.Standard
+          -> mb__com__machineblocks__scad__bricks__Standard
+
+        subclass Bottom of a manifested Wall
+          -> mb__com__example__scad__Wall__Bottom
+
+        private helper
+          -> mb__com__example__scad__Wall__help__myHelper
+
+        private function
+          -> mb__com__example__scad__Wall__func__myFunc
+
+    The names help and func are reserved and cannot be subclass names.
+
+    Multiple block classes may share one SCAD file. The file is named after the
+    primary class. The output root is srcDir.
+
+  </documentation>
+  <references>
+    <see type="rdoc:Imports" relation="ReadNext" />
+  </references>
+</rdoc:FqnNaming>

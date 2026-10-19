@@ -1,0 +1,66 @@
+<!--MachineBlocks Renderer Workspace Library
+  FQN: com.machineblocks.bml.renderer.workspace.Library-->
+<workspace:Library xmlns="http://blockml.org/bml"
+  xmlns:blockml="org.blockml.bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:mb="com.machineblocks.bml"
+  xmlns:engine="org.blockml.bml.engine.blockrender"
+  xmlns:render="com.machineblocks.bml.target.render"
+  xmlns:mbcli="com.machineblocks.bml.cli"
+  xmlns:workspace="com.machineblocks.bml.renderer.workspace">
+
+  <baseType>
+    core:BlockLibrary
+  </baseType>
+  <is>
+    The MachineBlocks Renderer monorepo workspace library catalog
+  </is>
+  <version>
+    0.1.0
+  </version>
+  <documentation>
+    Documentation and SSOT hub for the MachineBlocks Renderer monorepo.
+
+    This workspace orients three publishable packages:
+
+    - @blockml/block-render-engine — CompilerEngine that mixes render strategies
+    - @machineblocks/render-target — BML to MachineBlocks V3 SCAD
+    - @machineblocks/cli — thin MachineBlocks host over the BlockML compiler
+
+    @blockml/core supplies the language. @machineblocks/core supplies the domain
+    library and the SCAD runtime this target emits against. Neither is authored here.
+
+    Direction is workspace to packages only. Membership is the file tree under
+    this Library.bml. This hub does not contain package block files; package
+    libraries must not depend back on this library.
+  </documentation>
+  <references>
+    <see type="workspace:README" relation="ReadFirst">
+      Human/LLM reading entry for this library.
+    </see>
+  </references>
+  <language>
+    <blockml:language.English />
+  </language>
+  <properties>
+    <description override="true">
+      <value>MachineBlocks Renderer workspace monorepo library</value>
+    </description>
+  </properties>
+  <aggregations>
+    <readMe override="true">
+      <composition>
+        <workspace:README />
+      </composition>
+    </readMe>
+    <dependencies override="true">
+      <composition>
+        <blockml:Library />
+        <mb:Library />
+        <engine:Library />
+        <render:Library />
+        <mbcli:Library />
+      </composition>
+    </dependencies>
+  </aggregations>
+</workspace:Library>

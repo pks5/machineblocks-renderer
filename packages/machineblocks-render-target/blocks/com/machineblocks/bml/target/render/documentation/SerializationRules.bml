@@ -1,0 +1,84 @@
+<!--Render Target Documentation — SerializationRules
+  FQN: com.machineblocks.bml.target.render.documentation.SerializationRules-->
+<rdoc:SerializationRules xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    How MBOM values become SCAD settings expressions
+  </is>
+  <documentation>
+    Type shapes live on com.machineblocks.bml.type.* and native parameters on
+    NativeBlock.bml. This block is only the emit strategy (transferred from the
+    former types handbook, section 6).
+
+    Strategy:
+
+    1. Read the BOM member value in authored form.
+    2. Consult type metadata (field order, serialize capability, NativeBlock
+       scad:value).
+    3. Translate at render time.
+    4. Choose the shortest valid SCAD expression.
+    5. Add scadName to expression text on the SettingsBundle.
+    6. The SettingsEmitter writes the bundle (V1 pseudo-map pair, future object).
+
+    Default struct to SCAD array: element order is the type's property
+    declaration order — the same ordinal as BML positional array literals.
+    Do not invent a separate SCAD index convention.
+
+        FaceMapXY properties xNeg, xPos, yNeg, yPos
+        MBOM { xNeg: 1, xPos: 1, yNeg: 0, yPos: 0 }
+        SCAD [1, 1, 0, 0]
+
+    Exceptions must be defined on the type, the property, or an annotation
+    facet. Never implied:
+
+    - Compact forms (PerSide4 scalar or 2-element when faces are paired)
+    - Enum / catalog literals via scad:value
+    - A custom serialize capability on the type or property
+
+    Examples (settings entry shown as the V1 pair):
+
+    SizeXYZ { x:4, y:2, z:3 } -> ["size", [4, 2, 3]]
+
+    AxisXYZ holeXYZDiameter
+    - all auto -> ["holeXYZDiameter", "auto"]
+    - { x:3, y:3, z:4 } -> ["holeXYZDiameter", [3, 4]]
+    - { x:3, y:3.2, z:4 } -> ["holeXYZDiameter", [3, 3.2, 4]]
+
+    PerSide4 recessWallThickness
+    - all 0.333 -> ["recessWallThickness", 0.333]
+    - x faces 0.5, y faces 0.25 -> ["recessWallThickness", [0.5, 0.25]]
+    - 0.5, 0.4, 0.25, 0.2 -> ["recessWallThickness", [0.5, 0.4, 0.25, 0.2]]
+
+    FaceVector6 sizeMod
+    - { "x-":0, "x+":0.5, others 0 } -> ["sizeMod", [0, 0.5, 0, 0, 0, 0]]
+
+    FaceMap baseAdjustment
+    - { "x-": -0.1, "x+": -0.1, "z+": 0.05 }
+      -> ["baseAdjustment", [["x-", -0.1], ["x+", -0.1], ["z+", 0.05]]]
+    - namespaced keys pass through: "pbx.x+", "pty.z+"
+
+    SelectiveGrid studs
+    - studs true stays ["studs", true]
+    - studAreas become [["studAreas", [[[0,0],[1,1], false], [[2,0],[3,1], "hollow"]]]]
+
+    WallGapList recessWallGaps
+    - [{ face:"x+", position:0, length:"full" }, { face:"y-", position:2, length:3 }]
+      -> ["recessWallGaps", [["x+"], ["y-", 2, 3]]]
+
+    Direction.West -> ["direction", "west"]
+
+    Color { hex: "#EAC645" } -> ["baseColor", "#EAC645"]
+
+    Expressions stay ExpressionValue { raw } on the BOM. The renderer serializes
+    the parsed AST or a statically resolved value. See ExpressionRenderer.
+
+  </documentation>
+  <references>
+    <see type="rdoc:DomainBoundary" relation="ReadNext" />
+  </references>
+</rdoc:SerializationRules>

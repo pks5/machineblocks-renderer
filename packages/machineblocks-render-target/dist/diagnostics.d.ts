@@ -1,0 +1,22 @@
+import type { SourceLocation } from "@blockml/bom";
+import type { RenderOutput } from "@blockml/compiler";
+export declare const NO_TARGET = "BML_NO_TARGET";
+export declare const SETTINGS_FORMAT_UNSUPPORTED = "BML_SETTINGS_FORMAT_UNSUPPORTED";
+export declare const MB_LIB_PATH_MISSING = "BML_MB_LIB_PATH_MISSING";
+export declare const RENDER_DOCUMENT_NOT_FOUND = "BML_RENDER_DOCUMENT_NOT_FOUND";
+export declare const LEAF_VALUE_UNSUPPORTED = "BML_LEAF_VALUE_UNSUPPORTED";
+export declare const EMPTY_BLOCK = "MB_EMPTY_BLOCK";
+export declare const DIRECTIVE_DEFERRED = "BML_DIRECTIVE_DEFERRED";
+export declare const SET_PART_INCOMPLETE = "BML_SET_PART_INCOMPLETE";
+export declare const PRESET_CYCLE = "BML_PRESET_CYCLE";
+export declare const TARGET_PACKAGE_UNDETERMINED = "MB_TARGET_PACKAGE_UNDETERMINED";
+export declare const TARGET_PACKAGE_AMBIGUOUS = "MB_TARGET_PACKAGE_AMBIGUOUS";
+export declare const SOURCE_PACKAGE_ALONE = "MB_SOURCE_PACKAGE_ALONE";
+export declare const SOURCE_PACKAGE_REQUIRED = "MB_SOURCE_PACKAGE_REQUIRED";
+export declare const SOURCE_OUTSIDE_ROOT = "MB_SOURCE_OUTSIDE_ROOT";
+export declare const TARGET_COLLISION = "MB_TARGET_COLLISION";
+export declare const OUTPUT_ESCAPES_SRC = "MB_OUTPUT_ESCAPES_SRC";
+export declare const OUTPUT_OVERWRITES_BML = "MB_OUTPUT_OVERWRITES_BML";
+export declare const SELECTOR_EMPTY = "MB_SELECTOR_EMPTY";
+export declare function errorOutput(code: string, message: string, source?: SourceLocation): RenderOutput;
+//# sourceMappingURL=diagnostics.d.ts.map

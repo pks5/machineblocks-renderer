@@ -1,0 +1,47 @@
+<!--MachineBlocks Renderer Workspace — README
+  FQN: com.machineblocks.bml.renderer.workspace.README-->
+<workspace:README xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:engine="org.blockml.bml.engine.blockrender"
+  xmlns:render="com.machineblocks.bml.target.render"
+  xmlns:mbcli="com.machineblocks.bml.cli"
+  xmlns:workspace="com.machineblocks.bml.renderer.workspace"
+  xmlns:wsdocumentation="com.machineblocks.bml.renderer.workspace.documentation">
+
+  <baseType>
+    core:ReadMe
+  </baseType>
+  <is>
+    Reading entry for the MachineBlocks Renderer workspace library
+  </is>
+  <documentation>
+    This monorepo authors three publishable BML libraries.
+
+    @blockml/block-render-engine is the CompilerEngine. A RenderTarget uses it so
+    several processors in one project can compile, fill templates, or copy files
+    without each processor owning that infrastructure.
+
+    @machineblocks/render-target is the MachineBlocks compiler target. It turns
+    BML into OpenSCAD that matches the MachineBlocks V3 SCAD library in
+    @machineblocks/core.
+
+    @machineblocks/cli is the MachineBlocks host. It uses the normal BlockML
+    compiler, registers this render target, and presents a shorter command surface
+    for people who want BML rendered to SCAD without learning the universal CLI.
+
+    This library (com.machineblocks.bml.renderer.workspace.*) is the monorepo
+    documentation hub. It depends on the package libraries; packages never depend
+    back here. Start at com.machineblocks.bml.renderer.workspace.documentation.Introduction.
+  </documentation>
+  <references>
+    <see type="wsdocumentation:Introduction" relation="ReadFirst" />
+    <see type="wsdocumentation:PackageMap" relation="SeeAlso" />
+    <see type="wsdocumentation:ArchitectureOverview" relation="SeeAlso" />
+    <see type="wsdocumentation:ReadingOrder" relation="SeeAlso" />
+    <see type="wsdocumentation:LinkingRules" relation="SeeAlso" />
+    <see type="wsdocumentation:TransferredSources" relation="SeeAlso" />
+    <see type="engine:README" relation="SeeAlso" />
+    <see type="render:README" relation="SeeAlso" />
+    <see type="mbcli:README" relation="SeeAlso" />
+  </references>
+</workspace:README>

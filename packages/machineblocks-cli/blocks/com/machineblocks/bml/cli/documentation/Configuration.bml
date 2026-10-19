@@ -1,0 +1,54 @@
+<!--CLI Documentation — Configuration
+  FQN: com.machineblocks.bml.cli.documentation.Configuration-->
+<clidoc:Configuration xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    MachineBlocks defaults and blockml.config.json fields this host reads
+  </is>
+  <documentation>
+    The host reads blockml.config.json from the project root, the same file
+    @blockml/cli reads. It understands the universal keys and these MachineBlocks
+    keys. The universal CLI documents the MachineBlocks keys as unread in its V1;
+    this host is the reader.
+
+    Universal keys this host honours:
+
+    - srcDir — default blocks. Project BML sources, and the only compile output
+      root. Target FQNs are resolved to paths inside this directory. Compile
+      does not read outDir and does not accept --out.
+    - libraries — extra Library.bml seeds, appended to package.json blockml.library.
+    - targetOptions — opaque bag. Key machineblocks-v3-scad may carry
+      settingsFormat (pseudo-map or object). V1 emit is pseudo-map; object is
+      rejected with a diagnostic until the SCAD library accepts it.
+    - defaultTarget — this host treats machineblocks-v3-scad as the default even
+      when the key is omitted. If the key is set to another name, the host
+      reports that this command only compiles the SCAD target.
+
+    MachineBlocks keys:
+
+    - mbLibPath — root used to compute relative use/include paths to the SCAD
+      library (lib/block.scad, config/mb_config.scad, service .scad files).
+      Default: the installed @machineblocks/core package root.
+    - openscadPath — OpenSCAD executable for later thumbnail or preview commands.
+      Not required for compile.
+    - thumbsDir — output directory for later thumbnail generation.
+    - activeConfig — named config profile inside the SCAD library. Optional.
+    - bmlExtensions — extra filename suffixes treated as BML. Default .bml.
+
+    targets[] on the universal CLI defaults to ["blockdoc"] and must not be
+    required for this host. The host registers machineblocks-v3-scad itself.
+    Unknown toolchain target names are not an error here; they are ignored
+    because this command does not bootstrap them.
+
+    bom-cli.config.json renaming is not part of this package.
+
+  </documentation>
+  <references>
+    <see type="clidoc:TargetBootstrap" relation="ReadNext" />
+  </references>
+</clidoc:Configuration>

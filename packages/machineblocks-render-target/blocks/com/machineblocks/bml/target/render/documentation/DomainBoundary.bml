@@ -1,0 +1,43 @@
+<!--Render Target Documentation — DomainBoundary
+  FQN: com.machineblocks.bml.target.render.documentation.DomainBoundary-->
+<rdoc:DomainBoundary xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    What this target reads from @machineblocks/core
+  </is>
+  <documentation>
+    This package depends on @machineblocks/core and does not copy its blocks.
+
+    Read there:
+
+    - com.machineblocks.bml.documentation.scad.ScadRenderTarget — orientation
+    - com.machineblocks.bml.documentation.scad.MbBlockApi — mb_block signature
+    - com.machineblocks.bml.documentation.scad.BlockFileStructure — file sections
+      as the library presents them
+    - com.machineblocks.bml.documentation.scad.TypesAndSerialization — short
+      serialization sketch; SerializationRules in this library is the compiler
+      emit contract when the two differ, and type BML wins for shapes
+    - com.machineblocks.bml.documentation.scad.ModulePatterns
+    - com.machineblocks.bml.documentation.scad.ScadDecisionRules
+    - com.machineblocks.bml.core.NativeBlock — parameter inventory
+    - com.machineblocks.bml.type.* — type shapes
+    - com.machineblocks.bml.examples.* — example BML
+    - blocks/com/machineblocks/scad/** — corresponding SCAD, including
+      examples/Cross.scad and examples/Connector.scad
+    - lib/block.scad and config/mb_config.scad — runtime imports
+
+    Do not move those files into this package. When an example .scad and this
+    target's emit rules diverge, the BML example plus this library are the
+    intended compiler output; hand-maintained SCAD may still show the older
+    wrapper style that LeafOptimization removes.
+
+  </documentation>
+  <references>
+    <see type="rdoc:Introduction" relation="SeeAlso" />
+  </references>
+</rdoc:DomainBoundary>

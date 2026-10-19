@@ -1,0 +1,37 @@
+{
+  "name": "@blockml/block-render-engine",
+  "version": "0.1.0",
+  "description": "Block render engine — one CompilerEngine that lets a RenderTarget mix compile, template, and copy strategies",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "blockml": {
+    "library": "./blocks/org/blockml/bml/engine/blockrender/Library.bml"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "blocks"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "prepublishOnly": "npm run build",
+    "test": "vitest run --root ../.. packages/block-render-engine/test"
+  },
+  "dependencies": {
+    "@blockml/bom": "^0.9.13",
+    "@blockml/compiler": "^0.9.13",
+    "@blockml/core": "^1.4.2"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

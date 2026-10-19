@@ -1,0 +1,64 @@
+<!--Workspace Documentation — TransferredSources
+  FQN: com.machineblocks.bml.renderer.workspace.documentation.TransferredSources-->
+<wsdocumentation:TransferredSources xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:render="com.machineblocks.bml.target.render"
+  xmlns:wsdocumentation="com.machineblocks.bml.renderer.workspace.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Which BlockML toolchain documents were absorbed, and which were not
+  </is>
+  <documentation>
+    Absorbed into this repository (the Markdown in blockml/docs is no longer
+    the SSOT for these topics):
+
+    - docs/05_scad_renderer.md (v2.2.0) — entire SCAD renderer spec, now
+      com.machineblocks.bml.target.render.documentation.*
+    - RenderEngine / MakerEngine contract and strategy text from
+      docs/00_system.md (The First Engine, Engine Packages),
+      docs/01_bom_core.md (Target System, RenderEngine interface, strategies,
+      delegate-only targets, RenderOutput notes used by the engine),
+      docs/06_compiler.md (renderer steps 9-11 as SCAD reference, Target Registry
+      registration example, RenderEngine and RenderContext fields the engine
+      consumes), and docs/15_dev_setup.md (engines/maker-engine layout).
+      Home: org.blockml.bml.engine.blockrender.documentation.*
+    - MachineBlocks host CLI notes from docs/00_system.md (Zielbild items 3-4,
+      Dual CLI), docs/07_cli.md (host wiring row for MachineBlocks SCAD CLI),
+      and the @blockml/cli blocks that only pointed here: DualCliModel,
+      TargetBootstrap, TargetCliMatrix, Configuration fields thumbsDir /
+      mbLibPath / openscadPath / activeConfig / bmlExtensions, Installation,
+      PackageOwnership, LayerSeparation, ScopeExclusions item
+      machineblocks-v3-scad target registration.
+      Home: com.machineblocks.bml.cli.documentation.*
+    - MBOM-to-SCAD serialization strategy and examples from docs/04_types.md
+      section 6. Home: documentation.SerializationRules on the render target.
+      Type shapes themselves stay on com.machineblocks.bml.type.*.
+
+    Not absorbed (still owned elsewhere):
+
+    - docs/03_mbom.md — domain object model. Narrative home is
+      @machineblocks/core (com.machineblocks.bml.documentation.mbml.* and
+      concept.*). This repo only restates the Set aggregations the set
+      processor needs.
+    - docs/04_types.md except the serialize-to-SCAD strategy above — parse
+      behaviour and type inventory stay with the domain library and the
+      BlockML type system.
+    - Universal CLI commands, compiler facade, and toolchain targets — they
+      remain org.blockml.bml.cli.* and org.blockml.bml.compiler.* in the
+      blockml repository.
+    - The SCAD runtime (lib/block.scad, mb_block, mb_param_*) and example
+      .scad files — @machineblocks/core.
+
+    After this transfer, blockml docs may drop the absorbed holding text.
+    Universal CLI blocks may keep a one-line pointer to @machineblocks/cli;
+    they should not restate the host contract.
+
+  </documentation>
+  <references>
+    <see type="wsdocumentation:Introduction" relation="SeeAlso" />
+    <see type="render:README" relation="SeeAlso" />
+  </references>
+</wsdocumentation:TransferredSources>

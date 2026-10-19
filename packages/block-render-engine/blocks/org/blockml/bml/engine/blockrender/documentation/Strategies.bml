@@ -1,0 +1,60 @@
+<!--Engine Documentation — Strategies
+  FQN: org.blockml.bml.engine.blockrender.documentation.Strategies-->
+<edoc:Strategies xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:edoc="org.blockml.bml.engine.blockrender.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    How a BlockProcessor selects a strategy
+  </is>
+  <documentation>
+    A BlockProcessor is registered on a RenderTarget for a baseType. Its process
+    method calls exactly one engine strategy (or renderTemplates, which is the
+    template strategy for many files).
+
+    Compile strategy:
+
+        class ScadBlockProcessor implements BlockProcessor {
+          baseType = "com.machineblocks.bml.core.Block"
+          process(block, engine) {
+            return engine.compile(block, this, context)
+          }
+        }
+
+    Template strategy:
+
+        class NfcPlayerProcessor implements BlockProcessor {
+          baseType = "com.pimachine.nfc.NfcPlayer"
+          process(block, engine) {
+            return engine.renderTemplates(block, ["nfc_player.py.tpl", "config.json.tpl"])
+          }
+        }
+
+    Copy strategy:
+
+        class MathBuiltInProcessor implements BlockProcessor {
+          baseType = "org.blockml.bml.service.Math"
+          process(block, engine) {
+            return engine.copyTemplate("lib/math_service.scad", "lib/math_service.scad")
+          }
+        }
+
+    These class names are illustrative. The SCAD processors are specified by
+    @machineblocks/render-target, not by this package. The engine only guarantees
+    that each method is available and returns RenderOutput.
+
+    Built-in services (#math, #strings, #numbers, #lists, #bools) are BML in
+    @blockml/core (org.blockml.bml.service.*). A target that needs another
+    language form registers its own processor and chooses copy or compile.
+    Pre-rendered SCAD for those services, when present, lives in
+    @machineblocks/core under blocks/org/blockml/bml/service/. That layout is a
+    target concern.
+
+  </documentation>
+  <references>
+    <see type="edoc:MixedStrategies" relation="ReadNext" />
+  </references>
+</edoc:Strategies>

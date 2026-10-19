@@ -1,0 +1,52 @@
+<!--Workspace Documentation — PackageMap
+  FQN: com.machineblocks.bml.renderer.workspace.documentation.PackageMap-->
+<wsdocumentation:PackageMap xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:wsdocumentation="com.machineblocks.bml.renderer.workspace.documentation"
+  xmlns:engine="org.blockml.bml.engine.blockrender"
+  xmlns:render="com.machineblocks.bml.target.render"
+  xmlns:mbcli="com.machineblocks.bml.cli">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    npm package to BML library map for this monorepo
+  </is>
+  <documentation>
+    Linked libraries (npm, then BML FQN, then blocks path):
+
+    - @blockml/core (external) — org.blockml.bml.Library
+      node_modules/@blockml/core/blocks/org/blockml/bml/Library.bml
+      Language and framework types.
+
+    - @machineblocks/core (external) — com.machineblocks.bml.Library
+      node_modules/@machineblocks/core/blocks/com/machineblocks/bml/Library.bml
+      Domain model, SCAD library, and example BML with matching .scad files.
+      Examples: com.machineblocks.bml.examples.Cross and
+      com.machineblocks.scad.examples.Cross.
+
+    - @blockml/block-render-engine — org.blockml.bml.engine.blockrender.Library
+      packages/block-render-engine/blocks/org/blockml/bml/engine/blockrender/Library.bml
+      CompilerEngine implementation. Formerly maker-engine.
+
+    - @machineblocks/render-target — com.machineblocks.bml.target.render.Library
+      packages/machineblocks-render-target/blocks/com/machineblocks/bml/target/render/Library.bml
+      Registry name machineblocks-v3-scad. Formerly machineblocks-v3-scad-target.
+
+    - @machineblocks/cli — com.machineblocks.bml.cli.Library
+      packages/machineblocks-cli/blocks/com/machineblocks/bml/cli/Library.bml
+      Thin host. Recommended entry for MachineBlocks users.
+
+    This hub — com.machineblocks.bml.renderer.workspace.Library
+      blocks/com/machineblocks/bml/renderer/workspace/Library.bml
+      Monorepo orientation only. Not a publishable product library.
+
+  </documentation>
+  <references>
+    <see type="wsdocumentation:ArchitectureOverview" relation="ReadNext" />
+    <see type="engine:Library" relation="SeeAlso" />
+    <see type="render:Library" relation="SeeAlso" />
+    <see type="mbcli:Library" relation="SeeAlso" />
+  </references>
+</wsdocumentation:PackageMap>

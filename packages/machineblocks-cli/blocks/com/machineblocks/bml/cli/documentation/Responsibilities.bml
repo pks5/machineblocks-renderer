@@ -1,0 +1,50 @@
+<!--CLI Documentation — Responsibilities
+  FQN: com.machineblocks.bml.cli.documentation.Responsibilities-->
+<clidoc:Responsibilities xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    What the host does and what it leaves to other packages
+  </is>
+  <documentation>
+    This host does:
+
+    - Bootstrap a TypeRegistry from @blockml/core (org.blockml.bml.*) plus
+      @machineblocks/core (com.machineblocks.bml.*), using the same project
+      bootstrap the universal CLI uses.
+    - Register the render target before compile. The universal bootstrapTargets
+      path is not used for this name. validate does not need the target registry;
+      compile does.
+    - Pass mbLibPath so generated SCAD can import lib/block.scad and
+      config/mb_config.scad from the installed @machineblocks/core (or an
+      override path).
+    - Default the compile target to machineblocks-v3-scad. The command does not
+      take a target name.
+    - Resolve the type selector with the framework scan, keep blocks whose
+      baseType chain includes Block or Set, and pass the resolved mapping
+      (automatic, or sourcePackage plus targetPackage) on targetOptions.
+    - Compute every target FQN and output path before writing. One failure
+      writes nothing.
+    - Write .scad files, preset JSON, and source maps under the configured
+      srcDir. The published writer does not enforce that root; this host checks
+      the resolved real paths, then calls it with cleaning disabled.
+
+    This host does not:
+
+    - Parse or validate with its own code.
+    - Register blockdoc, xsd, or fatblock. Users who need those run blockml.
+    - Hardcode MBOM property lists. Those stay in NativeBlock.bml.
+    - Ship the SCAD library. That is @machineblocks/core lib/ and blocks/.
+
+    Node.js 20 or newer. The host bin is Node-only. The render target and the
+    engine remain browser-capable; only this package may use Node file APIs.
+
+  </documentation>
+  <references>
+    <see type="clidoc:Commands" relation="ReadNext" />
+  </references>
+</clidoc:Responsibilities>

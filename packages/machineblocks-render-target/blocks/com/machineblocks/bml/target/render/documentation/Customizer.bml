@@ -1,0 +1,62 @@
+<!--Render Target Documentation — Customizer
+  FQN: com.machineblocks.bml.target.render.documentation.Customizer-->
+<rdoc:Customizer xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    OpenSCAD customizer section
+  </is>
+  <documentation>
+    The customizer generator writes the OpenSCAD customizer section for block
+    and set files.
+
+    For each exposed property:
+
+    - Variable declaration with default value
+    - Inline comment with customizer dropdown syntax where it applies
+    - Group comment /* [Group Name] */ for property groups
+
+    The hidden section /* [Hidden] */ holds derived variables that combine
+    customizer inputs before they are passed to the module. Internal module
+    computations are never placed in the hidden section.
+
+    OpenSCAD customizer supports only flat primitives. The processor splits
+    complex properties into several customizer variables and recombines them in
+    [Hidden]. Splitting follows NativeBlock type metadata and annotations.
+
+    split [x, y, z] — a vector becomes named scalars:
+
+        baseRoundingRadiusX = 0.5; // [0:0.1:2]
+        baseRoundingRadiusY = 0.5;
+        baseRoundingRadiusZ = 0.5;
+        /* [Hidden] */
+        baseRoundingRadius = [baseRoundingRadiusX, baseRoundingRadiusY, baseRoundingRadiusZ];
+
+    auto_toggle true — a NoneOr value becomes a boolean plus a value:
+
+        recessDepthAuto = true;
+        recessDepth = 0.5;
+        /* [Hidden] */
+        recessDepthResolved = recessDepthAuto ? "auto" : recessDepth;
+
+    suggestions — a dropdown comment from the property suggestions. Each
+    suggestion instance is serialized to its SCAD literal:
+
+        textColor = "#303D4E"; // [#303D4E, #EAC645, #58B99D]
+
+    Optional labels may come from documentation on the suggestion instances.
+
+    constraints — Min and Max map to customizer range metadata
+    [min:step:max] when both bounds exist. See the BlockML constraints
+    documentation for the constraint instances. Individual constraints may also
+    inform editor range hints.
+
+  </documentation>
+  <references>
+    <see type="rdoc:Presets" relation="ReadNext" />
+  </references>
+</rdoc:Customizer>

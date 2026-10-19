@@ -1,0 +1,60 @@
+<!--Render Target Documentation — CompositeRendering
+  FQN: com.machineblocks.bml.target.render.documentation.CompositeRendering-->
+<rdoc:CompositeRendering xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Wrapper mb_block and nested children
+  </is>
+  <documentation>
+    A composite block (non-empty composition) is a wrapper mb_block() with
+    nested child calls, inside a typed module named by FqnNaming.
+
+    Module body order:
+
+    1. Native parameters via mb_param_* getters.
+    2. Custom parameters via mb_param.
+    3. assembly = mb_assembly(config, settings, size, direction)
+       and renderGroups = mb_param_renderGroups(config, settings).
+    4. Wrapper mb_block with id, base false, studs false, size, align, offset,
+       direction.
+    5. One child region per composition child: part_/group_/ns_ locals, then
+       mb_block with id mb_block_id(...), render mb_group_render(...), size
+       expression, and assembly helpers from AssemblyPatterns.
+
+    Wrapper decision:
+
+    - 0 children and custom processor logic — that logic renders; no wrapper.
+    - 0 children and no custom processor — diagnostic MB_EMPTY_BLOCK.
+    - exactly 1 child — no wrapper; the child is rendered directly.
+    - 2 or more children — automatic wrapper. Children render inside it.
+
+    The wrapper always sets base false and studs false, ignoring the block's
+    own base and studs. The wrapper is a layout container. Geometry is the
+    children. The block's base and studs are passed to the NativeBlock children.
+
+        Cross.studs = true
+          wrapper: studs false (processor)
+          children: studs true (block property)
+
+    Composite blocks do not need to declare base false or studs false for the
+    wrapper. Those properties keep their meaning for the children.
+
+    The automatic wrapper is only the outermost container, once per processor
+    invocation. Nested blocks in the composition are real instances, not extra
+    wrappers.
+
+    Illustrative child settings (top part) include offset via
+    mb_assembly_offset and baseCutoutType via mb_assembly_groove. Bottom parts
+    include tongue via mb_assembly_tongue. Both forward baseAdjustment through
+    mb_params_filter with that part's namespace.
+
+  </documentation>
+  <references>
+    <see type="rdoc:SetRendering" relation="ReadNext" />
+  </references>
+</rdoc:CompositeRendering>

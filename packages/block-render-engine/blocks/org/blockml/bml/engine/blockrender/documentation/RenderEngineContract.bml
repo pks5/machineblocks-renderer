@@ -1,0 +1,58 @@
+<!--Engine Documentation — RenderEngineContract
+  FQN: org.blockml.bml.engine.blockrender.documentation.RenderEngineContract-->
+<edoc:RenderEngineContract xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:edoc="org.blockml.bml.engine.blockrender.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    RenderEngine methods this package implements
+  </is>
+  <documentation>
+    BOM Core defines the interface. This package implements it. Method set:
+
+        interface RenderEngine {
+          compile(block, processor, context): RenderOutput
+          renderTemplate(block, templatePath): RenderOutput
+          renderTemplates(block, templatePaths): RenderOutput
+          copyTemplate(sourcePath, targetPath): RenderOutput
+          callLLM(block, prompt, context): RenderOutput
+        }
+
+    compile — deterministic transformation. The processor supplies the algorithm
+    as processor.compile(block, context). The engine calls that method with the
+    given RenderContext and returns its RenderOutput unchanged. It does not read
+    file content. The MachineBlocks SCAD processors use this method. If the
+    processor has no compile method, compile returns files: [] and diagnostic
+    BML_ENGINE_COMPILE_CALLBACK_MISSING.
+
+    renderTemplate — load one template and substitute variables from the block.
+    renderTemplates — the same for several template paths (one processor, several
+    output files). Example shape: a processor for a device that emits a script
+    template and a config template.
+
+    copyTemplate — copy a file from sourcePath to targetPath with no rewrite.
+    Used when a service file is already the desired artifact.
+
+    callLLM — reserved. This package does not call a model.
+
+    This implementation slice runs compile. renderTemplate, renderTemplates,
+    copyTemplate, and callLLM return files: [] and diagnostic
+    BML_ENGINE_STRATEGY_UNSUPPORTED. Template substitution and file copy without
+    a Node-only API are not specified yet. callLLM stays deferred.
+
+    This package does not call registerTarget.
+
+    The engine does not choose the method. The BlockProcessor does, inside
+    process(block, engine, context). The block is a BlockDefinition or a
+    BlockInstance. The engine does not inspect it. A processor that only
+    delegates should not be given an engine call at all; its target lists
+    delegates and may leave engine unset.
+
+  </documentation>
+  <references>
+    <see type="edoc:Strategies" relation="ReadNext" />
+  </references>
+</edoc:RenderEngineContract>

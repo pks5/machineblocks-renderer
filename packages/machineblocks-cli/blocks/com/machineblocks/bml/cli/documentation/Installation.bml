@@ -1,0 +1,44 @@
+<!--CLI Documentation — Installation
+  FQN: com.machineblocks.bml.cli.documentation.Installation-->
+<clidoc:Installation xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    How MachineBlocks users install the host
+  </is>
+  <documentation>
+    Consumer project (the usual path):
+
+        npm install @machineblocks/cli
+        npx machineblocks validate
+        npx machineblocks compile com.example.bml.bricks.MyBrick
+
+    That install brings @machineblocks/render-target, @blockml/block-render-engine,
+    @machineblocks/core, and the BlockML compiler packages. The user does not
+    install @blockml/cli unless they also want the universal command.
+
+    From this monorepo while the bin is not published:
+
+        npm install
+        npx blockml validate
+
+    The second command checks these BML libraries. It is the toolchain CLI used
+    to develop this repo, not the MachineBlocks user command.
+
+    Requires Node.js 20 or newer.
+
+    Domain users should not be sent to npm link of the blockml monorepo. The
+    universal installation note that says "install @machineblocks/cli from the
+    MachineBlocks mono-repo" now means this package (@machineblocks/cli in the
+    machineblocks-renderer repository). @machineblocks/core remains the separate
+    domain library.
+
+  </documentation>
+  <references>
+    <see type="clidoc:Introduction" relation="SeeAlso" />
+  </references>
+</clidoc:Installation>

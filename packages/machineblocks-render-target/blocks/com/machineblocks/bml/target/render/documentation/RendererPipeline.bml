@@ -1,0 +1,51 @@
+<!--Render Target Documentation — RendererPipeline
+  FQN: com.machineblocks.bml.target.render.documentation.RendererPipeline-->
+<rdoc:RendererPipeline xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Internal pipeline of each block renderer
+  </is>
+  <documentation>
+    These steps belong to this target. They are not a framework-wide pipeline.
+    Numbers 9-11 below match the historical SCAD reference notes in the compiler
+    handbook; the rest are internal to the processors.
+
+    MBOM Block
+      Module Name Resolver — FQN to SCAD module name
+      Import Resolver — FQN to use/include paths
+      Property Renderer — MBOM properties to settings entries
+      Expression Renderer — expression AST to SCAD expressions
+      Assembly Pattern Mapper — semantic values to SCAD assembly calls
+      Composition Renderer — compositions to nested mb_block() calls
+        (ScadBlockProcessor only)
+      Set Renderer — set to STEPS array plus view submodules
+        (ScadSetProcessor only)
+      Customizer Generator — properties to the OpenSCAD customizer section
+      Source Map Generator — BML positions to SCAD positions (Source Map V3)
+      ScadFile(s)
+
+    Before dispatch, on a working copy (canonical BOM unchanged):
+
+    9. Target Resolver — look up machineblocks-v3-scad. If the target cannot
+       support a block baseType, emit a diagnostic for that block.
+    10. expandDirectives() plus id resolution — expand bml:each, bml:if, and
+        bml:with on the composition tree. Then evaluate id expressions, assign
+        deterministic auto-ids to static unreferenced children that still lack
+        an id, and compose nested paths (parentPartId::childPartId) for output.
+        Auto-ids are not written back to the BomDocument.
+    11. Block renderer dispatch — exact FQN, then baseType chain, then delegates.
+
+    Renderers may call framework validation utilities during the pipeline.
+    They choose Urmodell, a pragmatic fork, or further forks. They do not mutate
+    the canonical document.
+
+  </documentation>
+  <references>
+    <see type="rdoc:FqnNaming" relation="ReadNext" />
+  </references>
+</rdoc:RendererPipeline>

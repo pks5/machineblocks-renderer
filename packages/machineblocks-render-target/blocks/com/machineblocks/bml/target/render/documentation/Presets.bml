@@ -1,0 +1,50 @@
+<!--Render Target Documentation — Presets
+  FQN: com.machineblocks.bml.target.render.documentation.Presets-->
+<rdoc:Presets xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Preset blocks to OpenSCAD customizer JSON
+  </is>
+  <documentation>
+    A preset block (for example com.machineblocks.bml.bricks.StandardPresets
+    with a _presets composition) may be rendered to an OpenSCAD customizer JSON
+    file. The compiler merges appliedPresets chains before serialization.
+
+    The JSON uses the preset name as the key (the label shown in the OpenSCAD UI):
+
+        {
+          "fileFormatVersion": "1",
+          "parameterSets": {
+            "Brick 2x4": {
+              "size": "[2, 4, 3]",
+              "baseColor": "#EAC645",
+              "studs": "true"
+            },
+            "Brick 1x1": {
+              "size": "[1, 1, 3]",
+              "baseColor": "#EAC645"
+            }
+          }
+        }
+
+    All parameter values are strings (OpenSCAD customizer requirement). Emit
+    only properties whose preset value differs from the block default. Omitted
+    properties fall back to those defaults when OpenSCAD loads the parameter
+    set.
+
+    A block whose only composition is presets is rendered to the manifestation
+    path with a .json suffix instead of a .scad file. basePresets chains are
+    merged left to right, then the instance's own values overlay them. The
+    parameter set key is the instance name. A basePresets cycle returns
+    files: [] and diagnostic BML_PRESET_CYCLE.
+
+  </documentation>
+  <references>
+    <see type="rdoc:SourceMaps" relation="ReadNext" />
+  </references>
+</rdoc:Presets>

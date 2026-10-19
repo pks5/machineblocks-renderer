@@ -1,0 +1,1 @@
+{"version":3,"file":"leaf.d.ts","sourceRoot":"","sources":["../src/leaf.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAqD,MAAM,cAAc,CAAC;AACvG,OAAO,KAAK,EAAE,YAAY,EAAE,MAAM,mBAAmB,CAAC;AActD,wBAAgB,cAAc,CAC5B,KAAK,EAAE,eAAe,EACtB,kBAAkB,EAAE,MAAM,EAC1B,cAAc,EAAE,MAAM,EACtB,SAAS,EAAE,MAAM,GAChB,YAAY,CA4Bd"}

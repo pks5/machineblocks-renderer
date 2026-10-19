@@ -1,0 +1,51 @@
+<!--Block Render Engine Library
+  FQN: org.blockml.bml.engine.blockrender.Library-->
+<engine:Library xmlns="http://blockml.org/bml"
+  xmlns:blockml="org.blockml.bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:engine="org.blockml.bml.engine.blockrender">
+
+  <baseType>
+    core:BlockLibrary
+  </baseType>
+  <is>
+    The block render engine library catalog
+  </is>
+  <version>
+    0.1.0
+  </version>
+  <documentation>
+    Publishable CompilerEngine library (org.blockml.bml.engine.blockrender.Library).
+    Implements the RenderEngine contract so one RenderTarget can mix compile,
+    template, and copy strategies. MachineBlocks-agnostic.
+
+    Formerly documented as MakerEngine, package @blockml/engine-maker, folder
+    maker-engine. Those names are retired. This package is @blockml/block-render-engine.
+
+    Membership is the file tree under this Library.bml. Version 0.1.0 is inherited
+    by members that omit their own version.
+  </documentation>
+  <references>
+    <see type="engine:README" relation="ReadFirst" />
+  </references>
+  <language>
+    <blockml:language.English />
+  </language>
+  <properties>
+    <description override="true">
+      <value>Block render engine — mixed compile, template, and copy strategies</value>
+    </description>
+  </properties>
+  <aggregations>
+    <readMe override="true">
+      <composition>
+        <engine:README />
+      </composition>
+    </readMe>
+    <dependencies override="true">
+      <composition>
+        <blockml:Library />
+      </composition>
+    </dependencies>
+  </aggregations>
+</engine:Library>

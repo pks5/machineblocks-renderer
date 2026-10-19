@@ -1,0 +1,41 @@
+<!--Workspace Documentation — ReadingOrder
+  FQN: com.machineblocks.bml.renderer.workspace.documentation.ReadingOrder-->
+<wsdocumentation:ReadingOrder xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:wsdocumentation="com.machineblocks.bml.renderer.workspace.documentation"
+  xmlns:engine="org.blockml.bml.engine.blockrender"
+  xmlns:render="com.machineblocks.bml.target.render"
+  xmlns:mbcli="com.machineblocks.bml.cli">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Recommended reading path across package libraries
+  </is>
+  <documentation>
+    Suggested order:
+
+    1. This hub — Introduction, PackageMap, ArchitectureOverview, LinkingRules,
+       TransferredSources.
+    2. The render target — README, then documentation.Introduction through the
+       ReadNext chain. That is the MBOM-to-SCAD contract.
+    3. The block render engine — README, then the RenderEngine contract and
+       strategies. Read this when implementing processors, not when learning
+       MachineBlocks output.
+    4. The host CLI — README, then how it differs from @blockml/cli.
+
+    Domain shapes, NativeBlock parameters, and the SCAD runtime API stay in
+    @machineblocks/core. Start at com.machineblocks.bml.README and
+    com.machineblocks.bml.documentation.scad.ScadRenderTarget. Example pairs
+    are com.machineblocks.bml.examples.* and the matching files under
+    blocks/com/machineblocks/scad/ in that package.
+
+  </documentation>
+  <references>
+    <see type="wsdocumentation:LinkingRules" relation="ReadNext" />
+    <see type="render:README" relation="SeeAlso" />
+    <see type="engine:README" relation="SeeAlso" />
+    <see type="mbcli:README" relation="SeeAlso" />
+  </references>
+</wsdocumentation:ReadingOrder>

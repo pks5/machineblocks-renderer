@@ -1,0 +1,44 @@
+<!--Render Target Documentation — LeafOptimization
+  FQN: com.machineblocks.bml.target.render.documentation.LeafOptimization-->
+<rdoc:LeafOptimization xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Direct mb_block call for single-NativeBlock types
+  </is>
+  <documentation>
+    Some block types are a single NativeBlock: every property maps 1:1 to
+    native settings, no sub-blocks, no multi-child composition. Example:
+    com.machineblocks.bml.bricks.Standard.
+
+    Standalone compile of such a block emits a direct mb_block() main call.
+    Customizer variables are the settings. There is no typed wrapper module and
+    no mb_param_* extraction layer:
+
+        mb_block(
+            config = mb_config,
+            settings = [
+                ["size", size],
+                ["studs", studs]
+            ]
+        );
+
+    This avoids the extra module call found in older hand-maintained SCAD
+    artifacts. Composite blocks with real inner structure (Wall, Calibrator)
+    still emit typed modules.
+
+    Exactly one NativeBlock child uses this direct call. Zero children returns
+    files: [] and diagnostic MB_EMPTY_BLOCK. Two or more children use the
+    composite module in CompositeRendering. A leaf parameter that is not a
+    property reference, or a default other than a boolean, number, string, or
+    SizeXYZ, returns files: [] and diagnostic BML_LEAF_VALUE_UNSUPPORTED.
+
+  </documentation>
+  <references>
+    <see type="rdoc:CompositeRendering" relation="ReadNext" />
+  </references>
+</rdoc:LeafOptimization>

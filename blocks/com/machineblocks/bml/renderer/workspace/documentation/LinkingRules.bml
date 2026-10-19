@@ -1,0 +1,40 @@
+<!--Workspace Documentation — LinkingRules
+  FQN: com.machineblocks.bml.renderer.workspace.documentation.LinkingRules-->
+<wsdocumentation:LinkingRules xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:wsdocumentation="com.machineblocks.bml.renderer.workspace.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Normative monorepo BML linking and SSOT rules
+  </is>
+  <documentation>
+    Normative rules for this monorepo:
+
+    1. Workspace to packages only. The workspace Library may list package
+       libraries in dependencies. Package Library files must never depend on
+       com.machineblocks.bml.renderer.workspace.Library.
+    2. No re-export. Package block files stay under packages/*/blocks/. The hub
+       file tree contains only workspace orientation blocks.
+    3. Package SSOT. Each publishable package owns its BML under packages/*/blocks/
+       and points at it via package.json blockml.library.
+    4. Hub SSOT. The root package.json blockml.library points at this workspace
+       Library.
+    5. Dependency direction. The render target may depend on the block render
+       engine and on @machineblocks/core. The CLI may depend on the render target
+       and on @blockml/cli. The engine must not depend on MachineBlocks packages.
+    6. Domain SSOT stays outside. Native parameters, type shapes, and the SCAD
+       library are @machineblocks/core. This repo specifies how a compiler target
+       emits SCAD from that model.
+    7. Rename. Do not reintroduce the names maker-engine, MakerEngine,
+       @blockml/engine-maker, or @machineblocks/machineblocks-v3-scad-target.
+       Registry id machineblocks-v3-scad remains.
+
+  </documentation>
+  <references>
+    <see type="wsdocumentation:TransferredSources" relation="ReadNext" />
+    <see type="wsdocumentation:Introduction" relation="SeeAlso" />
+  </references>
+</wsdocumentation:LinkingRules>
