@@ -27,6 +27,9 @@
       BlockRenderEngine.
     - Same validate and compile facade underneath. Defaults differ.
     - Does not reimplement parse, validate, or emit.
+    - init calls initProject from @blockml/cli, then adds devDependency
+      @machineblocks/cli and library dependency com.machineblocks.bml.Library.
+      The universal init stays domain-agnostic.
 
     Interop: a later plugin load (targetPackages in blockml.config.json mapping
     machineblocks-v3-scad to @machineblocks/render-target) may let the universal

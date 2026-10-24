@@ -44,60 +44,40 @@ npx blockml validate
 | `npm run validate` | `blockml validate` |
 | `npm run search:index` | `blockml search index` |
 
-`npx blockml` is the toolchain CLI used to check these libraries. The MachineBlocks user command is `machineblocks compile <source-selector>`. It compiles selected blocks to SCAD under the configured `srcDir`. How to stand up that command in another Node project is the next section.
+`npx blockml` is the toolchain CLI used to check these libraries. The MachineBlocks user commands are `machineblocks init <package-fqn>` and `machineblocks compile <source-selector>`. Compile writes selected blocks to SCAD under the configured `srcDir`. How to stand up that command in another Node project is the next section.
 
-Toolchain: `@blockml/cli` ^0.9.13, with the other `@blockml/*` 0.9 packages at 0.9.13. `@blockml/core` ^1.4.2. Domain library: `@machineblocks/core` ^3.0.0-A4.
+Toolchain: `@blockml/cli` ^0.9.14, with the other `@blockml/*` 0.9 packages at 0.9.14. `@blockml/core` ^1.4.5. Domain library: `@machineblocks/core` ^3.0.0-A4.
 
 ## Use the renderer in another project
 
-Node.js 20 or newer. The steps below turn a Node project into a BlockML project that can render `.bml` to MachineBlocks V3 `.scad` with `machineblocks`.
+Node.js 20 or newer. One command turns a Node project into a BlockML project that can render `.bml` to MachineBlocks V3 `.scad` with `machineblocks`.
 
 `@machineblocks/cli`, `@machineblocks/render-target`, `@blockml/block-render-engine`, `@blockml/cli`, `@blockml/core`, and `@machineblocks/core` all come from npm.
 
-### 1. Initialize with `blockml init`
+### 1. Initialize with `machineblocks init`
 
-From the project directory. The package FQN is a dotted identifier, and the last segment is a package name (`Library` is reserved). Put a `bml` segment after the domain, as in `com.example.bml`. Compile replaces that segment with `scad` when it chooses the output package.
-
-```bash
-npx @blockml/cli init com.example.bml
-```
-
-`init` writes or merges `package.json`: a `blockml.library` pointer, dependency `@blockml/core`, and devDependency `@blockml/cli`. It also writes `blocks/<package path>/Library.bml`, `README.bml`, and, when missing, `AGENTS.md` and `CLAUDE.md`. Existing files stay in place. `--src <dir>` changes the source directory (default `blocks`).
-
-Leave off `--install`. The next step adds the MachineBlocks packages, and one `npm install` installs everything `init` recorded.
-
-In a project that already depends on `@blockml/cli`, the same command is `npx blockml init com.example.bml`.
-
-### 2. Add the renderer and the host CLI
+From the project directory. The package FQN is a dotted identifier, and the last segment is a package name (`Library` is reserved). Put a `bml` segment after the domain, as in `com.example.bml`. Compile replaces that segment with `scad` when it chooses the output package. A package FQN without that segment still initializes and prints a warning.
 
 ```bash
-npm install @machineblocks/cli@^0.1.0
+npx @machineblocks/cli init com.example.bml
 ```
+
+`init` calls the universal BlockML scaffold, then records the MachineBlocks profile. It writes or merges `package.json`: a `blockml.library` pointer, dependency `@blockml/core`, and devDependencies `@blockml/cli` and `@machineblocks/cli`. It writes `blocks/<package path>/Library.bml` depending on `org.blockml.bml.Library` and `com.machineblocks.bml.Library`, plus `README.bml`, and, when missing, `AGENTS.md` and `CLAUDE.md`. Existing files stay in place. A second run adds only what is missing. `--src <dir>` changes the source directory (default `blocks`).
+
+Leave off `--install` unless the dependencies should be installed in the same step. Without it, the next step is `npm install`.
 
 | Package | Role |
 |---|---|
-| `@blockml/core`, `@blockml/cli` | Added by `init`. Language library and the `blockml` command. |
-| `@machineblocks/core` | Domain types and the SCAD runtime. Default `mbLibPath`. |
-| `@blockml/block-render-engine` | Engine the SCAD target runs on. |
-| `@machineblocks/render-target` | Compiler target `machineblocks-v3-scad`. |
-| `@machineblocks/cli` | The `machineblocks` command. It registers that target. |
+| `@blockml/core` | Language library. Recorded as a dependency. |
+| `@blockml/cli` | The `blockml` command. Recorded as a devDependency. |
+| `@machineblocks/cli` | The `machineblocks` command. Recorded as a devDependency. It registers target `machineblocks-v3-scad`. |
+| `@machineblocks/core` | Domain types and the SCAD runtime. Default `mbLibPath`. Installed with the CLI. |
+| `@blockml/block-render-engine` | Engine the SCAD target runs on. Installed with the CLI. |
+| `@machineblocks/render-target` | Compiler target `machineblocks-v3-scad`. Installed with the CLI. |
 
 `@machineblocks/cli` depends on `@machineblocks/render-target` ^0.1.0, `@blockml/block-render-engine` ^0.1.0, and `@machineblocks/core` ^3.0.0-A4. npm installs those with the CLI.
 
-Then make the project library depend on the MachineBlocks library. `init` only depends on `org.blockml.bml.Library`. Open `blocks/com/example/bml/Library.bml` (the path follows the package FQN), declare the namespace, and add the library next to the BlockML one:
-
-```xml
-xmlns:mb="com.machineblocks.bml"
-```
-
-```xml
-<dependencies override="true" type="core:BlockLibrary">
-  <composition>
-    <blockml:Library />
-    <mb:Library />
-  </composition>
-</dependencies>
-```
+On a project that `blockml init` already created, `npx machineblocks init com.example.bml` adds the devDependency and the library dependency and does not replace existing files. If `@machineblocks/cli` is already listed under `dependencies`, it stays there.
 
 Check the project:
 
@@ -106,7 +86,7 @@ npx blockml validate
 npx machineblocks --help
 ```
 
-### 3. Use `machineblocks`
+### 2. Use `machineblocks`
 
 `validate` checks the project. `compile` renders selected Block and Set types to `.scad` under `srcDir` (default `blocks`), plus preset JSON and a sibling `.map` when the target attaches a source map.
 
@@ -135,7 +115,7 @@ npx machineblocks compile com.example.models.bricks.MyBrick \
 
 Exit 0 is success, 1 is diagnostics, 2 is usage or configuration. The message names the code (`MB_SELECTOR_EMPTY` when the selector matches no Block or Set, `MB_EMPTY_BLOCK` when a composite has nothing to render, `MB_SOURCE_PACKAGE_REQUIRED` when `--target-package` has no source root).
 
-Search, inspect, graph, `new`, and `init` stay on `blockml`. After the library dependency above is in place, a new block can use a MachineBlocks base type:
+Search, inspect, graph, and `new` stay on `blockml`. A new block can use a MachineBlocks base type:
 
 ```bash
 npx blockml new com.example.bml.bricks.MyBrick \

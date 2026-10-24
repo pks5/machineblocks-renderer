@@ -28,14 +28,14 @@
   },
   "dependencies": {
     "@blockml/block-render-engine": "^0.1.0",
-    "@blockml/bom": "^0.9.13",
-    "@blockml/compiler": "^0.9.13",
-    "@blockml/core": "^1.4.2",
+    "@blockml/bom": "^0.9.14",
+    "@blockml/compiler": "^0.9.14",
+    "@blockml/core": "^1.4.5",
     "@machineblocks/core": "^3.0.0-A4"
   },
   "devDependencies": {
-    "@blockml/framework": "^0.9.13",
-    "@blockml/parser": "^0.9.13"
+    "@blockml/framework": "^0.9.14",
+    "@blockml/parser": "^0.9.14"
   },
   "engines": {
     "node": ">=20"

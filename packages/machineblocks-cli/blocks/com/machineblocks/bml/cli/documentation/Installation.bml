@@ -13,13 +13,21 @@
   <documentation>
     Consumer project (the usual path):
 
-        npm install @machineblocks/cli
+        npx @machineblocks/cli init com.example.bml
         npx machineblocks validate
         npx machineblocks compile com.example.bml.bricks.MyBrick
 
+    init calls the universal project scaffold, then records @machineblocks/cli
+    as a devDependency and adds com.machineblocks.bml.Library to the project
+    library. Pass --install to run npm install after that profile is recorded.
+    Otherwise the next step is npm install. On a project that blockml init
+    already created, the same command adds only the missing profile and does
+    not replace existing files.
+
     That install brings @machineblocks/render-target, @blockml/block-render-engine,
-    @machineblocks/core, and the BlockML compiler packages. The user does not
-    install @blockml/cli unless they also want the universal command.
+    @machineblocks/core, and the BlockML compiler packages. init also records
+    @blockml/core and @blockml/cli. A bml segment in the package FQN lets
+    compile map the output package to scad.
 
     From this monorepo while the bin is not published:
 

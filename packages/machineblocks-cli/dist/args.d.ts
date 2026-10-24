@@ -9,9 +9,16 @@ export interface CompileArgs {
     sourcePackage?: string;
     targetPackage?: string;
 }
+export interface InitArgs {
+    command: "init";
+    packageFqn: string;
+    srcDir?: string;
+    install: boolean;
+}
 export type HostCommand = {
     command: "help";
-} | ValidateArgs | CompileArgs | {
+    topic?: "init";
+} | ValidateArgs | CompileArgs | InitArgs | {
     command: "usage";
     message: string;
 };

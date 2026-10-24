@@ -8,7 +8,7 @@
     core:Documentation
   </baseType>
   <is>
-    User-facing commands for rendering BML to SCAD
+    User-facing commands for a MachineBlocks project
   </is>
   <documentation><![CDATA[
     The host exposes a short command set. validate matches blockml validate.
@@ -67,13 +67,31 @@
     Mapping codes MB_TARGET_PACKAGE_UNDETERMINED, MB_TARGET_PACKAGE_AMBIGUOUS,
     and MB_SOURCE_OUTSIDE_ROOT are defined with the manifestation rules.
 
+    machineblocks init <package-fqn> [--src dir] [--install]
+    - Scaffolds a BlockML project by calling initProject from @blockml/cli,
+      then records the MachineBlocks profile. It does not spawn blockml init.
+    - --src changes the source directory (default blocks). --install runs
+      npm install after the profile is recorded. Without --install, init
+      does not install.
+    - The profile adds @machineblocks/cli to devDependencies when that package
+      is absent from dependencies and devDependencies. The range is the caret
+      range of this host. An existing dependencies entry stays put.
+    - The project Library.bml gains a dependencies composition child
+      com.machineblocks.bml.Library. An existing child is left in place.
+      Existing files are not replaced.
+    - A package FQN without a bml segment still exits 0 and warns. Compile
+      maps a bml segment to scad.
+    - Exit codes match initProject: 0 success, 1 write or install failure,
+      2 usage or an invalid package FQN.
+    - --help shows this command.
+
     machineblocks --help
     - Lists these commands.
     - Points advanced users to blockml --help for search, inspect, graph,
-      transform, new, and init.
+      transform, and new.
 
     Not in this host surface (still available via blockml if that package
-    is installed): watch, search, inspect, graph, transform, scaffolding, xsd
+    is installed): watch, search, inspect, graph, transform, new, xsd
     toggle, thumbnail generation.
 
     Per-target matrix entry this host satisfies:

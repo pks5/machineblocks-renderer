@@ -1,4 +1,4 @@
-import { COMPILE_HELP } from "./help.js";
+import { COMPILE_HELP, INIT_HELP } from "./help.js";
 
 export interface ValidateArgs {
   command: "validate";
@@ -13,10 +13,18 @@ export interface CompileArgs {
   targetPackage?: string;
 }
 
+export interface InitArgs {
+  command: "init";
+  packageFqn: string;
+  srcDir?: string;
+  install: boolean;
+}
+
 export type HostCommand =
-  | { command: "help" }
+  | { command: "help"; topic?: "init" }
   | ValidateArgs
   | CompileArgs
+  | InitArgs
   | { command: "usage"; message: string };
 
 export function parseArgs(argv: readonly string[]): HostCommand {
@@ -29,6 +37,9 @@ export function parseArgs(argv: readonly string[]): HostCommand {
   }
   if (command === "compile") {
     return parseCompile(rest);
+  }
+  if (command === "init") {
+    return parseInit(rest);
   }
   return { command: "usage", message: `Unknown command: ${command ?? ""}` };
 }
@@ -100,6 +111,49 @@ function parseCompile(args: readonly string[]): HostCommand {
   }
   if (targetPackage !== undefined) {
     parsed.targetPackage = targetPackage;
+  }
+  return parsed;
+}
+
+function parseInit(args: readonly string[]): HostCommand {
+  if (args.includes("--help")) {
+    return { command: "help", topic: "init" };
+  }
+  let packageFqn: string | undefined;
+  let srcDir: string | undefined;
+  let install = false;
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index];
+    if (arg === undefined) {
+      continue;
+    }
+    if (arg === "--install") {
+      install = true;
+      continue;
+    }
+    if (arg === "--src") {
+      const value = args[index + 1];
+      if (value === undefined || value.startsWith("--")) {
+        return { command: "usage", message: "--src requires a directory." };
+      }
+      srcDir = value;
+      index += 1;
+      continue;
+    }
+    if (arg.startsWith("--")) {
+      return { command: "usage", message: `Unknown option: ${arg}` };
+    }
+    if (packageFqn !== undefined) {
+      return { command: "usage", message: "init accepts one package FQN." };
+    }
+    packageFqn = arg;
+  }
+  if (packageFqn === undefined) {
+    return { command: "usage", message: `init requires a package FQN.\n\n${INIT_HELP}` };
+  }
+  const parsed: InitArgs = { command: "init", packageFqn, install };
+  if (srcDir !== undefined) {
+    parsed.srcDir = srcDir;
   }
   return parsed;
 }

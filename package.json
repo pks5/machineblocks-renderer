@@ -10,12 +10,12 @@
     "library": "./blocks/com/machineblocks/bml/renderer/workspace/Library.bml"
   },
   "dependencies": {
-    "@blockml/core": "^1.4.2",
+    "@blockml/core": "^1.4.5",
     "@machineblocks/core": "^3.0.0-A4"
   },
   "devDependencies": {
     "@blockml/block-render-engine": "workspace:*",
-    "@blockml/cli": "^0.9.13",
+    "@blockml/cli": "^0.9.14",
     "@machineblocks/cli": "workspace:*",
     "@machineblocks/render-target": "workspace:*",
     "typescript": "^5.7.3",

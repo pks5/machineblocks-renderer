@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
+import { initProject } from "@blockml/cli";
 import { execute } from "../src/execute.js";
 
 const require = createRequire(import.meta.url);
@@ -116,6 +117,118 @@ describe("machineblocks compile", () => {
     expect(existsSync(scad(root, "com/example/scad/Brick.scad"))).toBe(false);
   });
 });
+
+describe("machineblocks init", () => {
+  it("scaffolds a project and records the MachineBlocks profile", () => {
+    const root = emptyDir();
+
+    const result = execute(["init", "com.example.bml"], root);
+
+    expect(result.code).toBe(0);
+    const pkg = readPackage(root);
+    expect(pkg.blockml).toEqual({ library: "./blocks/com/example/bml/Library.bml" });
+    expect(pkg.dependencies?.["@blockml/core"]).toBeDefined();
+    expect(pkg.devDependencies?.["@blockml/cli"]).toBeDefined();
+    expect(pkg.devDependencies?.["@machineblocks/cli"]).toBe("^0.1.0");
+    const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
+    expect(library).toContain("org.blockml.bml");
+    expect(library).toContain('xmlns:mb="com.machineblocks.bml"');
+    expect(library).toContain("<mb:Library");
+  });
+
+  it("does not duplicate the profile on a second run", () => {
+    const root = emptyDir();
+    expect(execute(["init", "com.example.bml"], root).code).toBe(0);
+    const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
+    const pkg = readFileSync(join(root, "package.json"), "utf8");
+
+    const again = execute(["init", "com.example.bml"], root);
+
+    expect(again.code).toBe(0);
+    expect(again.lines.join("\n")).toContain("Skipped existing @machineblocks/cli");
+    expect(again.lines.join("\n")).toContain("Skipped existing com.machineblocks.bml.Library");
+    expect(readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8")).toBe(library);
+    expect(readFileSync(join(root, "package.json"), "utf8")).toBe(pkg);
+  });
+
+  it("adds the library dependency to a project blockml init already created", () => {
+    const root = emptyDir();
+    expect(initProject({ packageFqn: "com.example.bml", rootDir: root }).code).toBe(0);
+    const before = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
+    expect(before).not.toContain("com.machineblocks.bml");
+
+    const result = execute(["init", "com.example.bml"], root);
+
+    expect(result.code).toBe(0);
+    const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
+    expect(library).toContain("org.blockml.bml");
+    expect(library).toContain("<mb:Library");
+    expect(readPackage(root).devDependencies?.["@machineblocks/cli"]).toBe("^0.1.0");
+  });
+
+  it("leaves an existing dependencies entry in place", () => {
+    const root = emptyDir();
+    expect(initProject({ packageFqn: "com.example.bml", rootDir: root }).code).toBe(0);
+    const pkg = readPackage(root);
+    pkg.dependencies = { ...pkg.dependencies, "@machineblocks/cli": "1.2.3" };
+    writeFileSync(join(root, "package.json"), `${JSON.stringify(pkg, null, 2)}\n`);
+
+    const result = execute(["init", "com.example.bml"], root);
+
+    expect(result.code).toBe(0);
+    const after = readPackage(root);
+    expect(after.dependencies?.["@machineblocks/cli"]).toBe("1.2.3");
+    expect(after.devDependencies?.["@machineblocks/cli"]).toBeUndefined();
+  });
+
+  it("rejects an invalid package FQN", () => {
+    const root = emptyDir();
+
+    const result = execute(["init", "Library"], root);
+
+    expect(result.code).toBe(2);
+    expect(result.lines.join("\n")).toContain("Invalid package FQN");
+    expect(existsSync(join(root, "blocks"))).toBe(false);
+  });
+
+  it("warns when the package FQN has no bml segment", () => {
+    const root = emptyDir();
+
+    const result = execute(["init", "com.example.models"], root);
+
+    expect(result.code).toBe(0);
+    expect(result.lines.join("\n")).toContain("no bml segment");
+    expect(readFileSync(join(root, "blocks/com/example/models/Library.bml"), "utf8")).toContain("<mb:Library");
+  });
+
+  it("shows init help", () => {
+    const root = emptyDir();
+
+    const command = execute(["init", "--help"], root);
+    const general = execute(["--help"], root);
+
+    expect(command.code).toBe(0);
+    expect(command.lines.join("\n")).toContain("machineblocks init <package-fqn>");
+    expect(general.code).toBe(0);
+    expect(general.lines.join("\n")).toContain("machineblocks init <package-fqn>");
+  });
+});
+
+function emptyDir(): string {
+  const root = mkdtempSync(join(tmpdir(), "mb-cli-"));
+  directories.push(root);
+  return root;
+}
+
+interface PackageJson {
+  blockml?: { library?: string };
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+}
+
+function readPackage(root: string): PackageJson {
+  return JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as PackageJson;
+}
 
 function project(): string {
   const root = mkdtempSync(join(tmpdir(), "mb-cli-"));
