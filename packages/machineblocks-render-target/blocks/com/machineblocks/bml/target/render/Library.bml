@@ -14,7 +14,7 @@
     The MachineBlocks SCAD render target library catalog
   </is>
   <version>
-    0.1.0
+    0.1.1
   </version>
   <documentation>
     Publishable compiler-target library (com.machineblocks.bml.target.render.Library).

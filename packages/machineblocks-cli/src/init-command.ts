@@ -4,7 +4,7 @@ import { dirname, join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { AggregationDefinition, BlockDefinition } from "@blockml/bom";
 import { BomBuilder } from "@blockml/builder";
-import { initProject } from "@blockml/cli";
+import { generateAgentsMd, initProject } from "@blockml/cli";
 import { parse } from "@blockml/parser";
 import { serialize } from "@blockml/serializer";
 import type { InitArgs } from "./args.js";
@@ -48,16 +48,24 @@ export function runInit(args: InitArgs, rootDir: string): HostResult {
     return { code: 0, lines };
   }
 
+  // initProject already tried GenerateAgentsMd, before this profile existed
+  // and before npm install. blockml init installs first, then generates.
   const kept = lines.filter((line) => !line.startsWith("Next:"));
-  const needsAgents = lines.some((line) => line.startsWith("Next:") && line.includes("agents-md"));
   const installed = npmInstall(rootDir);
   if (installed.code !== 0) {
     return { code: installed.code, lines: [...kept, ...installed.lines] };
   }
   return {
     code: 0,
-    lines: [...kept, ...installed.lines, needsAgents ? "Next: npx blockml agents-md generate" : "Next: npx blockml validate"],
+    lines: [...kept, ...installed.lines, ...agentsMdAfterInstall(rootDir, srcDir)],
   };
+}
+
+function agentsMdAfterInstall(rootDir: string, srcDir: string): string[] {
+  if (existsSync(join(rootDir, "AGENTS.md"))) {
+    return [];
+  }
+  return generateAgentsMd({ rootDir, srcDir }).lines.map((line) => line.text);
 }
 
 function ensureCliDevDependency(rootDir: string): HostResult {

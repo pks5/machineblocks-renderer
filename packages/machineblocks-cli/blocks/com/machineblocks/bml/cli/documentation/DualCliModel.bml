@@ -29,6 +29,8 @@
     - Does not reimplement parse, validate, or emit.
     - init calls initProject from @blockml/cli, then adds devDependency
       @machineblocks/cli and library dependency com.machineblocks.bml.Library.
+      --install then runs npm install and GenerateAgentsMd in that order:
+      profile first, then the same install and AGENTS.md step as initProject.
       The universal init stays domain-agnostic.
 
     Interop: a later plugin load (targetPackages in blockml.config.json mapping

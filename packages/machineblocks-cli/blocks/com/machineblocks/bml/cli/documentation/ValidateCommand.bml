@@ -1,0 +1,59 @@
+<!--CLI Documentation — ValidateCommand
+  FQN: com.machineblocks.bml.cli.documentation.ValidateCommand-->
+<clidoc:ValidateCommand xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    machineblocks validate specification
+  </is>
+  <documentation>
+    <![CDATA[
+    Syntax:
+        machineblocks validate [file] [--all]
+
+        Same project validate as blockml validate.
+        Does not register machineblocks-v3-scad and does not write SCAD.
+        A file argument parses that file and runs compileBmlToBom against the
+        full project registry.
+        Default (no file, no --all): semantic-validate project sources only
+        (this package srcDir plus local packages/*). npm libraries stay on the
+        registry for resolve.
+        --all semantic-validates every document in the registry, including npm.
+        file and --all together exit 2.
+        Exit 0 success, 1 diagnostics, 2 config or usage.
+        After diagnostics: Validated N block(s). or Validated N block(s) with errors.
+        This host does not accept --src, --libraries, or --verbose. Those flags
+        belong to blockml validate.
+
+    Printed help:
+    Usage: machineblocks validate [--all] [<file>]
+           machineblocks validate --help
+
+    When: check the model after edits. Ordinary project work.
+
+    Default (no file, no --all): semantic-validate project sources only (this package srcDir plus local packages/*). npm libraries stay on the registry for resolve.
+    --all: semantic-validate every document in the registry, including npm. Do not use --all as the default after every edit.
+    Single file: parse + compileBmlToBom against the full project registry.
+    file and --all together exit 2.
+
+    Does not register machineblocks-v3-scad. No output files written.
+    This host does not accept --src, --libraries, or --verbose.
+
+    Flags:
+      --all         entire reachable corpus, including npm
+
+    Exit 0 on success; 1 on diagnostic errors; 2 on config or usage errors.
+    After diagnostics: Validated N block(s). or Validated N block(s) with errors.
+
+    Related: compile. Search, scan, inspect, and graph stay on blockml.
+    ]]>
+  </documentation>
+  <references>
+    <see type="clidoc:CompileCommand" relation="ReadNext" />
+    <see type="clidoc:Help" relation="SeeAlso" />
+  </references>
+</clidoc:ValidateCommand>

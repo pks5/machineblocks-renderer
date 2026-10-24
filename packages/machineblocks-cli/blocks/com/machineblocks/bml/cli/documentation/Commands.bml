@@ -8,99 +8,30 @@
     core:Documentation
   </baseType>
   <is>
-    User-facing commands for a MachineBlocks project
+    Command inventory
   </is>
-  <documentation><![CDATA[
-    The host exposes a short command set. validate matches blockml validate.
-    compile takes a BlockML type selector, not a file path and not --out.
+  <documentation>
+    <![CDATA[
+    Host commands:
+    • validate — parser + semantic check; no SCAD target; no output files
+    • compile — render machineblocks-v3-scad for one type selector; writes under srcDir
+    • init — scaffold a BlockML project and record the MachineBlocks profile
 
-    machineblocks validate [file]
-    - Same project validate as blockml validate.
-    - Exit 0 success, 1 diagnostics, 2 config or usage.
-    - Does not register the SCAD target and does not write SCAD.
-    - A file argument validates that file. --all validates the reachable corpus.
-      file and --all together exit 2.
-
-    machineblocks compile <source-selector>
-    - Compiles with target machineblocks-v3-scad.
-    - The selector is one BlockML type selector: an exact block FQN, a package
-      selector ending in .*, or a recursive selector ending in .**.
-      Resolution is scanTypes from the BlockML framework. This host does not
-      define a second selector language.
-    - --source-package <FQN> is the source package root for an explicit mapping.
-    - --target-package <FQN> is the target package root. It is not a directory
-      and not the FQN of one output file.
-    - --help shows this command.
-    - There is no --out and no --all. The output root is the configured srcDir
-      (default blocks).
-    - A selector only chooses blocks. It does not by itself choose the target
-      package, except that a package selector (a final .* or .** segment)
-      supplies the source root when --target-package is set and
-      --source-package is omitted. An exact block FQN does not supply a source
-      root.
-    - --source-package without --target-package exits 2 with
-      MB_SOURCE_PACKAGE_ALONE.
-    - --target-package without a derivable source root exits 2 with
-      MB_SOURCE_PACKAGE_REQUIRED.
-    - A missing selector, an unknown flag, or a selector scanTypes rejects
-      exits 2.
-    - Types whose baseType chain is neither com.machineblocks.bml.core.Block
-      nor com.machineblocks.bml.core.Set are skipped. If none remain, the host
-      exits 1 with MB_SELECTOR_EMPTY and the selector text.
-    - Mapping failures, collisions, and paths that leave srcDir or would
-      overwrite a .bml file exit 1. No output file is written unless every
-      selected block has a target FQN and a legal path, and every compile
-      succeeded.
-    - Exit 0 writes the SCAD or preset JSON files and a sibling .map when the
-      target attached a source map.
-
-    Host diagnostic codes:
-
-    - MB_SOURCE_PACKAGE_ALONE — --source-package without --target-package.
-    - MB_SOURCE_PACKAGE_REQUIRED — --target-package and the source root is not
-      determined. The message names --source-package.
-    - MB_SELECTOR_EMPTY — the selector matched no Block or Set.
-    - MB_TARGET_COLLISION — two selected blocks share a target FQN or output path.
-    - MB_OUTPUT_ESCAPES_SRC — a resolved path is outside srcDir.
-    - MB_OUTPUT_OVERWRITES_BML — a resolved path is an existing .bml file.
-
-    Mapping codes MB_TARGET_PACKAGE_UNDETERMINED, MB_TARGET_PACKAGE_AMBIGUOUS,
-    and MB_SOURCE_OUTSIDE_ROOT are defined with the manifestation rules.
-
-    machineblocks init <package-fqn> [--src dir] [--install]
-    - Scaffolds a BlockML project by calling initProject from @blockml/cli,
-      then records the MachineBlocks profile. It does not spawn blockml init.
-    - --src changes the source directory (default blocks). --install runs
-      npm install after the profile is recorded. Without --install, init
-      does not install.
-    - The profile adds @machineblocks/cli to devDependencies when that package
-      is absent from dependencies and devDependencies. The range is the caret
-      range of this host. An existing dependencies entry stays put.
-    - The project Library.bml gains a dependencies composition child
-      com.machineblocks.bml.Library. An existing child is left in place.
-      Existing files are not replaced.
-    - A package FQN without a bml segment still exits 0 and warns. Compile
-      maps a bml segment to scad.
-    - Exit codes match initProject: 0 success, 1 write or install failure,
-      2 usage or an invalid package FQN.
-    - --help shows this command.
-
-    machineblocks --help
-    - Lists these commands.
-    - Points advanced users to blockml --help for search, inspect, graph,
-      transform, and new.
-
-    Not in this host surface (still available via blockml if that package
-    is installed): watch, search, inspect, graph, transform, new, xsd
-    toggle, thumbnail generation.
+    Not on this host (use blockml when that package is installed): watch, search,
+    scan, inspect, graph, transform, new, agents-md, xsd toggle, thumbnail generation.
 
     Per-target matrix entry this host satisfies:
 
         machineblocks-v3-scad — document target; selected by type selector;
         written under srcDir; registered by @machineblocks/cli, not by @blockml/cli.
 
-  ]]></documentation>
+    Printed operator help: clidoc:Help (root) and each command documentation Printed help section.
+    ]]>
+  </documentation>
   <references>
-    <see type="clidoc:Configuration" relation="ReadNext" />
+    <see type="clidoc:Help" relation="ReadNext" />
+    <see type="clidoc:ValidateCommand" relation="SeeAlso" />
+    <see type="clidoc:CompileCommand" relation="SeeAlso" />
+    <see type="clidoc:InitCommand" relation="SeeAlso" />
   </references>
 </clidoc:Commands>

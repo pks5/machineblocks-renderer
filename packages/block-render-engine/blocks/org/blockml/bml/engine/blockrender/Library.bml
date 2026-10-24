@@ -12,7 +12,7 @@
     The block render engine library catalog
   </is>
   <version>
-    0.1.0
+    0.1.1
   </version>
   <documentation>
     Publishable CompilerEngine library (org.blockml.bml.engine.blockrender.Library).

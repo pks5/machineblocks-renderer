@@ -1,4 +1,4 @@
-import { COMPILE_HELP, INIT_HELP } from "./help.js";
+export type HelpTopic = "validate" | "compile" | "init";
 
 export interface ValidateArgs {
   command: "validate";
@@ -21,11 +21,11 @@ export interface InitArgs {
 }
 
 export type HostCommand =
-  | { command: "help"; topic?: "init" }
+  | { command: "help"; topic?: HelpTopic }
   | ValidateArgs
   | CompileArgs
   | InitArgs
-  | { command: "usage"; message: string };
+  | { command: "usage"; message: string; topic?: HelpTopic };
 
 export function parseArgs(argv: readonly string[]): HostCommand {
   if (argv.length === 0 || argv[0] === "--help" || argv[0] === "help") {
@@ -45,33 +45,33 @@ export function parseArgs(argv: readonly string[]): HostCommand {
 }
 
 function parseValidate(args: readonly string[]): HostCommand {
+  if (args.includes("--help")) {
+    return { command: "help", topic: "validate" };
+  }
   let file: string | undefined;
   let all = false;
   for (const arg of args) {
-    if (arg === "--help") {
-      return { command: "help" };
-    }
     if (arg === "--all") {
       all = true;
       continue;
     }
     if (arg.startsWith("--")) {
-      return { command: "usage", message: `Unknown option: ${arg}` };
+      return { command: "usage", message: `Unknown option: ${arg}`, topic: "validate" };
     }
     if (file !== undefined) {
-      return { command: "usage", message: "validate accepts one file." };
+      return { command: "usage", message: "validate accepts one file.", topic: "validate" };
     }
     file = arg;
   }
   if (file !== undefined && all) {
-    return { command: "usage", message: "Specify either <file> or --all, not both." };
+    return { command: "usage", message: "Specify either <file> or --all, not both.", topic: "validate" };
   }
   return file === undefined ? { command: "validate", all } : { command: "validate", all, file };
 }
 
 function parseCompile(args: readonly string[]): HostCommand {
   if (args.includes("--help")) {
-    return { command: "help" };
+    return { command: "help", topic: "compile" };
   }
   let selector: string | undefined;
   let sourcePackage: string | undefined;
@@ -84,7 +84,7 @@ function parseCompile(args: readonly string[]): HostCommand {
     if (arg === "--source-package" || arg === "--target-package") {
       const value = args[index + 1];
       if (value === undefined || value.startsWith("--")) {
-        return { command: "usage", message: `${arg} requires a package FQN.` };
+        return { command: "usage", message: `${arg} requires a package FQN.`, topic: "compile" };
       }
       if (arg === "--source-package") {
         sourcePackage = value;
@@ -95,15 +95,15 @@ function parseCompile(args: readonly string[]): HostCommand {
       continue;
     }
     if (arg.startsWith("--")) {
-      return { command: "usage", message: `Unknown option: ${arg}` };
+      return { command: "usage", message: `Unknown option: ${arg}`, topic: "compile" };
     }
     if (selector !== undefined) {
-      return { command: "usage", message: "compile accepts one source selector." };
+      return { command: "usage", message: "compile accepts one source selector.", topic: "compile" };
     }
     selector = arg;
   }
   if (selector === undefined) {
-    return { command: "usage", message: `compile requires a source selector.\n\n${COMPILE_HELP}` };
+    return { command: "usage", message: "compile requires a source selector.", topic: "compile" };
   }
   const parsed: CompileArgs = { command: "compile", selector };
   if (sourcePackage !== undefined) {
@@ -134,22 +134,22 @@ function parseInit(args: readonly string[]): HostCommand {
     if (arg === "--src") {
       const value = args[index + 1];
       if (value === undefined || value.startsWith("--")) {
-        return { command: "usage", message: "--src requires a directory." };
+        return { command: "usage", message: "--src requires a directory.", topic: "init" };
       }
       srcDir = value;
       index += 1;
       continue;
     }
     if (arg.startsWith("--")) {
-      return { command: "usage", message: `Unknown option: ${arg}` };
+      return { command: "usage", message: `Unknown option: ${arg}`, topic: "init" };
     }
     if (packageFqn !== undefined) {
-      return { command: "usage", message: "init accepts one package FQN." };
+      return { command: "usage", message: "init accepts one package FQN.", topic: "init" };
     }
     packageFqn = arg;
   }
   if (packageFqn === undefined) {
-    return { command: "usage", message: `init requires a package FQN.\n\n${INIT_HELP}` };
+    return { command: "usage", message: "init requires a package FQN.", topic: "init" };
   }
   const parsed: InitArgs = { command: "init", packageFqn, install };
   if (srcDir !== undefined) {

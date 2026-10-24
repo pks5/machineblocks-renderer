@@ -27,5 +27,6 @@
     <see type="clidoc:Introduction" relation="ReadFirst" />
     <see type="clidoc:DualCliModel" relation="SeeAlso" />
     <see type="clidoc:Commands" relation="SeeAlso" />
+    <see type="clidoc:Help" relation="SeeAlso" />
   </references>
 </mbcli:README>

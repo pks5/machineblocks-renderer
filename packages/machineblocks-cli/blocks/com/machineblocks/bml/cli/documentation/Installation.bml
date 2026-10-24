@@ -19,8 +19,11 @@
 
     init calls the universal project scaffold, then records @machineblocks/cli
     as a devDependency and adds com.machineblocks.bml.Library to the project
-    library. Pass --install to run npm install after that profile is recorded.
-    Otherwise the next step is npm install. On a project that blockml init
+    library. Pass --install to run npm install after that profile is recorded
+    and then generate AGENTS.md the same way blockml init does. Without
+    --install, AGENTS.md is generated only when AgentInstructions already
+    resolve; otherwise the next step is npm install and
+    npx blockml agents-md generate. On a project that blockml init
     already created, the same command adds only the missing profile and does
     not replace existing files.
 

@@ -1,0 +1,49 @@
+<!--CLI Documentation — Help
+  FQN: com.machineblocks.bml.cli.documentation.Help-->
+<clidoc:Help xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    Printed root help page for machineblocks --help
+  </is>
+  <documentation>
+    <![CDATA[
+    Usage: machineblocks <command> [options]
+           machineblocks --help
+
+    machineblocks is the MachineBlocks host CLI.
+
+    It renders BML to OpenSCAD that matches the V3 SCAD library.
+    BML is the editable source of truth. Change BML first, then compile.
+    This host registers target machineblocks-v3-scad. It does not reimplement parse, validate, or emit.
+
+    Invocation: npx machineblocks <command>
+    Requires Node.js 20 or newer.
+    A new project starts with npx @machineblocks/cli init <package-fqn>.
+
+    Commands:
+      validate    Parser + semantic check. Same project check as blockml validate.
+                  Does not write SCAD.
+                  machineblocks validate [--all] [<file>]
+      compile     Render selected Block and Set types to SCAD under srcDir.
+                  machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
+      init        Scaffold a BlockML project and record the MachineBlocks profile.
+                  machineblocks init <package-fqn> [--src dir] [--install]
+
+    Search, scan, inspect, graph, new, agents-md, and transform stay on blockml.
+    Exit codes: 0 success, 1 diagnostic errors, 2 usage or configuration error.
+
+    Run `machineblocks <command> --help` for flags, defaults, output, and constraints.
+    ]]>
+  </documentation>
+  <references>
+    <see type="clidoc:Commands" relation="SeeAlso" />
+    <see type="clidoc:ValidateCommand" relation="SeeAlso" />
+    <see type="clidoc:CompileCommand" relation="SeeAlso" />
+    <see type="clidoc:InitCommand" relation="SeeAlso" />
+  </references>
+</clidoc:Help>

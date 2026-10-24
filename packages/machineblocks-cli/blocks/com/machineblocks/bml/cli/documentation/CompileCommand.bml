@@ -1,0 +1,126 @@
+<!--CLI Documentation — CompileCommand
+  FQN: com.machineblocks.bml.cli.documentation.CompileCommand-->
+<clidoc:CompileCommand xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation"
+  xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    machineblocks compile specification
+  </is>
+  <documentation>
+    <![CDATA[
+    Syntax:
+        machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
+
+        Compiles with target machineblocks-v3-scad. The command does not take a
+        target name.
+        The selector is one BlockML type selector: an exact block FQN, a package
+        selector ending in .*, or a recursive selector ending in .**.
+        Resolution is scanTypes from the BlockML framework. This host does not
+        define a second selector language.
+        Quote tokens that contain * or ** so the shell does not expand them.
+        --source-package <FQN> is the source package root for an explicit mapping.
+        --target-package <FQN> is the target package root. It is not a directory
+        and not the FQN of one output file.
+        There is no --out and no --all. The output root is the configured srcDir
+        (default blocks).
+        A selector only chooses blocks. It does not by itself choose the target
+        package, except that a package selector (a final .* or .** segment)
+        supplies the source root when --target-package is set and
+        --source-package is omitted. An exact block FQN does not supply a source
+        root.
+        --source-package without --target-package exits 2 with
+        MB_SOURCE_PACKAGE_ALONE.
+        --target-package without a derivable source root exits 2 with
+        MB_SOURCE_PACKAGE_REQUIRED. The message names --source-package.
+        A missing selector, an unknown flag, or a selector scanTypes rejects
+        exits 2.
+        Types whose baseType chain is neither com.machineblocks.bml.core.Block
+        nor com.machineblocks.bml.core.Set are skipped. If none remain, the host
+        exits 1 with MB_SELECTOR_EMPTY and the selector text.
+        Mapping failures, collisions, and paths that leave srcDir or would
+        overwrite a .bml file exit 1. No output file is written unless every
+        selected block has a target FQN and a legal path, and every compile
+        succeeded.
+        Exit 0 writes the SCAD or preset JSON files and a sibling .map when the
+        target attached a source map, then prints Wrote N file(s) to <srcDir>.
+        N counts every written file, including a sibling .map.
+
+        Automatic mapping replaces the one bml segment with scad. An explicit
+        mapping swaps sourcePackage for targetPackage and does not apply that
+        replacement on top. The path rules and the codes
+        MB_TARGET_PACKAGE_UNDETERMINED, MB_TARGET_PACKAGE_AMBIGUOUS, and
+        MB_SOURCE_OUTSIDE_ROOT are specified by rdoc:FqnNaming.
+
+        Host diagnostic codes:
+
+        - MB_SOURCE_PACKAGE_ALONE — --source-package without --target-package.
+        - MB_SOURCE_PACKAGE_REQUIRED — --target-package and the source root is not
+          determined. The message names --source-package.
+        - MB_SELECTOR_EMPTY — the selector matched no Block or Set.
+        - MB_TARGET_COLLISION — two selected blocks share a target FQN or output path.
+        - MB_OUTPUT_ESCAPES_SRC — a resolved path is outside srcDir.
+        - MB_OUTPUT_OVERWRITES_BML — a resolved path is an existing .bml file.
+        - MB_EMPTY_BLOCK — a composite has nothing to render.
+
+        blockml.config.json srcDir is the output root. mbLibPath defaults to the
+        installed @machineblocks/core package. openscadPath is unused by compile.
+        A missing mbLibPath and a missing @machineblocks/core install exit 2.
+
+    Printed help:
+    Usage: machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
+           machineblocks compile --help
+
+    When: render selected Block and Set types to OpenSCAD. Change BML first, then recompile.
+
+    Target is machineblocks-v3-scad. The command does not take a target name.
+    The selector is one BlockML type selector: an exact FQN, pkg.*, or pkg.**.
+    Quote tokens that contain * or ** so the shell does not expand them.
+    Resolution is scanTypes. This host does not define a second selector language.
+    Types whose baseType chain is neither com.machineblocks.bml.core.Block nor
+    com.machineblocks.bml.core.Set are skipped.
+
+    Output is written under the configured srcDir (default blocks). There is no --out and no --all.
+    A package selector (a final .* or .** segment) supplies the source root when
+    --target-package is set and --source-package is omitted. An exact block FQN does not.
+    Automatic mapping replaces the one bml segment with scad.
+    com.example.bml.bricks.MyBrick becomes blocks/com/example/scad/bricks/MyBrick.scad.
+    Explicit mapping swaps --source-package for --target-package and does not apply that replacement again.
+
+    Flags:
+      --source-package <FQN>   source package root for an explicit mapping
+      --target-package <FQN>   target package root. Not a directory and not one output file.
+
+    --source-package without --target-package exits 2 (MB_SOURCE_PACKAGE_ALONE).
+    --target-package without a derivable source root exits 2 (MB_SOURCE_PACKAGE_REQUIRED).
+    A missing selector, an unknown flag, or a selector scanTypes rejects exits 2.
+    If no Block or Set remains, exit 1 (MB_SELECTOR_EMPTY) and the message names the selector.
+
+    Exit 0 writes the SCAD or preset JSON files and a sibling .map when the target attached a source map.
+    The status line is Wrote N file(s) to <srcDir>. N counts every written file, including a sibling .map.
+    One failure writes nothing. Mapping failures, collisions, and illegal paths exit 1:
+      MB_TARGET_COLLISION — two selected blocks share a target FQN or output path.
+      MB_OUTPUT_ESCAPES_SRC — a resolved path is outside srcDir.
+      MB_OUTPUT_OVERWRITES_BML — a resolved path is an existing .bml file.
+      MB_TARGET_PACKAGE_UNDETERMINED — the source FQN has no bml segment.
+      MB_TARGET_PACKAGE_AMBIGUOUS — the source FQN has more than one bml segment.
+      MB_SOURCE_OUTSIDE_ROOT — a selected block is outside --source-package.
+      MB_EMPTY_BLOCK — a composite has nothing to render.
+
+    blockml.config.json srcDir is the output root. mbLibPath defaults to the installed
+    @machineblocks/core package. openscadPath is unused by compile.
+    A missing mbLibPath and a missing @machineblocks/core install exit 2.
+
+    Related: validate. Search, inspect, graph, and new stay on blockml.
+    ]]>
+  </documentation>
+  <references>
+    <see type="clidoc:InitCommand" relation="ReadNext" />
+    <see type="clidoc:ValidateCommand" relation="SeeAlso" />
+    <see type="rdoc:FqnNaming" relation="SeeAlso" />
+  </references>
+</clidoc:CompileCommand>

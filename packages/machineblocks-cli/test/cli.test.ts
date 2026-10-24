@@ -1,13 +1,51 @@
 import { createRequire } from "node:module";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
-import { afterEach, describe, expect, it } from "vitest";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { initProject } from "@blockml/cli";
 import { execute } from "../src/execute.js";
 
+vi.mock("node:child_process", async () => {
+  const actual = await vi.importActual<typeof import("node:child_process")>("node:child_process");
+  const { existsSync, mkdirSync, symlinkSync } = await import("node:fs");
+  const { dirname, join } = await import("node:path");
+  const { fileURLToPath } = await import("node:url");
+  const installed = join(dirname(fileURLToPath(import.meta.url)), "../../../node_modules/@blockml");
+  return {
+    ...actual,
+    spawnSync: (...args: Parameters<typeof actual.spawnSync>) => {
+      const [command, commandArgs, options] = args;
+      if (command === "npm" && Array.isArray(commandArgs) && commandArgs[0] === "install") {
+        const cwd = options && typeof options === "object" && "cwd" in options && options.cwd ? String(options.cwd) : process.cwd();
+        mkdirSync(join(cwd, "node_modules", "@blockml"), { recursive: true });
+        for (const name of ["core", "cli"]) {
+          const dest = join(cwd, "node_modules", "@blockml", name);
+          if (!existsSync(dest)) {
+            symlinkSync(join(installed, name), dest);
+          }
+        }
+        return { status: 0, signal: null, pid: 0, output: [], stdout: "", stderr: "" };
+      }
+      return actual.spawnSync(...args);
+    },
+  };
+});
+
 const require = createRequire(import.meta.url);
 const directories: string[] = [];
+
+function linkBlockmlPackages(root: string): void {
+  const installed = join(dirname(fileURLToPath(import.meta.url)), "../../../node_modules/@blockml");
+  mkdirSync(join(root, "node_modules", "@blockml"), { recursive: true });
+  for (const name of ["core", "cli"]) {
+    const dest = join(root, "node_modules", "@blockml", name);
+    if (!existsSync(dest)) {
+      symlinkSync(join(installed, name), dest);
+    }
+  }
+}
 
 afterEach(() => {
   for (const directory of directories.splice(0)) {
@@ -129,11 +167,14 @@ describe("machineblocks init", () => {
     expect(pkg.blockml).toEqual({ library: "./blocks/com/example/bml/Library.bml" });
     expect(pkg.dependencies?.["@blockml/core"]).toBeDefined();
     expect(pkg.devDependencies?.["@blockml/cli"]).toBeDefined();
-    expect(pkg.devDependencies?.["@machineblocks/cli"]).toBe("^0.1.0");
+    expect(pkg.devDependencies?.["@machineblocks/cli"]).toBe("^0.1.1");
     const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
     expect(library).toContain("org.blockml.bml");
     expect(library).toContain('xmlns:mb="com.machineblocks.bml"');
     expect(library).toContain("<mb:Library");
+    expect(existsSync(join(root, "AGENTS.md"))).toBe(false);
+    expect(readFileSync(join(root, "CLAUDE.md"), "utf8")).toBe("@AGENTS.md\n");
+    expect(result.lines.join("\n")).toContain("npx blockml agents-md generate");
   });
 
   it("does not duplicate the profile on a second run", () => {
@@ -163,7 +204,7 @@ describe("machineblocks init", () => {
     const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
     expect(library).toContain("org.blockml.bml");
     expect(library).toContain("<mb:Library");
-    expect(readPackage(root).devDependencies?.["@machineblocks/cli"]).toBe("^0.1.0");
+    expect(readPackage(root).devDependencies?.["@machineblocks/cli"]).toBe("^0.1.1");
   });
 
   it("leaves an existing dependencies entry in place", () => {
@@ -199,6 +240,36 @@ describe("machineblocks init", () => {
     expect(result.code).toBe(0);
     expect(result.lines.join("\n")).toContain("no bml segment");
     expect(readFileSync(join(root, "blocks/com/example/models/Library.bml"), "utf8")).toContain("<mb:Library");
+  });
+
+  it("generates AGENTS.md after --install the same way blockml init does", () => {
+    const root = emptyDir();
+
+    const result = execute(["init", "com.example.bml", "--install"], root);
+
+    expect(result.code).toBe(0);
+    const agents = readFileSync(join(root, "AGENTS.md"), "utf8");
+    expect(agents).toContain("# BlockML Project Instructions");
+    expect(agents).toContain("# Tools");
+    expect(result.lines.join("\n")).toContain("Created AGENTS.md");
+    expect(result.lines.join("\n")).not.toContain("agents-md generate");
+
+    const reference = emptyDir();
+    linkBlockmlPackages(reference);
+    expect(initProject({ packageFqn: "com.example.bml", rootDir: reference }).code).toBe(0);
+    expect(readFileSync(join(reference, "AGENTS.md"), "utf8")).toBe(agents);
+  });
+
+  it("leaves an existing AGENTS.md in place when --install runs", () => {
+    const root = emptyDir();
+    expect(execute(["init", "com.example.bml"], root).code).toBe(0);
+    writeFileSync(join(root, "AGENTS.md"), "keep\n");
+
+    const result = execute(["init", "com.example.bml", "--install"], root);
+
+    expect(result.code).toBe(0);
+    expect(readFileSync(join(root, "AGENTS.md"), "utf8")).toBe("keep\n");
+    expect(result.lines.join("\n")).not.toContain("Created AGENTS.md");
   });
 
   it("shows init help", () => {

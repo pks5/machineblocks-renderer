@@ -1,3 +1,4 @@
+export type HelpTopic = "validate" | "compile" | "init";
 export interface ValidateArgs {
     command: "validate";
     file?: string;
@@ -17,10 +18,11 @@ export interface InitArgs {
 }
 export type HostCommand = {
     command: "help";
-    topic?: "init";
+    topic?: HelpTopic;
 } | ValidateArgs | CompileArgs | InitArgs | {
     command: "usage";
     message: string;
+    topic?: HelpTopic;
 };
 export declare function parseArgs(argv: readonly string[]): HostCommand;
 /** A final .* or .** segment denotes a package. An exact type FQN does not. */
