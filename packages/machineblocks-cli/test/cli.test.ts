@@ -157,22 +157,23 @@ describe("machineblocks compile", () => {
 });
 
 describe("machineblocks init", () => {
-  it("scaffolds a project and records the MachineBlocks profile", () => {
+  it("records the MachineBlocks profile and skips install when --no-install is set", () => {
     const root = emptyDir();
 
-    const result = execute(["init", "com.example.bml"], root);
+    const result = execute(["init", "com.example.bml", "--no-install"], root);
 
     expect(result.code).toBe(0);
     const pkg = readPackage(root);
     expect(pkg.blockml).toEqual({ library: "./blocks/com/example/bml/Library.bml" });
     expect(pkg.dependencies?.["@blockml/core"]).toBeDefined();
     expect(pkg.devDependencies?.["@blockml/cli"]).toBeDefined();
-    expect(pkg.devDependencies?.["@machineblocks/cli"]).toBe("^0.1.1");
+    expect(pkg.devDependencies?.["@machineblocks/cli"]).toBe("^0.1.2");
     const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
     expect(library).toContain("org.blockml.bml");
     expect(library).toContain('xmlns:mb="com.machineblocks.bml"');
     expect(library).toContain("<mb:Library");
     expect(existsSync(join(root, "AGENTS.md"))).toBe(false);
+    expect(existsSync(join(root, "node_modules"))).toBe(false);
     expect(readFileSync(join(root, "CLAUDE.md"), "utf8")).toBe("@AGENTS.md\n");
     expect(result.lines.join("\n")).toContain("npx blockml agents-md generate");
   });
@@ -194,7 +195,7 @@ describe("machineblocks init", () => {
 
   it("adds the library dependency to a project blockml init already created", () => {
     const root = emptyDir();
-    expect(initProject({ packageFqn: "com.example.bml", rootDir: root }).code).toBe(0);
+    expect(initProject({ packageFqn: "com.example.bml", rootDir: root, noInstall: true }).code).toBe(0);
     const before = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
     expect(before).not.toContain("com.machineblocks.bml");
 
@@ -204,12 +205,12 @@ describe("machineblocks init", () => {
     const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
     expect(library).toContain("org.blockml.bml");
     expect(library).toContain("<mb:Library");
-    expect(readPackage(root).devDependencies?.["@machineblocks/cli"]).toBe("^0.1.1");
+    expect(readPackage(root).devDependencies?.["@machineblocks/cli"]).toBe("^0.1.2");
   });
 
   it("leaves an existing dependencies entry in place", () => {
     const root = emptyDir();
-    expect(initProject({ packageFqn: "com.example.bml", rootDir: root }).code).toBe(0);
+    expect(initProject({ packageFqn: "com.example.bml", rootDir: root, noInstall: true }).code).toBe(0);
     const pkg = readPackage(root);
     pkg.dependencies = { ...pkg.dependencies, "@machineblocks/cli": "1.2.3" };
     writeFileSync(join(root, "package.json"), `${JSON.stringify(pkg, null, 2)}\n`);
@@ -242,10 +243,10 @@ describe("machineblocks init", () => {
     expect(readFileSync(join(root, "blocks/com/example/models/Library.bml"), "utf8")).toContain("<mb:Library");
   });
 
-  it("generates AGENTS.md after --install the same way blockml init does", () => {
+  it("generates AGENTS.md by default the same way blockml init does", () => {
     const root = emptyDir();
 
-    const result = execute(["init", "com.example.bml", "--install"], root);
+    const result = execute(["init", "com.example.bml"], root);
 
     expect(result.code).toBe(0);
     const agents = readFileSync(join(root, "AGENTS.md"), "utf8");
@@ -260,12 +261,12 @@ describe("machineblocks init", () => {
     expect(readFileSync(join(reference, "AGENTS.md"), "utf8")).toBe(agents);
   });
 
-  it("leaves an existing AGENTS.md in place when --install runs", () => {
+  it("leaves an existing AGENTS.md in place when install runs", () => {
     const root = emptyDir();
-    expect(execute(["init", "com.example.bml"], root).code).toBe(0);
+    expect(execute(["init", "com.example.bml", "--no-install"], root).code).toBe(0);
     writeFileSync(join(root, "AGENTS.md"), "keep\n");
 
-    const result = execute(["init", "com.example.bml", "--install"], root);
+    const result = execute(["init", "com.example.bml"], root);
 
     expect(result.code).toBe(0);
     expect(readFileSync(join(root, "AGENTS.md"), "utf8")).toBe("keep\n");
@@ -279,9 +280,11 @@ describe("machineblocks init", () => {
     const general = execute(["--help"], root);
 
     expect(command.code).toBe(0);
-    expect(command.lines.join("\n")).toContain("machineblocks init <package-fqn>");
+    expect(command.lines.join("\n")).toContain("machineblocks init <package-fqn> [--src dir] [--no-install]");
+    expect(command.lines.join("\n")).toContain("--no-install");
+    expect(command.lines.join("\n")).not.toContain("--install");
     expect(general.code).toBe(0);
-    expect(general.lines.join("\n")).toContain("machineblocks init <package-fqn>");
+    expect(general.lines.join("\n")).toContain("machineblocks init <package-fqn> [--src dir] [--no-install]");
   });
 });
 

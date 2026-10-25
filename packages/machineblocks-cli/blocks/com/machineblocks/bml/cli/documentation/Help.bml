@@ -32,7 +32,7 @@
       compile     Render selected Block and Set types to SCAD under srcDir.
                   machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
       init        Scaffold a BlockML project and record the MachineBlocks profile.
-                  machineblocks init <package-fqn> [--src dir] [--install]
+                  machineblocks init <package-fqn> [--src dir] [--no-install]
 
     Search, scan, inspect, graph, new, agents-md, and transform stay on blockml.
     Exit codes: 0 success, 1 diagnostic errors, 2 usage or configuration error.

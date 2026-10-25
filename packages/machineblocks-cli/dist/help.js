@@ -1,13 +1,13 @@
 /** Short syntax printed on usage errors. Not the --help page. */
 export const USAGE = `Usage: machineblocks validate [--all] [<file>]
        machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
-       machineblocks init <package-fqn> [--src dir] [--install]
+       machineblocks init <package-fqn> [--src dir] [--no-install]
        machineblocks --help`;
 export const VALIDATE_USAGE = `Usage: machineblocks validate [--all] [<file>]
        machineblocks validate --help`;
 export const COMPILE_USAGE = `Usage: machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
        machineblocks compile --help`;
-export const INIT_USAGE = `Usage: machineblocks init <package-fqn> [--src dir] [--install]
+export const INIT_USAGE = `Usage: machineblocks init <package-fqn> [--src dir] [--no-install]
        machineblocks init --help`;
 /** Root help page. SSOT: com.machineblocks.bml.cli.documentation.Help */
 export const HELP = `Usage: machineblocks <command> [options]
@@ -30,7 +30,7 @@ Commands:
   compile     Render selected Block and Set types to SCAD under srcDir.
               machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
   init        Scaffold a BlockML project and record the MachineBlocks profile.
-              machineblocks init <package-fqn> [--src dir] [--install]
+              machineblocks init <package-fqn> [--src dir] [--no-install]
 
 Search, scan, inspect, graph, new, agents-md, and transform stay on blockml.
 Exit codes: 0 success, 1 diagnostic errors, 2 usage or configuration error.
@@ -103,7 +103,7 @@ A missing mbLibPath and a missing @machineblocks/core install exit 2.
 
 Related: validate. Search, inspect, graph, and new stay on blockml.`;
 /** Printed help. SSOT: com.machineblocks.bml.cli.documentation.InitCommand */
-export const INIT_HELP = `Usage: machineblocks init <package-fqn> [--src dir] [--install]
+export const INIT_HELP = `Usage: machineblocks init <package-fqn> [--src dir] [--no-install]
        machineblocks init --help
 
 When: turn a directory into a MachineBlocks project. Scaffolds a BlockML project,
@@ -113,8 +113,8 @@ PACKAGE-FQN is a dotted package identifier (not …Library). A bml segment after
 the domain is recommended. Compile maps a bml segment to scad.
 A package FQN without a bml segment still exits 0 and warns.
 Does not overwrite existing files.
-Does not spawn blockml init. Calls initProject from @blockml/cli with install
-false, then records the profile before npm install.
+Does not spawn blockml init. Calls initProject from @blockml/cli with noInstall
+true, then records the profile before npm install.
 
 The profile adds @machineblocks/cli to devDependencies when that package is
 absent from dependencies and devDependencies. The range is the caret range of
@@ -122,19 +122,18 @@ this host. An existing dependencies entry stays put.
 The project Library.bml gains com.machineblocks.bml.Library.
 CLAUDE.md (@AGENTS.md) is written when missing.
 
-Flags:
-  --src dir     source directory (default blocks)
-  --install     run npm install after the profile is recorded, then generate
-                AGENTS.md the same way as blockml init
-
-Without --install, AGENTS.md is generated only inside initProject, before
-dependencies are installed. The file is written when AgentInstructions already
-resolve. Otherwise the next step remains: npm install && npx blockml agents-md generate.
-With --install, an existing AGENTS.md is left in place. When the file is missing,
-generation runs after npm install. Sections or rules write AGENTS.md.
-No AgentInstructions content leaves the file unwritten and prints
+Runs npm install, then generates AGENTS.md, unless --no-install is passed.
+--no-install skips npm install and AGENTS.md generation.
+AGENTS.md is generated from AgentInstructions blocks when the file is missing.
+When none are found, the file is left unwritten and prints
 No AgentInstructions blocks found. The init exit code stays 0.
-The next-step line from the earlier initProject pass is dropped, because install already ran.
+An existing AGENTS.md is left in place.
+The next-step line from the earlier initProject pass is dropped when install runs.
+With --no-install, that next step remains: npm install && npx blockml agents-md generate.
+
+Flags:
+  --src dir       source directory (default blocks)
+  --no-install    skip npm install and AGENTS.md generation
 
 Exit codes match initProject: 0 success, 1 write or install failure,
 2 usage or an invalid package FQN.

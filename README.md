@@ -62,9 +62,7 @@ From the project directory. The package FQN is a dotted identifier, and the last
 npx @machineblocks/cli init com.example.bml
 ```
 
-`init` calls the universal BlockML scaffold, then records the MachineBlocks profile. It writes or merges `package.json`: a `blockml.library` pointer, dependency `@blockml/core`, and devDependencies `@blockml/cli` and `@machineblocks/cli`. It writes `blocks/<package path>/Library.bml` depending on `org.blockml.bml.Library` and `com.machineblocks.bml.Library`, plus `README.bml`. `CLAUDE.md` is written when missing. `AGENTS.md` is generated from AgentInstructions when missing, by the same step as `blockml init`. Existing files stay in place. A second run adds only what is missing. `--src <dir>` changes the source directory (default `blocks`).
-
-`--install` runs `npm install` after the profile is recorded, then generates `AGENTS.md`. Without `--install`, that generation runs before dependencies are installed. A fresh directory then leaves `AGENTS.md` unwritten, and the next step is `npm install` followed by `npx blockml agents-md generate`.
+`init` calls the universal BlockML scaffold, then records the MachineBlocks profile. It writes or merges `package.json`: a `blockml.library` pointer, dependency `@blockml/core`, and devDependencies `@blockml/cli` and `@machineblocks/cli`. It writes `blocks/<package path>/Library.bml` depending on `org.blockml.bml.Library` and `com.machineblocks.bml.Library`, plus `README.bml`. `CLAUDE.md` is written when missing. By default it then runs `npm install` and generates `AGENTS.md` from AgentInstructions when the file is missing, by the same step as `blockml init`. The profile is recorded before `npm install`. Existing files stay in place. A second run adds only what is missing. `--src <dir>` changes the source directory (default `blocks`). `--no-install` skips `npm install` and `AGENTS.md` generation; the next step is then `npm install` followed by `npx blockml agents-md generate`.
 
 | Package | Role |
 |---|---|

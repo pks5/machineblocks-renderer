@@ -90,14 +90,14 @@ function parseInit(args) {
     }
     let packageFqn;
     let srcDir;
-    let install = false;
+    let noInstall = false;
     for (let index = 0; index < args.length; index += 1) {
         const arg = args[index];
         if (arg === undefined) {
             continue;
         }
-        if (arg === "--install") {
-            install = true;
+        if (arg === "--no-install") {
+            noInstall = true;
             continue;
         }
         if (arg === "--src") {
@@ -120,7 +120,7 @@ function parseInit(args) {
     if (packageFqn === undefined) {
         return { command: "usage", message: "init requires a package FQN.", topic: "init" };
     }
-    const parsed = { command: "init", packageFqn, install };
+    const parsed = { command: "init", packageFqn, noInstall };
     if (srcDir !== undefined) {
         parsed.srcDir = srcDir;
     }

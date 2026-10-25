@@ -14,7 +14,7 @@ export interface InitArgs {
     command: "init";
     packageFqn: string;
     srcDir?: string;
-    install: boolean;
+    noInstall: boolean;
 }
 export type HostCommand = {
     command: "help";

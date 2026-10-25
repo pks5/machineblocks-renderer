@@ -20,7 +20,7 @@ export function runInit(args: InitArgs, rootDir: string): HostResult {
     packageFqn: args.packageFqn,
     rootDir,
     ...(args.srcDir === undefined ? {} : { srcDir: args.srcDir }),
-    install: false,
+    noInstall: true,
   });
   const lines = scaffold.lines.map((line) => line.text);
   if (scaffold.code !== 0) {
@@ -44,12 +44,12 @@ export function runInit(args: InitArgs, rootDir: string): HostResult {
     lines.push("Package FQN has no bml segment. Compile maps a bml segment to scad.");
   }
 
-  if (!args.install) {
+  if (args.noInstall) {
     return { code: 0, lines };
   }
 
-  // initProject already tried GenerateAgentsMd, before this profile existed
-  // and before npm install. blockml init installs first, then generates.
+  // initProject skipped npm install and AGENTS.md so the profile lands first.
+  // Default matches blockml init: install, then generate.
   const kept = lines.filter((line) => !line.startsWith("Next:"));
   const installed = npmInstall(rootDir);
   if (installed.code !== 0) {

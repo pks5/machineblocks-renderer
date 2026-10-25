@@ -17,7 +17,7 @@ export interface InitArgs {
   command: "init";
   packageFqn: string;
   srcDir?: string;
-  install: boolean;
+  noInstall: boolean;
 }
 
 export type HostCommand =
@@ -121,14 +121,14 @@ function parseInit(args: readonly string[]): HostCommand {
   }
   let packageFqn: string | undefined;
   let srcDir: string | undefined;
-  let install = false;
+  let noInstall = false;
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === undefined) {
       continue;
     }
-    if (arg === "--install") {
-      install = true;
+    if (arg === "--no-install") {
+      noInstall = true;
       continue;
     }
     if (arg === "--src") {
@@ -151,7 +151,7 @@ function parseInit(args: readonly string[]): HostCommand {
   if (packageFqn === undefined) {
     return { command: "usage", message: "init requires a package FQN.", topic: "init" };
   }
-  const parsed: InitArgs = { command: "init", packageFqn, install };
+  const parsed: InitArgs = { command: "init", packageFqn, noInstall };
   if (srcDir !== undefined) {
     parsed.srcDir = srcDir;
   }
