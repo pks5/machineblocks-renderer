@@ -1,6 +1,6 @@
 {
   "name": "@blockml/block-render-engine",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Block render engine — one CompilerEngine that lets a RenderTarget mix compile, template, and copy strategies",
   "license": "Apache-2.0",
   "publishConfig": {
@@ -27,8 +27,8 @@
     "test": "vitest run --root ../.. packages/block-render-engine/test"
   },
   "dependencies": {
-    "@blockml/bom": "^0.9.14",
-    "@blockml/compiler": "^0.9.14",
+    "@blockml/bom": "^0.9.15",
+    "@blockml/compiler": "^0.9.15",
     "@blockml/core": "^1.4.5"
   },
   "engines": {

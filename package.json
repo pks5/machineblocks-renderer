@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@blockml/block-render-engine": "workspace:*",
-    "@blockml/cli": "^0.9.14",
+    "@blockml/cli": "^0.9.15",
     "@machineblocks/cli": "workspace:*",
     "@machineblocks/render-target": "workspace:*",
     "typescript": "^5.7.3",
@@ -28,6 +28,7 @@
     "vbump:major": "node scripts/vbump.mjs major",
     "vbump:minor": "node scripts/vbump.mjs minor",
     "vbump:patch": "node scripts/vbump.mjs patch",
+    "deps:set": "node scripts/deps-set.mjs",
     "publish:packages": "bash scripts/publish-packages.sh"
   },
   "engines": {
