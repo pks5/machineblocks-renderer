@@ -26,6 +26,11 @@ vi.mock("node:child_process", async () => {
             symlinkSync(join(installed, name), dest);
           }
         }
+        const machineblocksCli = join(cwd, "node_modules", "@machineblocks", "cli");
+        if (!existsSync(machineblocksCli)) {
+          mkdirSync(join(cwd, "node_modules", "@machineblocks"), { recursive: true });
+          symlinkSync(join(dirname(fileURLToPath(import.meta.url)), ".."), machineblocksCli);
+        }
         return { status: 0, signal: null, pid: 0, output: [], stdout: "", stderr: "" };
       }
       return actual.spawnSync(...args);
@@ -261,7 +266,7 @@ describe("machineblocks init", () => {
     expect(readFileSync(join(root, "blocks/com/example/models/Library.bml"), "utf8")).toContain("<mb:Library");
   });
 
-  it("generates AGENTS.md by default the same way blockml init does", () => {
+  it("adds MachineBlocks CLI instructions when it generates AGENTS.md", () => {
     const root = emptyDir();
 
     const result = execute(["init", "com.example.bml"], root);
@@ -270,13 +275,19 @@ describe("machineblocks init", () => {
     const agents = readFileSync(join(root, "AGENTS.md"), "utf8");
     expect(agents).toContain("# BlockML Project Instructions");
     expect(agents).toContain("# Tools");
+    expect(agents).toContain("# MachineBlocks CLI");
+    expect(agents).toContain("When a command exists on both CLIs, prefer `machineblocks`.");
+    expect(agents.indexOf("# MachineBlocks CLI")).toBeGreaterThan(agents.indexOf("# Tools"));
+    expect(agents.indexOf("# Rules")).toBeGreaterThan(agents.indexOf("# MachineBlocks CLI"));
     expect(result.lines.join("\n")).toContain("Created AGENTS.md");
     expect(result.lines.join("\n")).not.toContain("agents-md generate");
 
     const reference = emptyDir();
     linkBlockmlPackages(reference);
     expect(initProject({ packageFqn: "com.example.bml", rootDir: reference }).code).toBe(0);
-    expect(readFileSync(join(reference, "AGENTS.md"), "utf8")).toBe(agents);
+    const blockmlAgents = readFileSync(join(reference, "AGENTS.md"), "utf8");
+    expect(blockmlAgents).not.toContain("# MachineBlocks CLI");
+    expect(blockmlAgents).toContain("# Tools");
   });
 
   it("overwrites AGENTS.md on a BlockML project", () => {

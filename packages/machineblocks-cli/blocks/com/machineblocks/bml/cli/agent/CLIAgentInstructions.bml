@@ -1,0 +1,64 @@
+<!--MachineBlocks CLI — repository agent instructions
+  FQN: com.machineblocks.bml.cli.agent.CLIAgentInstructions-->
+<agent:CLIAgentInstructions xmlns="http://blockml.org/bml"
+  xmlns:agent="com.machineblocks.bml.cli.agent"
+  xmlns:bml="org.blockml.bml.annotation.BmlAnnotation"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+  <baseType>
+    core:AgentInstructions
+  </baseType>
+  <is>
+    The AGENTS.md instructions of the MachineBlocks CLI
+  </is>
+  <documentation>
+    Concrete AgentInstructions for the MachineBlocks host CLI.
+
+    Its section tells agents to prefer host commands that also exist on the
+    BlockML CLI, and to keep using blockml for commands this host does not
+    provide. order 200 places this fragment after the BlockML CLI instructions.
+
+    The AGENTS.md renderer composes these with instructions from other libraries.
+  </documentation>
+  <references>
+    <see type="core:AgentInstructions" relation="Extends">
+      Abstract fragment of a generated AGENTS.md.
+    </see>
+    <see type="clidoc:DualCliModel" relation="SeeAlso" />
+    <see type="clidoc:Commands" relation="SeeAlso" />
+  </references>
+  <properties>
+    <order override="true">
+      <value>200</value>
+    </order>
+  </properties>
+  <aggregations>
+    <sections override="true">
+      <composition>
+        <core:AgentInstructions.Section bml:id="host" title="MachineBlocks CLI">
+          <content><![CDATA[`machineblocks` extends the BlockML CLI. It does not replace `blockml`.
+
+```bash
+npx machineblocks <command>
+```
+
+When a command exists on both CLIs, prefer `machineblocks`. Those commands are `validate`, `compile`, and `init`.
+
+Run `npx machineblocks --help` for commands and flags. Run `npx machineblocks <command> --help` before first use of validate, compile, or init. Do not install or upgrade `@machineblocks/cli` unless asked. If `machineblocks` is missing, report that and stop.
+
+- `validate` — parser and semantic check. Same project check as `blockml validate`. Does not write SCAD.
+  `machineblocks validate [--all] [<file>]`
+- `compile` — render selected Block and Set types to OpenSCAD. The target is `machineblocks-v3-scad`. The command does not take a target name.
+  `machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]`
+- `init` — scaffold a BlockML project and record the MachineBlocks profile.
+  `machineblocks init <package-fqn> [--src dir] [--no-install]`
+
+Search, scan, inspect, graph, new, agents-md, and transform stay on `blockml`. So does `blockml compile` for toolchain targets (`blockdoc`, `xsd`, `fatblock`).
+
+After a BML edit, run `npx machineblocks validate`. Update SCAD companions with `npx machineblocks compile`.
+]]></content>
+        </core:AgentInstructions.Section>
+      </composition>
+    </sections>
+  </aggregations>
+</agent:CLIAgentInstructions>
