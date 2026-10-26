@@ -62,20 +62,20 @@ From the project directory. The package FQN is a dotted identifier, and the last
 npx @machineblocks/cli init com.example.bml
 ```
 
-`init` calls the universal BlockML scaffold, then records the MachineBlocks profile. It writes or merges `package.json`: a `blockml.library` pointer, dependency `@blockml/core`, and devDependencies `@blockml/cli` and `@machineblocks/cli`. It writes `blocks/<package path>/Library.bml` depending on `org.blockml.bml.Library` and `com.machineblocks.bml.Library`, plus `README.bml`. `CLAUDE.md` is written when missing. Preflight runs before any write. A project that already has a `blockml` key in `package.json` keeps `AGENTS.md`, and generation overwrites it after `npm install`. Otherwise an existing `AGENTS.md` is renamed to `AGENTS.md.pre-blockml`. By default it then runs `npm install` and generates `AGENTS.md` the same way `blockml init` does. The profile is recorded before `npm install`. Existing BML files and `CLAUDE.md` stay in place. A second run adds only what is missing and regenerates `AGENTS.md`. `--src <dir>` changes the source directory (default `blocks`). `--no-install` skips `npm install` and `AGENTS.md` generation and does not skip preflight.
+`init` calls the universal BlockML scaffold, then records the MachineBlocks profile. It writes or merges `package.json`: a `blockml.library` pointer, dependencies `@blockml/core` and `@machineblocks/core`, and devDependencies `@blockml/cli` and `@machineblocks/cli`. It writes `blocks/<package path>/Library.bml` depending on `org.blockml.bml.Library` and `com.machineblocks.bml.Library`, plus `README.bml`. `CLAUDE.md` is written when missing. Preflight runs before any write. A project that already has a `blockml` key in `package.json` keeps `AGENTS.md`, and generation overwrites it after `npm install`. Otherwise an existing `AGENTS.md` is renamed to `AGENTS.md.pre-blockml`. By default it then runs `npm install` and generates `AGENTS.md` the same way `blockml init` does. The profile is recorded before `npm install`. Existing BML files and `CLAUDE.md` stay in place. A second run adds only what is missing and regenerates `AGENTS.md`. `--src <dir>` changes the source directory (default `blocks`). `--no-install` skips `npm install` and `AGENTS.md` generation and does not skip preflight.
 
 | Package | Role |
 |---|---|
 | `@blockml/core` | Language library. Recorded as a dependency. |
 | `@blockml/cli` | The `blockml` command. Recorded as a devDependency. |
 | `@machineblocks/cli` | The `machineblocks` command. Recorded as a devDependency. It registers target `machineblocks-v3-scad`. |
-| `@machineblocks/core` | Domain types and the SCAD runtime. Default `mbLibPath`. Installed with the CLI. |
+| `@machineblocks/core` | Domain types and the SCAD runtime. Default `mbLibPath`. Recorded as a dependency, beside `@blockml/core`. The render target peers this package, so the project selects the installed version. |
 | `@blockml/block-render-engine` | Engine the SCAD target runs on. Installed with the CLI. |
 | `@machineblocks/render-target` | Compiler target `machineblocks-v3-scad`. Installed with the CLI. |
 
-`@machineblocks/cli` depends on `@machineblocks/render-target` ^0.1.0, `@blockml/block-render-engine` ^0.1.0, and `@machineblocks/core` ^3.0.0-A4. npm installs those with the CLI.
+`@machineblocks/cli` depends on `@machineblocks/render-target` ^0.1.0, `@blockml/block-render-engine` ^0.1.0, and `@machineblocks/core` ^3.0.0-A4. `@machineblocks/render-target` peers `@machineblocks/core`. npm installs the engine and the target with the CLI. The project dependency selects the core version.
 
-On a project that `blockml init` already created, `npx machineblocks init com.example.bml` adds the devDependency and the library dependency. BML files and `CLAUDE.md` stay. `AGENTS.md` is regenerated. If `@machineblocks/cli` is already listed under `dependencies`, it stays there.
+On a project that `blockml init` already created, `npx machineblocks init com.example.bml` adds the core dependency, the devDependency, and the library dependency. BML files and `CLAUDE.md` stay. `AGENTS.md` is regenerated. If `@machineblocks/cli` or `@machineblocks/core` is already listed under `dependencies`, that entry stays there.
 
 Check the project:
 

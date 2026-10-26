@@ -11,7 +11,8 @@
     What this target reads from @machineblocks/core
   </is>
   <documentation>
-    This package depends on @machineblocks/core and does not copy its blocks.
+    This package peers @machineblocks/core and does not copy its blocks.
+    The consuming project supplies the installed version.
 
     Read there:
 

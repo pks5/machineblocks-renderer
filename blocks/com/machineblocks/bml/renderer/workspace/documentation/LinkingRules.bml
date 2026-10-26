@@ -22,9 +22,11 @@
        and points at it via package.json blockml.library.
     4. Hub SSOT. The root package.json blockml.library points at this workspace
        Library.
-    5. Dependency direction. The render target may depend on the block render
-       engine and on @machineblocks/core. The CLI may depend on the render target
-       and on @blockml/cli. The engine must not depend on MachineBlocks packages.
+    5. Dependency direction. The render target depends on the block render
+       engine and peers @machineblocks/core. The consuming project depends on
+       @machineblocks/core. The CLI may depend on the render target, on
+       @blockml/cli, and on @machineblocks/core. The engine must not depend on
+       MachineBlocks packages.
     6. Domain SSOT stays outside. Native parameters, type shapes, and the SCAD
        library are @machineblocks/core. This repo specifies how a compiler target
        emits SCAD from that model.

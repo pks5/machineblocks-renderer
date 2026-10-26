@@ -29,8 +29,9 @@
     - Does not reimplement parse, validate, or emit.
     - init calls initProject from @blockml/cli with noInstall. That call runs
       preflight before any write, including the foreign AGENTS.md rename.
-      Then this host adds devDependency @machineblocks/cli and library
-      dependency com.machineblocks.bml.Library. Unless --no-install, it then
+      Then this host adds dependency @machineblocks/core beside @blockml/core,
+      devDependency @machineblocks/cli, and library dependency
+      com.machineblocks.bml.Library. Unless --no-install, it then
       runs npm install and GenerateAgentsMd, which overwrites AGENTS.md.
       Profile first, then the same install and AGENTS.md step as initProject.
       --no-install does not skip preflight. The universal init stays

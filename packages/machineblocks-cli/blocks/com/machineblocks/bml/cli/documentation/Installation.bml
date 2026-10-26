@@ -17,8 +17,9 @@
         npx machineblocks validate
         npx machineblocks compile com.example.bml.bricks.MyBrick
 
-    init calls the universal project scaffold, then records @machineblocks/cli
-    as a devDependency and adds com.machineblocks.bml.Library to the project
+    init calls the universal project scaffold, then records @machineblocks/core
+    in dependencies beside @blockml/core, records @machineblocks/cli as a
+    devDependency, and adds com.machineblocks.bml.Library to the project
     library. Preflight runs inside that scaffold before any write. A BlockML
     project keeps AGENTS.md, and generation overwrites it after npm install.
     Otherwise an existing AGENTS.md is renamed to AGENTS.md.pre-blockml.
@@ -28,9 +29,10 @@
     preflight. On a project that blockml init already created, the same
     command adds only the missing profile. BML files and CLAUDE.md stay.
 
-    That install brings @machineblocks/render-target, @blockml/block-render-engine,
-    @machineblocks/core, and the BlockML compiler packages. init also records
-    @blockml/core and @blockml/cli. A bml segment in the package FQN lets
+    That install brings @machineblocks/render-target and
+    @blockml/block-render-engine, plus the BlockML compiler packages.
+    The render target peers @machineblocks/core, so the project dependency
+    selects the installed core version. A bml segment in the package FQN lets
     compile map the output package to scad.
 
     From this monorepo while the bin is not published:

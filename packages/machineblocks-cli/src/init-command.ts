@@ -11,6 +11,8 @@ import type { InitArgs } from "./args.js";
 import type { HostResult } from "./compile-command.js";
 
 const CLI_PACKAGE = "@machineblocks/cli";
+const MACHINEBLOCKS_CORE = "@machineblocks/core";
+const BLOCKML_CORE = "@blockml/core";
 const MACHINEBLOCKS_LIBRARY = "com.machineblocks.bml.Library";
 const MACHINEBLOCKS_NAMESPACE = "com.machineblocks.bml";
 const BLOCK_LIBRARY_BASE = "org.blockml.bml.core.BlockLibrary";
@@ -32,6 +34,12 @@ export function runInit(args: InitArgs, rootDir: string): HostResult {
   lines.push(...dependency.lines);
   if (dependency.code !== 0) {
     return { code: dependency.code, lines };
+  }
+
+  const core = ensureCoreDependency(rootDir);
+  lines.push(...core.lines);
+  if (core.code !== 0) {
+    return { code: core.code, lines };
   }
 
   const library = ensureLibraryDependency(rootDir, srcDir, args.packageFqn);
@@ -84,6 +92,40 @@ function ensureCliDevDependency(rootDir: string): HostResult {
   return { code: 0, lines: [`Recorded devDependency ${CLI_PACKAGE}`] };
 }
 
+function ensureCoreDependency(rootDir: string): HostResult {
+  const pkgPath = join(rootDir, "package.json");
+  let pkg: {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+  };
+  try {
+    pkg = JSON.parse(readFileSync(pkgPath, "utf8")) as typeof pkg;
+  } catch {
+    return { code: 2, lines: ["Could not parse package.json."] };
+  }
+  if (pkg.dependencies?.[MACHINEBLOCKS_CORE] !== undefined || pkg.devDependencies?.[MACHINEBLOCKS_CORE] !== undefined) {
+    return { code: 0, lines: [`Skipped existing ${MACHINEBLOCKS_CORE}`] };
+  }
+  pkg.dependencies = insertAfter(pkg.dependencies ?? {}, BLOCKML_CORE, MACHINEBLOCKS_CORE, ownCoreRange());
+  writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`, "utf8");
+  return { code: 0, lines: [`Recorded dependency ${MACHINEBLOCKS_CORE}`] };
+}
+
+function insertAfter(
+  record: Record<string, string>,
+  after: string,
+  key: string,
+  value: string,
+): Record<string, string> {
+  const entries = Object.entries(record);
+  const index = entries.findIndex(([name]) => name === after);
+  if (index < 0) {
+    return { ...record, [key]: value };
+  }
+  entries.splice(index + 1, 0, [key, value]);
+  return Object.fromEntries(entries);
+}
+
 function ensureLibraryDependency(rootDir: string, srcDir: string, packageFqn: string): HostResult {
   const libraryPath = join(rootDir, srcDir, ...packageFqn.split("."), "Library.bml");
   const display = displayPath(libraryPath, rootDir);
@@ -134,10 +176,20 @@ function npmInstall(rootDir: string): HostResult {
   return { code: 0, lines: [] };
 }
 
-function ownVersion(): string {
+function ownPackageJson(): { version?: string; dependencies?: Record<string, string> } {
   const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-  const pkg = JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8")) as { version?: string };
-  return pkg.version ?? "0.0.0";
+  return JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8")) as {
+    version?: string;
+    dependencies?: Record<string, string>;
+  };
+}
+
+function ownVersion(): string {
+  return ownPackageJson().version ?? "0.0.0";
+}
+
+function ownCoreRange(): string {
+  return ownPackageJson().dependencies?.[MACHINEBLOCKS_CORE] ?? "^0.0.0";
 }
 
 function displayPath(file: string, rootDir: string): string {

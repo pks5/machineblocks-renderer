@@ -19,7 +19,9 @@
 
     - It depends on published @blockml/* packages (universal CLI and compiler).
     - It depends on @machineblocks/render-target and therefore on
-      @blockml/block-render-engine and @machineblocks/core.
+      @blockml/block-render-engine.
+    - It depends on @machineblocks/core. The render target peers that package.
+      init records it in the consumer project's dependencies, beside @blockml/core.
     - It registers registry name machineblocks-v3-scad.
     - It fills MachineBlocks defaults: where the SCAD library lives, where
       OpenSCAD is, where .scad files are written.

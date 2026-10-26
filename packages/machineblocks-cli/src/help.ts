@@ -130,6 +130,10 @@ stays, and agents-md generate overwrites it after npm install.
 Otherwise an existing AGENTS.md is renamed to AGENTS.md.pre-blockml.
 Does not overwrite existing BML files or CLAUDE.md.
 
+The profile adds @machineblocks/core to dependencies, beside @blockml/core,
+when that package is absent from dependencies and devDependencies. The range
+is this host's dependency range for @machineblocks/core. An existing entry
+stays put.
 The profile adds @machineblocks/cli to devDependencies when that package is
 absent from dependencies and devDependencies. The range is the caret range of
 this host. An existing dependencies entry stays put.

@@ -7,6 +7,8 @@ import { generateAgentsMd, initProject } from "@blockml/cli";
 import { parse } from "@blockml/parser";
 import { serialize } from "@blockml/serializer";
 const CLI_PACKAGE = "@machineblocks/cli";
+const MACHINEBLOCKS_CORE = "@machineblocks/core";
+const BLOCKML_CORE = "@blockml/core";
 const MACHINEBLOCKS_LIBRARY = "com.machineblocks.bml.Library";
 const MACHINEBLOCKS_NAMESPACE = "com.machineblocks.bml";
 const BLOCK_LIBRARY_BASE = "org.blockml.bml.core.BlockLibrary";
@@ -26,6 +28,11 @@ export function runInit(args, rootDir) {
     lines.push(...dependency.lines);
     if (dependency.code !== 0) {
         return { code: dependency.code, lines };
+    }
+    const core = ensureCoreDependency(rootDir);
+    lines.push(...core.lines);
+    if (core.code !== 0) {
+        return { code: core.code, lines };
     }
     const library = ensureLibraryDependency(rootDir, srcDir, args.packageFqn);
     lines.push(...library.lines);
@@ -68,6 +75,31 @@ function ensureCliDevDependency(rootDir) {
     pkg.devDependencies = { ...pkg.devDependencies, [CLI_PACKAGE]: `^${ownVersion()}` };
     writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`, "utf8");
     return { code: 0, lines: [`Recorded devDependency ${CLI_PACKAGE}`] };
+}
+function ensureCoreDependency(rootDir) {
+    const pkgPath = join(rootDir, "package.json");
+    let pkg;
+    try {
+        pkg = JSON.parse(readFileSync(pkgPath, "utf8"));
+    }
+    catch {
+        return { code: 2, lines: ["Could not parse package.json."] };
+    }
+    if (pkg.dependencies?.[MACHINEBLOCKS_CORE] !== undefined || pkg.devDependencies?.[MACHINEBLOCKS_CORE] !== undefined) {
+        return { code: 0, lines: [`Skipped existing ${MACHINEBLOCKS_CORE}`] };
+    }
+    pkg.dependencies = insertAfter(pkg.dependencies ?? {}, BLOCKML_CORE, MACHINEBLOCKS_CORE, ownCoreRange());
+    writeFileSync(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`, "utf8");
+    return { code: 0, lines: [`Recorded dependency ${MACHINEBLOCKS_CORE}`] };
+}
+function insertAfter(record, after, key, value) {
+    const entries = Object.entries(record);
+    const index = entries.findIndex(([name]) => name === after);
+    if (index < 0) {
+        return { ...record, [key]: value };
+    }
+    entries.splice(index + 1, 0, [key, value]);
+    return Object.fromEntries(entries);
 }
 function ensureLibraryDependency(rootDir, srcDir, packageFqn) {
     const libraryPath = join(rootDir, srcDir, ...packageFqn.split("."), "Library.bml");
@@ -113,10 +145,15 @@ function npmInstall(rootDir) {
     }
     return { code: 0, lines: [] };
 }
-function ownVersion() {
+function ownPackageJson() {
     const packageRoot = join(dirname(fileURLToPath(import.meta.url)), "..");
-    const pkg = JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8"));
-    return pkg.version ?? "0.0.0";
+    return JSON.parse(readFileSync(join(packageRoot, "package.json"), "utf8"));
+}
+function ownVersion() {
+    return ownPackageJson().version ?? "0.0.0";
+}
+function ownCoreRange() {
+    return ownPackageJson().dependencies?.[MACHINEBLOCKS_CORE] ?? "^0.0.0";
 }
 function displayPath(file, rootDir) {
     const rel = relative(rootDir, file);

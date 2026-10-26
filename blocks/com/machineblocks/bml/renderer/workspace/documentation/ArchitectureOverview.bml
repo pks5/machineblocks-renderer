@@ -22,7 +22,8 @@
     One target may mix those strategies. callLLM is specified and deferred.
 
     @machineblocks/render-target is a RenderTarget named machineblocks-v3-scad.
-    It depends on the engine and on @machineblocks/core. V1 processors cover
+    It depends on the engine and peers @machineblocks/core. The consuming
+    project supplies that version. V1 processors cover
     com.machineblocks.bml.core.Block and com.machineblocks.bml.core.Set.
     Mappings are declarative. The target is browser and Node compatible: no
     Node-only APIs.
@@ -32,9 +33,10 @@
     path, OpenSCAD path, output), and is the command MachineBlocks users run.
     @blockml/cli stays domain-agnostic and does not register this target.
 
-    A content project holds BML sources and generated SCAD. It installs
-    @machineblocks/cli (and through it the target, the engine, and
-    @machineblocks/core). It does not need the blockml source repository.
+    A content project holds BML sources and generated SCAD. init records
+    @machineblocks/core in its dependencies and @machineblocks/cli as a
+    devDependency. That install brings the render target and the engine.
+    It does not need the blockml source repository.
 
     Delegate-only targets (for example a domain that only adds Block types)
     may list this render target as a delegate and ship no engine of their own.

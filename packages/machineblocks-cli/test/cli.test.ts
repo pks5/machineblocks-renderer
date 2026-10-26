@@ -166,6 +166,9 @@ describe("machineblocks init", () => {
     const pkg = readPackage(root);
     expect(pkg.blockml).toEqual({ library: "./blocks/com/example/bml/Library.bml" });
     expect(pkg.dependencies?.["@blockml/core"]).toBeDefined();
+    expect(pkg.dependencies?.["@machineblocks/core"]).toBe(coreRange());
+    const dependencyNames = Object.keys(pkg.dependencies ?? {});
+    expect(dependencyNames.indexOf("@machineblocks/core")).toBe(dependencyNames.indexOf("@blockml/core") + 1);
     expect(pkg.devDependencies?.["@blockml/cli"]).toBeDefined();
     expect(pkg.devDependencies?.["@machineblocks/cli"]).toBe(cliRange());
     const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
@@ -188,6 +191,7 @@ describe("machineblocks init", () => {
 
     expect(again.code).toBe(0);
     expect(again.lines.join("\n")).toContain("Skipped existing @machineblocks/cli");
+    expect(again.lines.join("\n")).toContain("Skipped existing @machineblocks/core");
     expect(again.lines.join("\n")).toContain("Skipped existing com.machineblocks.bml.Library");
     expect(readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8")).toBe(library);
     expect(readFileSync(join(root, "package.json"), "utf8")).toBe(pkg);
@@ -221,6 +225,20 @@ describe("machineblocks init", () => {
     const after = readPackage(root);
     expect(after.dependencies?.["@machineblocks/cli"]).toBe("1.2.3");
     expect(after.devDependencies?.["@machineblocks/cli"]).toBeUndefined();
+  });
+
+  it("leaves an existing @machineblocks/core dependency in place", () => {
+    const root = emptyDir();
+    expect(initProject({ packageFqn: "com.example.bml", rootDir: root, noInstall: true }).code).toBe(0);
+    const pkg = readPackage(root);
+    pkg.dependencies = { ...pkg.dependencies, "@machineblocks/core": "9.9.9" };
+    writeFileSync(join(root, "package.json"), `${JSON.stringify(pkg, null, 2)}\n`);
+
+    const result = execute(["init", "com.example.bml", "--no-install"], root);
+
+    expect(result.code).toBe(0);
+    expect(result.lines.join("\n")).toContain("Skipped existing @machineblocks/core");
+    expect(readPackage(root).dependencies?.["@machineblocks/core"]).toBe("9.9.9");
   });
 
   it("rejects an invalid package FQN", () => {
@@ -346,11 +364,19 @@ describe("machineblocks init", () => {
   });
 });
 
-function cliRange(): string {
-  const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../package.json"), "utf8")) as {
+function hostPackage(): { version?: string; dependencies?: Record<string, string> } {
+  return JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../package.json"), "utf8")) as {
     version?: string;
+    dependencies?: Record<string, string>;
   };
-  return `^${pkg.version ?? "0.0.0"}`;
+}
+
+function cliRange(): string {
+  return `^${hostPackage().version ?? "0.0.0"}`;
+}
+
+function coreRange(): string {
+  return hostPackage().dependencies?.["@machineblocks/core"] ?? "";
 }
 
 function emptyDir(): string {
