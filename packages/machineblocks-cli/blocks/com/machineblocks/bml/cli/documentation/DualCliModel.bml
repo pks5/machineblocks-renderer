@@ -27,11 +27,13 @@
       BlockRenderEngine.
     - Same validate and compile facade underneath. Defaults differ.
     - Does not reimplement parse, validate, or emit.
-    - init calls initProject from @blockml/cli with noInstall, then adds
-      devDependency @machineblocks/cli and library dependency
-      com.machineblocks.bml.Library. Unless --no-install, it then runs
-      npm install and GenerateAgentsMd: profile first, then the same install
-      and AGENTS.md step as initProject. The universal init stays
+    - init calls initProject from @blockml/cli with noInstall. That call runs
+      preflight before any write, including the foreign AGENTS.md rename.
+      Then this host adds devDependency @machineblocks/cli and library
+      dependency com.machineblocks.bml.Library. Unless --no-install, it then
+      runs npm install and GenerateAgentsMd, which overwrites AGENTS.md.
+      Profile first, then the same install and AGENTS.md step as initProject.
+      --no-install does not skip preflight. The universal init stays
       domain-agnostic.
 
     Interop: a later plugin load (targetPackages in blockml.config.json mapping

@@ -167,7 +167,7 @@ describe("machineblocks init", () => {
     expect(pkg.blockml).toEqual({ library: "./blocks/com/example/bml/Library.bml" });
     expect(pkg.dependencies?.["@blockml/core"]).toBeDefined();
     expect(pkg.devDependencies?.["@blockml/cli"]).toBeDefined();
-    expect(pkg.devDependencies?.["@machineblocks/cli"]).toBe("^0.1.2");
+    expect(pkg.devDependencies?.["@machineblocks/cli"]).toBe(cliRange());
     const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
     expect(library).toContain("org.blockml.bml");
     expect(library).toContain('xmlns:mb="com.machineblocks.bml"');
@@ -205,7 +205,7 @@ describe("machineblocks init", () => {
     const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
     expect(library).toContain("org.blockml.bml");
     expect(library).toContain("<mb:Library");
-    expect(readPackage(root).devDependencies?.["@machineblocks/cli"]).toBe("^0.1.2");
+    expect(readPackage(root).devDependencies?.["@machineblocks/cli"]).toBe(cliRange());
   });
 
   it("leaves an existing dependencies entry in place", () => {
@@ -261,7 +261,7 @@ describe("machineblocks init", () => {
     expect(readFileSync(join(reference, "AGENTS.md"), "utf8")).toBe(agents);
   });
 
-  it("leaves an existing AGENTS.md in place when install runs", () => {
+  it("overwrites AGENTS.md on a BlockML project", () => {
     const root = emptyDir();
     expect(execute(["init", "com.example.bml", "--no-install"], root).code).toBe(0);
     writeFileSync(join(root, "AGENTS.md"), "keep\n");
@@ -269,8 +269,66 @@ describe("machineblocks init", () => {
     const result = execute(["init", "com.example.bml"], root);
 
     expect(result.code).toBe(0);
-    expect(readFileSync(join(root, "AGENTS.md"), "utf8")).toBe("keep\n");
-    expect(result.lines.join("\n")).not.toContain("Created AGENTS.md");
+    expect(readFileSync(join(root, "AGENTS.md"), "utf8")).toContain("# BlockML Project Instructions");
+    expect(result.lines.join("\n")).toContain("Updated AGENTS.md");
+    expect(existsSync(join(root, "AGENTS.md.pre-blockml"))).toBe(false);
+  });
+
+  it("renames a foreign AGENTS.md before writing and still runs preflight with --no-install", () => {
+    const root = emptyDir();
+    writeFileSync(join(root, "package.json"), `${JSON.stringify({ name: "app" })}\n`);
+    writeFileSync(join(root, "AGENTS.md"), "foreign\n");
+
+    const result = execute(["init", "com.example.bml", "--no-install"], root);
+
+    expect(result.code).toBe(0);
+    expect(readFileSync(join(root, "AGENTS.md.pre-blockml"), "utf8")).toBe("foreign\n");
+    expect(existsSync(join(root, "AGENTS.md"))).toBe(false);
+    expect(result.lines.join("\n")).toContain("Renamed AGENTS.md to AGENTS.md.pre-blockml");
+    expect(readPackage(root).devDependencies?.["@machineblocks/cli"]).toBe(cliRange());
+    expect(existsSync(join(root, "node_modules"))).toBe(false);
+  });
+
+  it("keeps the foreign AGENTS.md and writes a generated one", () => {
+    const root = emptyDir();
+    writeFileSync(join(root, "AGENTS.md"), "foreign\n");
+
+    const result = execute(["init", "com.example.bml"], root);
+
+    expect(result.code).toBe(0);
+    expect(readFileSync(join(root, "AGENTS.md.pre-blockml"), "utf8")).toBe("foreign\n");
+    expect(readFileSync(join(root, "AGENTS.md"), "utf8")).toContain("# BlockML Project Instructions");
+  });
+
+  it("stops before writing when AGENTS.md.pre-blockml already exists", () => {
+    const root = emptyDir();
+    writeFileSync(join(root, "package.json"), `${JSON.stringify({ name: "app" })}\n`);
+    writeFileSync(join(root, "AGENTS.md"), "foreign\n");
+    writeFileSync(join(root, "AGENTS.md.pre-blockml"), "backup\n");
+
+    const result = execute(["init", "com.example.bml"], root);
+
+    expect(result.code).toBe(2);
+    expect(result.lines.join("\n")).toContain("AGENTS.md.pre-blockml already exists.");
+    expect(existsSync(join(root, "blocks"))).toBe(false);
+    expect(readFileSync(join(root, "AGENTS.md"), "utf8")).toBe("foreign\n");
+    expect(readFileSync(join(root, "AGENTS.md.pre-blockml"), "utf8")).toBe("backup\n");
+    expect(readPackage(root).blockml).toBeUndefined();
+    expect(readPackage(root).devDependencies?.["@machineblocks/cli"]).toBeUndefined();
+  });
+
+  it("stops before writing when package.json cannot be parsed", () => {
+    const root = emptyDir();
+    writeFileSync(join(root, "package.json"), "{");
+    writeFileSync(join(root, "AGENTS.md"), "foreign\n");
+
+    const result = execute(["init", "com.example.bml"], root);
+
+    expect(result.code).toBe(2);
+    expect(result.lines.join("\n")).toContain("Could not parse package.json.");
+    expect(existsSync(join(root, "blocks"))).toBe(false);
+    expect(readFileSync(join(root, "AGENTS.md"), "utf8")).toBe("foreign\n");
+    expect(existsSync(join(root, "AGENTS.md.pre-blockml"))).toBe(false);
   });
 
   it("shows init help", () => {
@@ -287,6 +345,13 @@ describe("machineblocks init", () => {
     expect(general.lines.join("\n")).toContain("machineblocks init <package-fqn> [--src dir] [--no-install]");
   });
 });
+
+function cliRange(): string {
+  const pkg = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../package.json"), "utf8")) as {
+    version?: string;
+  };
+  return `^${pkg.version ?? "0.0.0"}`;
+}
 
 function emptyDir(): string {
   const root = mkdtempSync(join(tmpdir(), "mb-cli-"));

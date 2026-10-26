@@ -62,7 +62,7 @@ From the project directory. The package FQN is a dotted identifier, and the last
 npx @machineblocks/cli init com.example.bml
 ```
 
-`init` calls the universal BlockML scaffold, then records the MachineBlocks profile. It writes or merges `package.json`: a `blockml.library` pointer, dependency `@blockml/core`, and devDependencies `@blockml/cli` and `@machineblocks/cli`. It writes `blocks/<package path>/Library.bml` depending on `org.blockml.bml.Library` and `com.machineblocks.bml.Library`, plus `README.bml`. `CLAUDE.md` is written when missing. By default it then runs `npm install` and generates `AGENTS.md` from AgentInstructions when the file is missing, by the same step as `blockml init`. The profile is recorded before `npm install`. Existing files stay in place. A second run adds only what is missing. `--src <dir>` changes the source directory (default `blocks`). `--no-install` skips `npm install` and `AGENTS.md` generation; the next step is then `npm install` followed by `npx blockml agents-md generate`.
+`init` calls the universal BlockML scaffold, then records the MachineBlocks profile. It writes or merges `package.json`: a `blockml.library` pointer, dependency `@blockml/core`, and devDependencies `@blockml/cli` and `@machineblocks/cli`. It writes `blocks/<package path>/Library.bml` depending on `org.blockml.bml.Library` and `com.machineblocks.bml.Library`, plus `README.bml`. `CLAUDE.md` is written when missing. Preflight runs before any write. A project that already has a `blockml` key in `package.json` keeps `AGENTS.md`, and generation overwrites it after `npm install`. Otherwise an existing `AGENTS.md` is renamed to `AGENTS.md.pre-blockml`. By default it then runs `npm install` and generates `AGENTS.md` the same way `blockml init` does. The profile is recorded before `npm install`. Existing BML files and `CLAUDE.md` stay in place. A second run adds only what is missing and regenerates `AGENTS.md`. `--src <dir>` changes the source directory (default `blocks`). `--no-install` skips `npm install` and `AGENTS.md` generation and does not skip preflight.
 
 | Package | Role |
 |---|---|
@@ -75,7 +75,7 @@ npx @machineblocks/cli init com.example.bml
 
 `@machineblocks/cli` depends on `@machineblocks/render-target` ^0.1.0, `@blockml/block-render-engine` ^0.1.0, and `@machineblocks/core` ^3.0.0-A4. npm installs those with the CLI.
 
-On a project that `blockml init` already created, `npx machineblocks init com.example.bml` adds the devDependency and the library dependency and does not replace existing files. If `@machineblocks/cli` is already listed under `dependencies`, it stays there.
+On a project that `blockml init` already created, `npx machineblocks init com.example.bml` adds the devDependency and the library dependency. BML files and `CLAUDE.md` stay. `AGENTS.md` is regenerated. If `@machineblocks/cli` is already listed under `dependencies`, it stays there.
 
 Check the project:
 

@@ -112,9 +112,14 @@ then records the MachineBlocks profile.
 PACKAGE-FQN is a dotted package identifier (not …Library). A bml segment after
 the domain is recommended. Compile maps a bml segment to scad.
 A package FQN without a bml segment still exits 0 and warns.
-Does not overwrite existing files.
 Does not spawn blockml init. Calls initProject from @blockml/cli with noInstall
 true, then records the profile before npm install.
+
+Preflight runs before any write and checks conditions. --no-install does not skip it.
+A project is BlockML when package.json has a blockml key. Then AGENTS.md
+stays, and agents-md generate overwrites it after npm install.
+Otherwise an existing AGENTS.md is renamed to AGENTS.md.pre-blockml.
+Does not overwrite existing BML files or CLAUDE.md.
 
 The profile adds @machineblocks/cli to devDependencies when that package is
 absent from dependencies and devDependencies. The range is the caret range of
@@ -123,20 +128,19 @@ The project Library.bml gains com.machineblocks.bml.Library.
 CLAUDE.md (@AGENTS.md) is written when missing.
 
 Runs npm install, then generates AGENTS.md, unless --no-install is passed.
---no-install skips npm install and AGENTS.md generation.
-AGENTS.md is generated from AgentInstructions blocks when the file is missing.
-When none are found, the file is left unwritten and prints
-No AgentInstructions blocks found. The init exit code stays 0.
-An existing AGENTS.md is left in place.
+--no-install skips npm install and AGENTS.md generation. It does not skip preflight.
+AGENTS.md is overwritten when at least one section or rule is found.
+When no AgentInstructions content is found, AGENTS.md is left unwritten.
 The next-step line from the earlier initProject pass is dropped when install runs.
-With --no-install, that next step remains: npm install && npx blockml agents-md generate.
+With --no-install and no AGENTS.md, that next step remains:
+npm install && npx blockml agents-md generate.
 
 Flags:
   --src dir       source directory (default blocks)
   --no-install    skip npm install and AGENTS.md generation
 
-Exit codes match initProject: 0 success, 1 write or install failure,
-2 usage or an invalid package FQN.
+Exit codes match initProject: 0 success, 1 write, rename, or install failure,
+2 usage, an invalid package FQN, or a failed preflight.
 
 Related: validate, compile. agents-md and new stay on blockml.`;
 export function helpFor(topic) {

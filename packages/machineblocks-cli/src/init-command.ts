@@ -62,9 +62,6 @@ export function runInit(args: InitArgs, rootDir: string): HostResult {
 }
 
 function agentsMdAfterInstall(rootDir: string, srcDir: string): string[] {
-  if (existsSync(join(rootDir, "AGENTS.md"))) {
-    return [];
-  }
   return generateAgentsMd({ rootDir, srcDir }).lines.map((line) => line.text);
 }
 

@@ -51,9 +51,6 @@ export function runInit(args, rootDir) {
     };
 }
 function agentsMdAfterInstall(rootDir, srcDir) {
-    if (existsSync(join(rootDir, "AGENTS.md"))) {
-        return [];
-    }
     return generateAgentsMd({ rootDir, srcDir }).lines.map((line) => line.text);
 }
 function ensureCliDevDependency(rootDir) {
