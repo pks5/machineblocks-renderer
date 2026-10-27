@@ -180,7 +180,7 @@ module mb__com__machineblocks__scad__bricks__Fixture(config = undef, settings = 
     expect(content).toContain("module mb__com__example__scad__sets__Kit__Print()");
     expect(content).toContain("module mb__com__example__scad__sets__Kit__Step()");
     expect(content).toContain("module mb__com__example__scad__sets__Kit__Instance()");
-    expect(content).toContain("mb_set_bounding_box(STEPS)");
+    expect(content).toContain("mb_parts_total_size(STEPS)");
   });
 
   it("reports BML_NO_TARGET when the chain has no Block", () => {

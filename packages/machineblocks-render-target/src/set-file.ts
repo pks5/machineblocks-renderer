@@ -127,7 +127,7 @@ ${steps}
     mb_block(
         config = config,
         settings = [
-            ["size", mb_set_bounding_box(STEPS)]
+            ["size", mb_parts_total_size(STEPS)]
         ]
     );
     if (mode == "total") ${moduleName}__Total();

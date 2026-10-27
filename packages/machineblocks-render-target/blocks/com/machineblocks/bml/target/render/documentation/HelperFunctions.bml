@@ -14,7 +14,6 @@
     Some helpers run at SCAD render time instead of being precomputed.
 
     Decided — SCAD runtime:
-    - mb_set_bounding_box(STEPS)
     - mb_assembly(config, settings, size, direction)
     - mb_assembly_tongue(assembly, renderGroups, group)
     - mb_assembly_groove(assembly, renderGroups, group)
@@ -39,12 +38,16 @@
     after the namespace filter. Entries without a namespace and entries with
     numeric keys are ignored.
 
-    mb_parts_total_size(parts) is the SCAD bounding box of the parts after
-    direction resolution. Each entry is [id, size, direction, offset], the
-    same layout as a STEPS row. id is required. size, direction, and offset
-    are indexes 1, 2, and 3. The renderer emits the call:
+    mb_parts_total_size(parts) is the Core SCAD bounding box of the parts
+    after direction resolution. Each entry is [id, size, direction, offset].
+    id is required. size, direction, and offset are indexes 1, 2, and 3.
+    A STEPS row uses that same layout. A composite emits:
 
         size = mb_parts_total_size(parts);
+
+    A set passes STEPS to the same function:
+
+        ["size", mb_parts_total_size(STEPS)]
 
     Rule: render-dependent values (assembly, renderGroups, overridable
     blockId) resolve at SCAD runtime. Structural and static values are

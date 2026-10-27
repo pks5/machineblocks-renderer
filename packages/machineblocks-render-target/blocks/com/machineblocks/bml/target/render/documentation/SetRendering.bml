@@ -40,9 +40,11 @@
             ["00002", [4, 4, 9], "west", [0, 0, 1]]
         ];
 
-    The set bounding box is computed at SCAD render time, not by the compiler:
+    The set bounding box is computed at SCAD render time by the Core function
+    mb_parts_total_size, which reads size, direction, and offset from each
+    STEPS row:
 
-        ["size", mb_set_bounding_box(STEPS)]
+        ["size", mb_parts_total_size(STEPS)]
 
     Four submodules, PascalCase suffixes of the set module:
 
@@ -56,8 +58,8 @@
     (...__Instance_00001). Each of those modules calls the manifestation
     module of the placed part's type FQN with config and settings for size,
     offset, and direction. mb_block applies that offset and direction. The
-    set does not add a translate around the call. STEPS still feeds only
-    mb_set_bounding_box.
+    set does not add a translate around the call. STEPS feeds only
+    mb_parts_total_size.
 
     Total and Print call every instance module in STEPS order. Step calls the
     prefix of that list whose index is less than or equal to the customizer

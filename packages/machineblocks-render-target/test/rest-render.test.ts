@@ -123,7 +123,7 @@ describe("composite, set, presets, source map", () => {
     const content = result.files[0]?.content ?? "";
     expect(content).toContain('["00002", [4, 4, 9], "west", [0, 0, 1]]');
     expect(content).toContain('["00001", [16, 16, 1], "north", [0, 0, 0]]');
-    expect(content).toContain("mb_set_bounding_box(STEPS)");
+    expect(content).toContain("mb_parts_total_size(STEPS)");
     expect(content).toContain("if (instanceId == \"00002\")");
     expect(content).toContain("else if (instanceId == \"00001\")");
     expect(content).toContain(`mb__com__machineblocks__scad__bricks__Standard(
