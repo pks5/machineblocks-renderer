@@ -11,11 +11,11 @@
   },
   "dependencies": {
     "@blockml/core": "^1.4.6",
-    "@machineblocks/core": "^3.0.0-A4"
+    "@machineblocks/core": "^3.0.0-A5"
   },
   "devDependencies": {
     "@blockml/block-render-engine": "workspace:*",
-    "@blockml/cli": "^0.9.16",
+    "@blockml/cli": "^0.9.17",
     "@machineblocks/cli": "workspace:*",
     "@machineblocks/render-target": "workspace:*",
     "typescript": "^5.7.3",

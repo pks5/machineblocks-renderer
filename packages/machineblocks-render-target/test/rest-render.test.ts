@@ -126,7 +126,15 @@ describe("composite, set, presets, source map", () => {
     expect(content).toContain("mb_set_bounding_box(STEPS)");
     expect(content).toContain("if (instanceId == \"00002\")");
     expect(content).toContain("else if (instanceId == \"00001\")");
-    expect(content).toContain("mb__com__machineblocks__scad__bricks__Standard();");
+    expect(content).toContain(`mb__com__machineblocks__scad__bricks__Standard(
+        config = mb_config,
+        settings = [
+            ["size", [4, 4, 9]],
+            ["offset", [0, 0, 1]],
+            ["direction", "west"]
+        ]
+    );`);
+    expect(content).toContain(`["direction", "north"]`);
     expect(content).toContain("use <../../../machineblocks/scad/bricks/Standard.scad>;");
     const map = JSON.parse((result.files[0] as { sourceMap?: string }).sourceMap ?? "{}") as { mappings?: string };
     const lineCount = content.endsWith("\n") ? content.slice(0, -1).split("\n").length : content.split("\n").length;

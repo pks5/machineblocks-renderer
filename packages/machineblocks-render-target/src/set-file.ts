@@ -1,5 +1,6 @@
-import type { BlockDefinition, BlockInstance, LiteralValue } from "@blockml/bom";
-import type { RenderOutput } from "@blockml/compiler";
+import type { BlockDefinition, BlockInstance, LiteralValue, PropertyDefinition } from "@blockml/bom";
+import type { RenderContext, RenderOutput } from "@blockml/compiler";
+import { resolveEffectiveMembers } from "@blockml/framework";
 import { compositionChildren } from "./composition.js";
 import { SET_PART_INCOMPLETE, errorOutput } from "./diagnostics.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
@@ -16,12 +17,15 @@ interface Placement {
   offset: string;
 }
 
+type Registry = RenderContext["session"]["typeRegistry"];
+
 export function renderSetFile(
   block: BlockDefinition,
   outputRelativePath: string,
   outputBasePath: string,
   mbLibPath: string,
   mapping: ManifestationMapping,
+  registry: Registry,
 ): RenderOutput {
   const source = block.source ?? { file: "", line: 1, column: 1 };
   const placements: Placement[] = [];
@@ -29,7 +33,7 @@ export function renderSetFile(
     if (child.kind !== "blockInstance") {
       continue;
     }
-    const placement = placementOf(child.instance, source);
+    const placement = placementOf(child.instance, source, registry);
     if ("files" in placement) {
       return placement;
     }
@@ -66,7 +70,7 @@ export function renderSetFile(
       ? baseColor.value.value
       : "#EAC645";
   const steps = ordered
-    .map((placement) => `        ["${placement.id}", ${placement.size}, "${placement.direction}", ${placement.offset}]`)
+    .map((placement) => `        ["${placement.id}", ${placement.size}, ${placement.direction}, ${placement.offset}]`)
     .join(",\n");
   const instanceCalls = ordered.map((placement) => `    ${moduleName}__Instance_${placement.id}();`).join("\n");
   const stepCalls = ordered
@@ -81,7 +85,14 @@ export function renderSetFile(
   const instanceModules = ordered
     .map(
       (placement) => `module ${moduleName}__Instance_${placement.id}() {
-    ${moduleNameForManifestation(manifestedType(placement.typeFqn, typeManifestations))}();
+    ${moduleNameForManifestation(manifestedType(placement.typeFqn, typeManifestations))}(
+        config = mb_config,
+        settings = [
+            ["size", ${placement.size}],
+            ["offset", ${placement.offset}],
+            ["direction", ${placement.direction}]
+        ]
+    );
 }`,
     )
     .join("\n\n");
@@ -154,17 +165,48 @@ ${instanceModules}
 function placementOf(
   instance: BlockInstance,
   source: { file: string; line: number; column: number },
+  registry: Registry,
 ): Placement | RenderOutput {
   const id = literalString(instance.id);
-  const sizeMember = instance.memberValues.size;
-  const size = sizeMember?.kind === "literal" ? serializeLiteral(sizeMember) : undefined;
+  const size = placedValue(instance, "size", registry) ?? typeDefault(instance.typeFqn, "size", registry);
   if (!id || !size) {
     return errorOutput(SET_PART_INCOMPLETE, "A placed part needs an id and a size.", instance.source ?? source);
   }
-  const direction = literalString(instance.memberValues.direction) ?? "west";
-  const offsetMember = instance.memberValues.offset;
-  const offset = offsetMember?.kind === "literal" ? serializeLiteral(offsetMember) ?? "[0, 0, 0]" : "[0, 0, 0]";
+  const direction = placedValue(instance, "direction", registry) ?? '"west"';
+  const offset = placedValue(instance, "offset", registry) ?? "[0, 0, 0]";
   return { id, typeFqn: instance.typeFqn, size, direction, offset };
+}
+
+function placedValue(instance: BlockInstance, name: string, registry: Registry): string | undefined {
+  const member = instance.memberValues[name];
+  if (!member || member.kind !== "literal") {
+    return undefined;
+  }
+  const property = propertyOn(instance.typeFqn, name, registry);
+  return serializeLiteral(member, {
+    registry,
+    typeFqn: property?.typeFqn || member.typeFqn,
+    type: property?.type,
+  });
+}
+
+function typeDefault(typeFqn: string, name: string, registry: Registry): string | undefined {
+  const property = propertyOn(typeFqn, name, registry);
+  if (!property?.value || property.value.kind !== "literal") {
+    return undefined;
+  }
+  return serializeLiteral(property.value, { registry, typeFqn: property.typeFqn, type: property.type });
+}
+
+function propertyOn(typeFqn: string, name: string, registry: Registry): PropertyDefinition | undefined {
+  const definition = registry.get(typeFqn)?.block;
+  if (!definition) {
+    return undefined;
+  }
+  const property = resolveEffectiveMembers(definition, registry).find(
+    (member) => member.kind === "property" && member.name === name,
+  );
+  return property?.kind === "property" ? property : undefined;
 }
 
 function orderBySteps(block: BlockDefinition, placements: readonly Placement[]): Placement[] {

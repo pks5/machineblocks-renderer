@@ -28,7 +28,8 @@
         [instanceId, boundingBox, direction, offset]
 
     - [0] instanceId — string from the placed instance id
-    - [1] boundingBox — [x, y, z] from merged preset/configuration size
+    - [1] boundingBox — [x, y, z] from the instance size literal, otherwise
+      the placed type's size property default. Preset merge is not applied.
     - [2] direction — "west" | "north" | "east" | "south"
     - [3] offset — [x, y, z]
 
@@ -53,7 +54,10 @@
     The Instance submodule dispatches with if / else if on instanceId to
     per-instance modules named with the id appended by underscore
     (...__Instance_00001). Each of those modules calls the manifestation
-    module of the placed part's type FQN.
+    module of the placed part's type FQN with config and settings for size,
+    offset, and direction. mb_block applies that offset and direction. The
+    set does not add a translate around the call. STEPS still feeds only
+    mb_set_bounding_box.
 
     Total and Print call every instance module in STEPS order. Step calls the
     prefix of that list whose index is less than or equal to the customizer

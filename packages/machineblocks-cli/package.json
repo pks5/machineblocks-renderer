@@ -31,14 +31,14 @@
   },
   "dependencies": {
     "@blockml/block-render-engine": "^0.1.5",
-    "@blockml/builder": "^0.9.16",
-    "@blockml/cli": "^0.9.16",
-    "@blockml/compiler": "^0.9.16",
+    "@blockml/builder": "^0.9.17",
+    "@blockml/cli": "^0.9.17",
+    "@blockml/compiler": "^0.9.17",
     "@blockml/core": "^1.4.6",
-    "@blockml/framework": "^0.9.16",
-    "@blockml/parser": "^0.9.16",
-    "@blockml/serializer": "^0.9.16",
-    "@machineblocks/core": "^3.0.0-A4",
+    "@blockml/framework": "^0.9.17",
+    "@blockml/parser": "^0.9.17",
+    "@blockml/serializer": "^0.9.17",
+    "@machineblocks/core": "^3.0.0-A5",
     "@machineblocks/render-target": "^0.1.5"
   },
   "engines": {

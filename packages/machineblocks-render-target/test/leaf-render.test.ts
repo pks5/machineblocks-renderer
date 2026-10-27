@@ -71,7 +71,7 @@ describe("MachineBlocksRenderTarget leaf slice", () => {
     );
   });
 
-  it("emits a direct mb_block file for one NativeBlock child", () => {
+  it("emits a module and a main call for one NativeBlock child", () => {
     const result = render(FIXTURE, "fixture.bml");
 
     expect(result.diagnostics ?? []).toEqual([]);
@@ -95,7 +95,7 @@ studs = true;
 grilleCount = 5;
 
 /* Main Module Call */
-mb_block(
+mb__com__machineblocks__scad__bricks__Fixture(
     config = mb_config,
     settings = [
         ["studs", studs],
@@ -104,6 +104,26 @@ mb_block(
 );
 
 /* Main Module Definition */
+module mb__com__machineblocks__scad__bricks__Fixture(config = undef, settings = undef) {
+    studs = mb_param(config, settings, "studs", true);
+    grilleCount = mb_param(config, settings, "grilleCount", 5);
+    size = mb_param_size(config, settings);
+    align = mb_param_align(config, settings);
+    offset = mb_param_offset(config, settings);
+    direction = mb_param_direction(config, settings);
+    mb_block(
+        config = config,
+        settings = [
+            ["studs", studs],
+            ["grilleCount", grilleCount],
+            ["size", size],
+            ["align", align],
+            ["offset", offset],
+            ["direction", direction]
+        ]
+    );
+}
+
 /* Optional Sub Modules */
 /* Optional Helper Modules */
 /* Optional Global Functions */

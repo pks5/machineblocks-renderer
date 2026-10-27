@@ -15,11 +15,12 @@
     native settings, no sub-blocks, no multi-child composition. Example:
     com.machineblocks.bml.bricks.Standard.
 
-    Standalone compile of such a block emits a direct mb_block() main call.
-    Customizer variables are the settings. There is no typed wrapper module and
-    no mb_param_* extraction layer:
+    Standalone compile of such a block emits a typed module and a main call of
+    that module. The module reads settings with mb_param / mb_param_* and
+    forwards them to mb_block(), so a Set can call the same module with size,
+    offset, and direction. Customizer variables are the block properties:
 
-        mb_block(
+        mb__com__machineblocks__scad__bricks__Standard(
             config = mb_config,
             settings = [
                 ["size", size],
@@ -27,15 +28,28 @@
             ]
         );
 
-    This avoids the extra module call found in older hand-maintained SCAD
-    artifacts. Composite blocks with real inner structure (Wall, Calibrator)
-    still emit typed modules.
+        module mb__com__machineblocks__scad__bricks__Standard(config = undef, settings = undef) {
+            size = mb_param_size(config, settings, [4, 2, 3]);
+            studs = mb_param_studs(config, settings, true);
+            mb_block(
+                config = config,
+                settings = [
+                    ["size", size],
+                    ["studs", studs]
+                ]
+            );
+        }
 
-    Exactly one NativeBlock child uses this direct call. Zero children returns
-    files: [] and diagnostic MB_EMPTY_BLOCK. Two or more children use the
-    composite module in CompositeRendering. A leaf parameter that is not a
-    property reference, or a default other than a boolean, number, string, or
-    SizeXYZ, returns files: [] and diagnostic BML_LEAF_VALUE_UNSUPPORTED.
+    Composite blocks with real inner structure (Wall, Calibrator) still emit
+    the wrapper module in CompositeRendering.
+
+    Exactly one NativeBlock child, and no bml:each, bml:if, or bml:with, uses
+    this module. A composition that carries those directives uses the composite
+    path so the directives can expand. Zero children returns files: [] and
+    diagnostic MB_EMPTY_BLOCK. Two or more children use the composite module.
+    A parameter this target cannot lower returns files: [] and diagnostic
+    BML_LEAF_VALUE_UNSUPPORTED. The file is not written with an undefined
+    variable in its place.
 
   </documentation>
   <references>

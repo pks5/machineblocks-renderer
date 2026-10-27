@@ -41,7 +41,7 @@ export class ScadSetProcessor implements BlockProcessor {
       return errorOutput(MB_LIB_PATH_MISSING, "targetOptions.machineblocks-v3-scad.mbLibPath is required.", blockSource(block));
     }
     if (hasDirectives(block)) {
-      return errorOutput(DIRECTIVE_DEFERRED, "bml:each, bml:if, and bml:with are not expanded in this implementation.", blockSource(block));
+      return errorOutput(DIRECTIVE_DEFERRED, "bml:each, bml:if, and bml:with are not expanded for a Set.", blockSource(block));
     }
     return renderSetFile(
       block,
@@ -49,6 +49,7 @@ export class ScadSetProcessor implements BlockProcessor {
       context.session.outputBasePath,
       mbLibPath,
       this.options.mapping,
+      context.session.typeRegistry,
     );
   }
 }
@@ -70,9 +71,6 @@ export class ScadBlockProcessor implements BlockProcessor {
     if (!mbLibPath) {
       return errorOutput(MB_LIB_PATH_MISSING, "targetOptions.machineblocks-v3-scad.mbLibPath is required.", blockSource(block));
     }
-    if (hasDirectives(block)) {
-      return errorOutput(DIRECTIVE_DEFERRED, "bml:each, bml:if, and bml:with are not expanded in this implementation.", blockSource(block));
-    }
     const parts = compositionChildren(block, "parts");
     const presets = compositionChildren(block, "presets");
     if (presets.length > 0 && parts.length === 0) {
@@ -82,8 +80,15 @@ export class ScadBlockProcessor implements BlockProcessor {
       return errorOutput(EMPTY_BLOCK, "A block with no children has nothing to render.", blockSource(block));
     }
     const only = parts.length === 1 ? parts[0] : undefined;
-    if (only?.kind === "blockInstance" && only.instance.typeFqn === NATIVE_BLOCK_FQN) {
-      return renderLeafFile(block, context.outputRelativePath, context.session.outputBasePath, mbLibPath);
+    if (!hasDirectives(block) && only?.kind === "blockInstance" && only.instance.typeFqn === NATIVE_BLOCK_FQN) {
+      return renderLeafFile(
+        block,
+        context.outputRelativePath,
+        context.session.outputBasePath,
+        mbLibPath,
+        context.session.typeRegistry,
+        this.options.mapping,
+      );
     }
     return renderCompositeFile(
       block,

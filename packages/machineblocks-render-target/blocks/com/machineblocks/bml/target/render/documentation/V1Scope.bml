@@ -34,8 +34,12 @@
 
     ScadBlockProcessor emits a leaf, a composite module, or a preset JSON file.
     ScadSetProcessor emits a SCAD file with a STEPS array and four view
-    submodules. A composition that carries bml:each, bml:if, or bml:with
-    returns files: [] and diagnostic BML_DIRECTIVE_DEFERRED.
+    submodules. Before that emit, on a working copy, bml:with becomes SCAD
+    assignments, bml:each over a count becomes a for-range, bml:each over a
+    list becomes list iteration, and bml:if / bml:unless become a SCAD if.
+    The canonical BOM is not rewritten. A directive shape this walk does not
+    know, including directives on a Set, returns files: [] and diagnostic
+    BML_DIRECTIVE_DEFERRED.
 
   </documentation>
   <references>

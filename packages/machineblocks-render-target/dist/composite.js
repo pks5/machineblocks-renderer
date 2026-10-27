@@ -1,5 +1,7 @@
+import { parseExpression, resolveEffectiveMembers } from "@blockml/framework";
 import { compositionChildren } from "./composition.js";
-import { LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
+import { DIRECTIVE_DEFERRED, FUNCTION_NO_RUNTIME, LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
+import { lowerExpression, propertyTypesOf } from "./lower.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
 import { mapManifestation, moduleNameForManifestation } from "./naming.js";
 import { isIdentifier, serializeLiteral } from "./serialize.js";
@@ -7,9 +9,14 @@ import { withSourceMap } from "./source-map.js";
 import { NATIVE_BLOCK_FQN, RENDER_TARGET_VERSION } from "./version.js";
 export function renderCompositeFile(block, outputRelativePath, outputBasePath, mbLibPath, registry, mapping) {
     const source = block.source ?? { file: "", line: 1, column: 1 };
+    const template = partsTemplate(block);
     const children = compositionChildren(block, "parts").flatMap((child) => child.kind === "blockInstance" ? [child.instance] : []);
     const nativeNames = nativePropertyNames(registry);
     const properties = block.members.filter((member) => member.kind === "property");
+    const ready = readyProperties(block, properties, nativeNames, registry, source);
+    if (isOutput(ready)) {
+        return ready;
+    }
     const root = mapManifestation(block.type, mapping, "selected");
     if (!root.ok) {
         return errorOutput(root.code, root.message, source);
@@ -19,33 +26,30 @@ export function renderCompositeFile(block, outputRelativePath, outputBasePath, m
     const outputDir = dirnamePosix(joinPosix(outputBasePath, outputRelativePath));
     const blockImport = relativePosix(outputDir, joinPosix(mbLibPath, "lib/block.scad"));
     const configImport = relativePosix(outputDir, joinPosix(mbLibPath, "config/mb_config.scad"));
-    const childBlocks = [];
+    const scope = {
+        registry,
+        block,
+        properties: propertyTypesOf(properties),
+        locals: new Set(),
+        source,
+    };
+    const rendered = template
+        ? renderWrapped(template.directives ?? [], template.children, scope, "        ")
+        : "";
+    if (isOutput(rendered)) {
+        return rendered;
+    }
     const partRows = [];
     let partsHaveSize = children.length > 0;
     for (const child of children) {
         const partId = literalText(child.id);
-        if (!partId || !isIdentifier(`part_${partId}`)) {
-            return errorOutput(LEAF_VALUE_UNSUPPORTED, "A composite child needs an identifier id.", child.source ?? source);
-        }
-        const settings = [
-            { parameter: "id", expression: `mb_block_id(blockId, part_${partId})` },
-            { parameter: "render", expression: `mb_group_render(renderGroups, group_${partId})` },
-        ];
-        for (const [parameter, member] of Object.entries(child.memberValues)) {
-            const expression = childExpression(block, partId, parameter, member, source);
-            if (typeof expression !== "string") {
-                return expression;
-            }
-            settings.push({ parameter, expression });
-        }
-        childBlocks.push(childRegion(partId, settings));
         const sizeLiteral = child.memberValues.size;
-        if (sizeLiteral?.kind === "literal" && serializeLiteral(sizeLiteral)) {
+        if (partId && sizeLiteral?.kind === "literal" && serializeLiteral(sizeLiteral, { registry })) {
             const direction = literalText(child.memberValues.direction) ?? "west";
-            const offset = sizeLiteral && child.memberValues.offset?.kind === "literal"
-                ? serializeLiteral(child.memberValues.offset) ?? "[0, 0, 0]"
+            const offset = child.memberValues.offset?.kind === "literal"
+                ? serializeLiteral(child.memberValues.offset, { registry }) ?? "[0, 0, 0]"
                 : "[0, 0, 0]";
-            partRows.push(`    ["${partId}", ${serializeLiteral(sizeLiteral)}, "${direction}", ${offset}]`);
+            partRows.push(`    ["${partId}", ${serializeLiteral(sizeLiteral, { registry })}, "${direction}", ${offset}]`);
         }
         else {
             partsHaveSize = false;
@@ -55,23 +59,25 @@ export function renderCompositeFile(block, outputRelativePath, outputBasePath, m
     const partsLine = !declaresSize && partsHaveSize
         ? `    parts = [\n${partRows.join(",\n")}\n    ];\n    size = mb_parts_total_size(parts);\n`
         : "";
+    const passed = ready.filter((property) => property.scad !== undefined);
     const content = `${header(block, filename)}
+
 /* Imports */
 use <${blockImport}>;
 include <${configImport}>;
 
 /* Customization */
-${customizerLines(properties)}
+${customizerLines(passed)}
 
 /* Main Module Call */
 ${moduleName}(
     config = mb_config,
-    settings = [${settingsBody(properties.map((property) => `        ["${property.name}", ${property.name}]`))}]
+    settings = [${settingsBody(passed.map((property) => `        ["${property.name}", ${property.name}]`))}]
 );
 
 /* Main Module Definition */
 module ${moduleName}(config = undef, settings = undef) {
-${propertyGetters(properties, nativeNames)}
+${propertyGetters(ready)}
     blockId = mb_param_id(config, settings, "${block.type}");
 ${fixedGetters(properties)}
     assembly = mb_assembly(config, settings, size, direction);
@@ -88,7 +94,7 @@ ${partsLine}    mb_block(
             ["direction", direction]
         ]
     ) {
-${childBlocks.join("\n")}
+${rendered}
     }
 }
 
@@ -98,80 +104,225 @@ ${childBlocks.join("\n")}
 `;
     return { files: [withSourceMap(block, { path: outputRelativePath, content })] };
 }
-function childExpression(block, partId, parameter, member, source) {
+function renderWrapped(directives, nodes, scope, indent) {
+    return applyDirectives(directives, scope, indent, (inner, innerIndent) => renderNodes(nodes, inner, innerIndent));
+}
+function renderNodes(nodes, scope, indent) {
+    const parts = [];
+    for (const node of nodes) {
+        const rendered = renderNode(node, scope, indent);
+        if (isOutput(rendered)) {
+            return rendered;
+        }
+        parts.push(rendered);
+    }
+    return parts.join("\n");
+}
+function renderNode(node, scope, indent) {
+    return applyDirectives(node.directives ?? [], scope, indent, (inner, innerIndent) => {
+        if (node.kind === "virtualContainer") {
+            return renderNodes(node.children, inner, innerIndent);
+        }
+        return renderInstance(node.instance, inner, innerIndent);
+    });
+}
+function applyDirectives(directives, scope, indent, body) {
+    const each = directives.find((directive) => directive.type === "each");
+    const guard = directives.find((directive) => directive.type === "if" || directive.type === "unless");
+    const withs = directives.flatMap((directive) => (directive.type === "with" ? directive.bindings : []));
+    if (each && (each.variables.length !== 1 || !each.variables[0] || !isIdentifier(each.variables[0]))) {
+        return errorOutput(DIRECTIVE_DEFERRED, "bml:each needs one identifier variable.", scope.source);
+    }
+    const layers = (each ? 1 : 0) + (guard ? 1 : 0);
+    const innerIndent = `${indent}${"    ".repeat(layers)}`;
+    const locals = new Set(scope.locals);
+    if (each?.variables[0]) {
+        locals.add(each.variables[0]);
+    }
+    let cursor = { ...scope, locals };
+    const assignments = [];
+    for (const binding of withs) {
+        if (!isIdentifier(binding.name) || binding.value.raw.trim().length === 0) {
+            return errorOutput(DIRECTIVE_DEFERRED, "bml:with binding cannot be lowered.", scope.source);
+        }
+        const lowered = lowerExpression(binding.value.raw, lowerScope(cursor));
+        if (!lowered.ok) {
+            return errorOutput(lowered.code, lowered.message, binding.value.source ?? scope.source);
+        }
+        assignments.push(`${innerIndent}${binding.name} = ${lowered.scad};`);
+        locals.add(binding.name);
+        cursor = { ...cursor, locals: new Set(locals) };
+    }
+    const rendered = body(cursor, innerIndent);
+    if (isOutput(rendered)) {
+        return rendered;
+    }
+    let text = `${assignments.join("\n")}${assignments.length > 0 && rendered ? "\n" : ""}${rendered}`;
+    if (guard) {
+        const lowered = lowerExpression(guard.condition.raw, lowerScope(scope));
+        if (!lowered.ok) {
+            return errorOutput(lowered.code, lowered.message, guard.condition.source ?? scope.source);
+        }
+        const test = guard.type === "unless" ? `!(${lowered.scad})` : lowered.scad;
+        const guardIndent = `${indent}${"    ".repeat(each ? 1 : 0)}`;
+        text = `${guardIndent}if (${test}) {\n${text}\n${guardIndent}}`;
+    }
+    if (each?.variables[0]) {
+        const collection = eachCollection(each, scope);
+        if (isOutput(collection)) {
+            return collection;
+        }
+        text = `${indent}${collection}\n${text}\n${indent}}`;
+    }
+    return text;
+}
+function eachCollection(each, scope) {
+    const lowered = lowerExpression(each.collection.raw, lowerScope(scope));
+    if (!lowered.ok) {
+        return errorOutput(lowered.code, lowered.message, each.collection.source ?? scope.source);
+    }
+    const parsed = parseExpression(each.collection.raw);
+    const list = parsed.ok && parsed.result.ast.kind === "array";
+    const variable = each.variables[0];
+    if (list) {
+        return `for (${variable} = ${lowered.scad}) {`;
+    }
+    return `for (${variable} = [0 : ${lowered.scad} - 1]) {`;
+}
+function renderInstance(instance, scope, indent) {
+    const partId = literalText(instance.id);
+    if (!partId || !isIdentifier(`part_${partId}`)) {
+        return errorOutput(LEAF_VALUE_UNSUPPORTED, "A composite child needs an identifier id.", instance.source ?? scope.source);
+    }
+    const group = `group_${partId}`;
+    const settings = [
+        { parameter: "id", expression: `mb_block_id(blockId, part_${partId})` },
+        { parameter: "render", expression: `mb_group_render(renderGroups, group_${partId})` },
+    ];
+    for (const [parameter, member] of Object.entries(instance.memberValues)) {
+        const expression = childExpression(scope, instance, partId, parameter, member);
+        if (isOutput(expression)) {
+            return expression;
+        }
+        settings.push({ parameter, expression });
+    }
+    const body = settings
+        .map((setting) => `${indent}        ["${setting.parameter}", ${setting.expression}]`)
+        .join(",\n");
+    return `${indent}part_${partId} = "${partId}";
+${indent}group_${partId} = part_${partId};
+${indent}ns_${partId} = part_${partId};
+${indent}mb_block(
+${indent}    config = config,
+${indent}    settings = [
+${body}
+${indent}    ]
+${indent});`;
+}
+function childExpression(scope, instance, partId, parameter, member) {
     const group = `group_${partId}`;
     const namespace = `ns_${partId}`;
-    if (member.kind === "expression") {
-        if (!isIdentifier(member.raw)) {
-            return errorOutput(LEAF_VALUE_UNSUPPORTED, `Parameter ${parameter} must be a property reference or a literal.`, member.source ?? source);
-        }
-        const variable = member.raw.trim();
-        if (parameter === "offset") {
-            return `mb_assembly_offset(${variable}, assembly, renderGroups, ${group})`;
-        }
-        if (parameter === "baseAdjustment") {
-            return `mb_params_filter(${variable}, ${namespace})`;
-        }
-        if (parameter === "baseCutoutType" && propertyDefaultText(block, variable) === "groove") {
-            return `mb_assembly_groove(assembly, renderGroups, ${group})`;
-        }
-        if (parameter === "tongue" && propertyDefaultText(block, variable) === "true") {
-            return `mb_assembly_tongue(assembly, renderGroups, ${group})`;
-        }
-        return variable;
-    }
-    if (member.kind !== "literal") {
-        return errorOutput(LEAF_VALUE_UNSUPPORTED, `Parameter ${parameter} is not a literal.`, source);
-    }
-    if (parameter === "baseCutoutType" && member.value === "groove") {
-        return `mb_assembly_groove(assembly, renderGroups, ${group})`;
-    }
-    if (parameter === "tongue" && member.value === true) {
-        return `mb_assembly_tongue(assembly, renderGroups, ${group})`;
+    const parameterType = propertyOn(instance.typeFqn, parameter, scope.registry);
+    const lowered = member.kind === "expression"
+        ? lowerExpression(member.raw, {
+            ...lowerScope(scope),
+            typeFqn: parameterType.typeFqn,
+            type: parameterType.type,
+        })
+        : member.kind === "literal"
+            ? lowerExpressionLiteral(member.value, parameterType, scope)
+            : { ok: false, code: LEAF_VALUE_UNSUPPORTED, message: `Parameter ${parameter} is not a literal.` };
+    if (!lowered.ok) {
+        return errorOutput(lowered.code, lowered.message, ("source" in member ? member.source : undefined) ?? instance.source ?? scope.source);
     }
     if (parameter === "offset") {
-        const literal = serializeLiteral(member);
-        if (!literal) {
-            return errorOutput(LEAF_VALUE_UNSUPPORTED, "offset cannot be serialized.", source);
-        }
-        return `mb_assembly_offset(${literal}, assembly, renderGroups, ${group})`;
+        return `mb_assembly_offset(${lowered.scad}, assembly, renderGroups, ${group})`;
     }
-    if (parameter === "baseAdjustment") {
-        const literal = serializeLiteral(member);
-        if (!literal) {
-            return errorOutput(LEAF_VALUE_UNSUPPORTED, "baseAdjustment cannot be serialized.", source);
-        }
-        return literal;
+    if (parameter === "baseAdjustment" && isIdentifier(lowered.scad)) {
+        return `mb_params_filter(${lowered.scad}, ${namespace})`;
     }
-    const literal = serializeLiteral(member);
-    if (!literal) {
-        return errorOutput(LEAF_VALUE_UNSUPPORTED, `Parameter ${parameter} cannot be serialized.`, source);
+    if (parameter === "baseCutoutType" && cutoutToken(lowered.scad, scope.block, member) === "groove") {
+        return `mb_assembly_groove(assembly, renderGroups, ${group})`;
     }
-    return literal;
+    if (parameter === "tongue" && tongueEnabled(lowered.scad, scope.block, member)) {
+        return `mb_assembly_tongue(assembly, renderGroups, ${group})`;
+    }
+    return lowered.scad;
 }
-function childRegion(partId, settings) {
-    const body = settings
-        .map((setting) => `                ["${setting.parameter}", ${setting.expression}]`)
-        .join(",\n");
-    return `        part_${partId} = "${partId}";
-        group_${partId} = part_${partId};
-        ns_${partId} = part_${partId};
-        mb_block(
-            config = config,
-            settings = [
-${body}
-            ]
-        );`;
+function lowerExpressionLiteral(value, parameterType, scope) {
+    const outcome = serializeLiteralValue(value, parameterType, scope.registry);
+    if (!outcome) {
+        return { ok: false, code: LEAF_VALUE_UNSUPPORTED, message: "Parameter cannot be serialized." };
+    }
+    return { ok: true, scad: outcome, constant: true };
 }
-function propertyGetters(properties, nativeNames) {
+function serializeLiteralValue(value, parameterType, registry) {
+    const outcome = serializeLiteral({ kind: "literal", value, typeFqn: parameterType.typeFqn ?? "" }, { registry, typeFqn: parameterType.typeFqn, type: parameterType.type });
+    return outcome;
+}
+function cutoutToken(scad, block, member) {
+    const direct = unquote(scad);
+    if (direct) {
+        return direct;
+    }
+    if (member.kind === "expression" && isIdentifier(member.raw)) {
+        return unquote(propertyScad(block, member.raw.trim()));
+    }
+    return undefined;
+}
+function tongueEnabled(scad, block, member) {
+    if (scad === "true") {
+        return true;
+    }
+    return member.kind === "expression" && isIdentifier(member.raw) && propertyScad(block, member.raw.trim()) === "true";
+}
+function propertyScad(block, name) {
+    const property = block.members.find((member) => member.kind === "property" && member.name === name);
+    if (!property?.value || property.value.kind !== "literal") {
+        return undefined;
+    }
+    return serializeLiteral(property.value, { typeFqn: property.typeFqn, type: property.type });
+}
+function readyProperties(block, properties, nativeNames, registry, source) {
+    const scope = {
+        registry,
+        properties: propertyTypesOf(properties),
+        locals: new Set(),
+    };
+    const ready = [];
+    for (const property of properties) {
+        const native = nativeNames.has(property.name);
+        if (!property.value) {
+            ready.push({ name: property.name, constant: false, native });
+            continue;
+        }
+        if (property.value.kind !== "literal" && property.value.kind !== "expression") {
+            return errorOutput(LEAF_VALUE_UNSUPPORTED, `Property ${property.name} cannot be serialized.`, property.source ?? source);
+        }
+        const lowered = property.value.kind === "expression"
+            ? lowerExpression(property.value.raw, { ...scope, typeFqn: property.typeFqn || undefined, type: property.type })
+            : lowerExpressionLiteral(property.value.value, { typeFqn: property.typeFqn || undefined, type: property.type }, {
+                registry,
+                block,
+                properties: scope.properties,
+                locals: new Set(),
+                source,
+            });
+        if (!lowered.ok) {
+            return errorOutput(lowered.code === FUNCTION_NO_RUNTIME ? FUNCTION_NO_RUNTIME : LEAF_VALUE_UNSUPPORTED, lowered.message, ("source" in property.value ? property.value.source : undefined) ?? property.source ?? source);
+        }
+        ready.push({ name: property.name, scad: lowered.scad, constant: lowered.constant, native });
+    }
+    return ready;
+}
+function propertyGetters(properties) {
     return properties
         .map((property) => {
-        const fallback = property.value?.kind === "literal" ? serializeLiteral(property.value) : undefined;
-        const suffix = fallback === undefined ? "" : `, ${fallback}`;
-        if (nativeNames.has(property.name)) {
-            return `    ${property.name} = mb_param_${property.name}(config, settings${suffix});`;
+        const fallback = property.constant && property.scad !== undefined ? `, ${property.scad}` : "";
+        if (property.native) {
+            return `    ${property.name} = mb_param_${property.name}(config, settings${fallback});`;
         }
-        return `    ${property.name} = mb_param(config, settings, "${property.name}"${suffix});`;
+        return `    ${property.name} = mb_param(config, settings, "${property.name}"${fallback});`;
     })
         .join("\n");
 }
@@ -184,11 +335,7 @@ function fixedGetters(properties) {
 }
 function customizerLines(properties) {
     return properties
-        .map((property) => {
-        const value = property.value?.kind === "literal" ? serializeLiteral(property.value) : undefined;
-        return value === undefined ? undefined : `${property.name} = ${value};`;
-    })
-        .filter((line) => line !== undefined)
+        .flatMap((property) => (property.scad === undefined ? [] : [`${property.name} = ${property.scad};`]))
         .join("\n");
 }
 function settingsBody(lines) {
@@ -197,18 +344,51 @@ function settingsBody(lines) {
     }
     return `\n${lines.join(",\n")}\n    `;
 }
-function propertyDefaultText(block, name) {
-    const property = block.members.find((member) => member.kind === "property" && member.name === name);
-    if (!property?.value || property.value.kind !== "literal") {
-        return undefined;
+function partsTemplate(block) {
+    for (const composition of block.compositions) {
+        if (composition.aggregationName === "parts") {
+            return composition;
+        }
     }
-    return String(property.value.value);
+    for (const member of block.members) {
+        if (member.kind === "aggregation" && member.name === "parts" && member.composition) {
+            return member.composition;
+        }
+    }
+    return undefined;
+}
+function propertyOn(typeFqn, name, registry) {
+    const definition = registry.get(typeFqn)?.block;
+    if (!definition) {
+        return {};
+    }
+    const property = resolveEffectiveMembers(definition, registry).find((member) => member.kind === "property" && member.name === name);
+    if (!property || property.kind !== "property") {
+        return {};
+    }
+    return { typeFqn: property.typeFqn || undefined, type: property.type };
+}
+function lowerScope(scope) {
+    return {
+        registry: scope.registry,
+        properties: scope.properties,
+        locals: scope.locals,
+    };
 }
 function literalText(value) {
     if (!value || value.kind !== "literal" || typeof value.value !== "string") {
         return undefined;
     }
     return value.value;
+}
+function unquote(value) {
+    if (!value || !value.startsWith('"') || !value.endsWith('"')) {
+        return undefined;
+    }
+    return value.slice(1, -1);
+}
+function isOutput(value) {
+    return typeof value === "object" && value !== null && "files" in value;
 }
 export function nativePropertyNames(registry) {
     const names = new Set();
