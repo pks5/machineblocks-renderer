@@ -14,7 +14,7 @@
     The MachineBlocks host CLI library catalog
   </is>
   <version>
-    0.1.5
+    0.1.6
   </version>
   <documentation>
     Publishable host-CLI library (com.machineblocks.bml.cli.Library).
