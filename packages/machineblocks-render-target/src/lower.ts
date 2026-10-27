@@ -24,8 +24,10 @@ const INDEX_FIELDS: Record<string, readonly string[]> = {
   "com.machineblocks.bml.type.SelectiveGrid": ["start", "end", "value"],
 };
 
+const WALL_GAP = "com.machineblocks.bml.type.WallGap";
+
 const FIELD_TYPES: Record<string, Record<string, string>> = {
-  "com.machineblocks.bml.type.WallGap": { face: "com.machineblocks.bml.type.FaceAxisXY" },
+  [WALL_GAP]: { face: "com.machineblocks.bml.type.FaceAxisXY" },
   "com.machineblocks.bml.type.SelectiveGrid": {
     start: "com.machineblocks.bml.type.AxisXY",
     end: "com.machineblocks.bml.type.AxisXY",
@@ -136,7 +138,7 @@ function lowerNode(node: ExpressionNode, scope: LowerScope): Lowered | LowerErro
 }
 
 function lowerList(elements: readonly ExpressionNode[], scope: LowerScope): Lowered | LowerError {
-  const elementScope = untyped(scope);
+  const elementScope = listElementScope(scope);
   const parts: string[] = [];
   let constant = true;
   for (const element of elements) {
@@ -171,6 +173,9 @@ function lowerObject(entries: Record<string, ExpressionNode>, scope: LowerScope)
     if (outcome.ok) {
       return { ok: true, scad: outcome.scad, constant: true };
     }
+  }
+  if (isWallGap(scope.typeFqn)) {
+    return lowerDynamicWallGap(dynamic);
   }
   const fields = indexFields(scope.typeFqn) ?? Object.keys(entries);
   const parts: string[] = [];
@@ -254,6 +259,53 @@ function enumConstant(name: string, scope: LowerScope): string | undefined {
     return undefined;
   }
   return outcome.scad;
+}
+
+function listElementScope(scope: LowerScope): LowerScope {
+  const type = scope.type;
+  if (type?.kind === "named" && type.multiplicity) {
+    return {
+      ...scope,
+      typeFqn: type.fqn,
+      type: {
+        kind: "named",
+        fqn: type.fqn,
+        ...(type.typeArguments ? { typeArguments: type.typeArguments } : {}),
+      },
+    };
+  }
+  if (type?.kind === "grouped" && type.multiplicity) {
+    const inner = type.expression;
+    return { ...scope, type: inner, typeFqn: inner.kind === "named" ? inner.fqn : undefined };
+  }
+  return untyped(scope);
+}
+
+function lowerDynamicWallGap(dynamic: Record<string, Lowered>): Lowered | LowerError {
+  const face = dynamic.face;
+  if (!face) {
+    return { ok: false, code: LEAF_VALUE_UNSUPPORTED, message: "Expression object is missing face." };
+  }
+  const pos = dynamic.pos ?? dynamic.position;
+  const len = dynamic.len ?? dynamic.length;
+  const lenIsFull = !len || (len.constant && (len.scad === '"full"' || len.scad === '"Full"'));
+  const posScad = pos?.scad ?? "0";
+  const posConstant = pos ? pos.constant : true;
+  if (lenIsFull && (!pos || (pos.constant && pos.scad === "0"))) {
+    return { ok: true, scad: `[${face.scad}]`, constant: face.constant };
+  }
+  if (lenIsFull || !len) {
+    return { ok: true, scad: `[${face.scad}, ${posScad}]`, constant: face.constant && posConstant };
+  }
+  return {
+    ok: true,
+    scad: `[${face.scad}, ${posScad}, ${len.scad}]`,
+    constant: face.constant && posConstant && len.constant,
+  };
+}
+
+function isWallGap(typeFqn: string | undefined): boolean {
+  return typeFqn?.split("(")[0]?.trim() === WALL_GAP;
 }
 
 function fieldScope(scope: LowerScope, field: string): LowerScope {

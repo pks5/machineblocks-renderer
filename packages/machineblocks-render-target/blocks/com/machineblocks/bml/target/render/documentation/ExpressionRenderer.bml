@@ -44,6 +44,11 @@
     - withVariable -> SCAD local from the bml:with scope
     - #math.min(a, b) / #math.max(a, b) -> min / max via the native map
 
+    A list element keeps the element type. An enum member on a typed field
+    resolves to the catalog token when a sibling field is dynamic. WallGap
+    face: Y in [{face: Y, len: size.z - 1}] emits "y". A missing pos is 0,
+    the same shape as a constant WallGap.
+
     V1 does not execute @bean calls or model bindings as SCAD. A TypeScript
     implementation whose arguments are all literals is evaluated at compile
     time and emitted as that literal. Any other @bean call is not emitted;

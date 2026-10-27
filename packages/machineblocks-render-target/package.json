@@ -28,16 +28,16 @@
   },
   "dependencies": {
     "@blockml/block-render-engine": "^0.1.6",
-    "@blockml/bom": "^0.9.17",
-    "@blockml/compiler": "^0.9.17",
+    "@blockml/bom": "^0.9.18",
+    "@blockml/compiler": "^0.9.18",
     "@blockml/core": "^1.4.6"
   },
   "peerDependencies": {
     "@machineblocks/core": "^3.0.0-A5"
   },
   "devDependencies": {
-    "@blockml/framework": "^0.9.17",
-    "@blockml/parser": "^0.9.17"
+    "@blockml/framework": "^0.9.18",
+    "@blockml/parser": "^0.9.18"
   },
   "engines": {
     "node": ">=20"

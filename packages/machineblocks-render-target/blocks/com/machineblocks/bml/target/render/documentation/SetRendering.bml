@@ -28,8 +28,11 @@
         [instanceId, boundingBox, direction, offset]
 
     - [0] instanceId — string from the placed instance id
-    - [1] boundingBox — [x, y, z] from the instance size literal, otherwise
-      the placed type's size property default. Preset merge is not applied.
+    - [1] boundingBox — [x, y, z] from the instance size, otherwise the placed
+      type's size property default. A literal is copied. A constant expression
+      is evaluated from that part's property values; a placement value overrides
+      the type default of the same name. Preset merge is not applied. An
+      expression that still depends on a runtime value counts as missing.
     - [2] direction — "west" | "north" | "east" | "south"
     - [3] offset — [x, y, z]
 
@@ -65,8 +68,8 @@
     prefix of that list whose index is less than or equal to the customizer
     variable step. When _steps is absent, STEPS follows _parts document order.
     A missing direction defaults to "west". A missing offset defaults to
-    [0, 0, 0]. A missing id or size returns files: [] and diagnostic
-    BML_SET_PART_INCOMPLETE.
+    [0, 0, 0]. A missing id, a missing size, or a size expression that is not
+    constant returns files: [] and diagnostic BML_SET_PART_INCOMPLETE.
 
     Set customizer variables:
 

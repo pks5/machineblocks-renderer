@@ -286,4 +286,83 @@ describe("emit gaps", () => {
     );`);
     expect(content).not.toContain("translate(");
   });
+
+  it("evaluates a constant size expression from the placed type", () => {
+    const tower = `<bricks:Tower xmlns="http://blockml.org/bml" xmlns:bricks="com.machineblocks.bml.bricks" xmlns:type="org.blockml.bml.type" xmlns:mbt="com.machineblocks.bml.type">
+  <properties>
+    <levels type="type:Integer"><value>2</value></levels>
+    <size type="mbt:SizeXYZ"><value>\${ {x: 6, y: 6, z: levels * 3 + 1} }</value></size>
+  </properties>
+</bricks:Tower>`;
+    const result = render(
+      `<?xml version="1.0"?>
+<sets:Kit xmlns="http://blockml.org/bml"
+  xmlns:bml="org.blockml.bml.annotation.BmlAnnotation"
+  xmlns:sets="com.example.bml.sets"
+  xmlns:mbcore="com.machineblocks.bml.core"
+  xmlns:bricks="com.machineblocks.bml.bricks">
+  <baseType>mbcore:Set</baseType>
+  <aggregations>
+    <_parts override="true">
+      <composition>
+        <bricks:Tower bml:id="00001" />
+        <bricks:Tower bml:id="00002" levels="3" />
+        <bricks:Tower bml:id="00003" size="{x:1,y:1,z:1}" />
+      </composition>
+    </_parts>
+  </aggregations>
+</sets:Kit>`,
+      "kit.bml",
+      [document(tower, "tower.bml")],
+    );
+    expect(result.diagnostics ?? []).toEqual([]);
+    const content = result.files[0]?.content ?? "";
+    expect(content).toContain('["00001", [6, 6, 7], "west", [0, 0, 0]]');
+    expect(content).toContain('["00002", [6, 6, 10], "west", [0, 0, 0]]');
+    expect(content).toContain('["00003", [1, 1, 1], "west", [0, 0, 0]]');
+  });
+
+  it("reports a size expression that still depends on a runtime value", () => {
+    const open = `<bricks:Open xmlns="http://blockml.org/bml" xmlns:bricks="com.machineblocks.bml.bricks" xmlns:mbt="com.machineblocks.bml.type">
+  <properties>
+    <size type="mbt:SizeXYZ"><value>\${ {x: width, y: 6, z: 7} }</value></size>
+  </properties>
+</bricks:Open>`;
+    const result = render(
+      `<?xml version="1.0"?>
+<sets:Kit xmlns="http://blockml.org/bml"
+  xmlns:bml="org.blockml.bml.annotation.BmlAnnotation"
+  xmlns:sets="com.example.bml.sets"
+  xmlns:mbcore="com.machineblocks.bml.core"
+  xmlns:bricks="com.machineblocks.bml.bricks">
+  <baseType>mbcore:Set</baseType>
+  <aggregations>
+    <_parts override="true">
+      <composition>
+        <bricks:Open bml:id="00001" />
+      </composition>
+    </_parts>
+  </aggregations>
+</sets:Kit>`,
+      "kit.bml",
+      [document(open, "open.bml")],
+    );
+    expect(result.files).toEqual([]);
+    expect(result.diagnostics?.map((diagnostic) => diagnostic.code)).toEqual(["BML_SET_PART_INCOMPLETE"]);
+  });
+
+  it("resolves an enum member in a dynamic wall-gap list", () => {
+    const result = render(
+      leaf(
+        `<size type="mbt:SizeXYZ"><value>{x: 4, y: 2, z: 3}</value></size>
+         <gaps type="mbt:WallGap[]"><value>\${ [{face: Y, len: size.z - 1}, {face: 'Y', pos: 1, len: size.z}] }</value></gaps>`,
+        "",
+      ),
+      "plate.bml",
+      enums,
+    );
+    expect(result.diagnostics ?? []).toEqual([]);
+    const content = result.files[0]?.content ?? "";
+    expect(content).toContain('gaps = [["y", 0, (size[2] - 1)], ["y", 1, size[2]]];');
+  });
 });

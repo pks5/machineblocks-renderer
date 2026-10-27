@@ -1,11 +1,11 @@
 import type { BlockDefinition, BlockInstance, LiteralValue, PropertyDefinition } from "@blockml/bom";
 import type { RenderContext, RenderOutput } from "@blockml/compiler";
-import { resolveEffectiveMembers } from "@blockml/framework";
+import { evaluateExpression, parseExpression, resolveEffectiveMembers, type ExpressionScope } from "@blockml/framework";
 import { compositionChildren } from "./composition.js";
 import { SET_PART_INCOMPLETE, errorOutput } from "./diagnostics.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
 import { mapManifestation, moduleNameForManifestation, pathForManifestation, type ManifestationMapping } from "./naming.js";
-import { serializeLiteral } from "./serialize.js";
+import { serializeLiteral, serializeTyped } from "./serialize.js";
 import { withSourceMap } from "./source-map.js";
 import { RENDER_TARGET_VERSION } from "./version.js";
 
@@ -168,34 +168,94 @@ function placementOf(
   registry: Registry,
 ): Placement | RenderOutput {
   const id = literalString(instance.id);
-  const size = placedValue(instance, "size", registry) ?? typeDefault(instance.typeFqn, "size", registry);
+  const size = memberScad(instance, "size", registry);
   if (!id || !size) {
     return errorOutput(SET_PART_INCOMPLETE, "A placed part needs an id and a size.", instance.source ?? source);
   }
-  const direction = placedValue(instance, "direction", registry) ?? '"west"';
-  const offset = placedValue(instance, "offset", registry) ?? "[0, 0, 0]";
+  const direction = memberScad(instance, "direction", registry) ?? '"west"';
+  const offset = memberScad(instance, "offset", registry) ?? "[0, 0, 0]";
   return { id, typeFqn: instance.typeFqn, size, direction, offset };
 }
 
-function placedValue(instance: BlockInstance, name: string, registry: Registry): string | undefined {
-  const member = instance.memberValues[name];
-  if (!member || member.kind !== "literal") {
+function memberScad(instance: BlockInstance, name: string, registry: Registry): string | undefined {
+  const property = propertyOn(instance.typeFqn, name, registry);
+  const member = instance.memberValues[name] ?? property?.value;
+  if (!member) {
     return undefined;
   }
-  const property = propertyOn(instance.typeFqn, name, registry);
-  return serializeLiteral(member, {
-    registry,
-    typeFqn: property?.typeFqn || member.typeFqn,
-    type: property?.type,
-  });
+  if (member.kind === "literal") {
+    return serializeLiteral(member, {
+      registry,
+      typeFqn: property?.typeFqn || member.typeFqn,
+      type: property?.type,
+    });
+  }
+  if (member.kind !== "expression") {
+    return undefined;
+  }
+  const parsed = parseExpression(member.raw);
+  if (!parsed.ok) {
+    return undefined;
+  }
+  try {
+    const value = evaluateExpression(parsed.result.ast, bindingScope(instance, registry));
+    const outcome = serializeTyped(value, {
+      registry,
+      typeFqn: property?.typeFqn,
+      type: property?.type,
+    });
+    return outcome.ok ? outcome.scad : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
-function typeDefault(typeFqn: string, name: string, registry: Registry): string | undefined {
-  const property = propertyOn(typeFqn, name, registry);
-  if (!property?.value || property.value.kind !== "literal") {
-    return undefined;
+function bindingScope(instance: BlockInstance, registry: Registry): ExpressionScope {
+  const cache = new Map<string, unknown>();
+  const pending = new Set<string>();
+  const scope: ExpressionScope = new Proxy({} as ExpressionScope, {
+    has(_target, key) {
+      return typeof key === "string" && read(key) !== undefined;
+    },
+    get(_target, key) {
+      return typeof key === "string" ? read(key) : undefined;
+    },
+  });
+
+  function read(name: string): unknown {
+    if (cache.has(name)) {
+      return cache.get(name);
+    }
+    if (pending.has(name)) {
+      return undefined;
+    }
+    const property = propertyOn(instance.typeFqn, name, registry);
+    const member = instance.memberValues[name] ?? property?.value;
+    if (!member) {
+      return undefined;
+    }
+    pending.add(name);
+    let value: unknown;
+    if (member.kind === "literal") {
+      value = member.value;
+    } else if (member.kind === "expression") {
+      const parsed = parseExpression(member.raw);
+      if (parsed.ok) {
+        try {
+          value = evaluateExpression(parsed.result.ast, scope);
+        } catch {
+          value = undefined;
+        }
+      }
+    }
+    pending.delete(name);
+    if (value !== undefined) {
+      cache.set(name, value);
+    }
+    return value;
   }
-  return serializeLiteral(property.value, { registry, typeFqn: property.typeFqn, type: property.type });
+
+  return scope;
 }
 
 function propertyOn(typeFqn: string, name: string, registry: Registry): PropertyDefinition | undefined {
