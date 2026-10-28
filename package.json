@@ -15,7 +15,7 @@
   },
   "devDependencies": {
     "@blockml/block-render-engine": "workspace:*",
-    "@blockml/cli": "^0.9.18",
+    "@blockml/cli": "^0.9.19",
     "@machineblocks/cli": "workspace:*",
     "@machineblocks/render-target": "workspace:*",
     "typescript": "^5.7.3",
@@ -23,6 +23,7 @@
   },
   "scripts": {
     "build": "npm run build -w @blockml/block-render-engine && npm run build -w @machineblocks/render-target && npm run build -w @machineblocks/cli",
+    "test": "vitest run",
     "validate": "blockml validate",
     "search:index": "blockml search index",
     "vbump:major": "node scripts/vbump.mjs major",

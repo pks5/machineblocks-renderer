@@ -16,7 +16,7 @@
     The MachineBlocks Renderer monorepo workspace library catalog
   </is>
   <version>
-    0.1.6
+    0.1.7
   </version>
   <documentation>
     Documentation and SSOT hub for the MachineBlocks Renderer monorepo.

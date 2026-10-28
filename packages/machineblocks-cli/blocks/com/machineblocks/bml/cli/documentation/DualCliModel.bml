@@ -15,7 +15,7 @@
 
     @blockml/cli (command: blockml), library org.blockml.bml.cli.*:
     - Universal toolchain: validate, compile blockdoc or xsd or fatblock, search,
-      graph, inspect, transform, new, init.
+      graph, inspect, transform, new, init, update.
     - Domain-agnostic. No MachineBlocks paths, no machineblocks-v3-scad built-in.
     - Reads blockml.config.json targets[] for toolchain targets.
     - Scope exclusions in that library list machineblocks-v3-scad registration
@@ -36,6 +36,12 @@
       Profile first, then the same install and AGENTS.md step as initProject.
       --no-install does not skip preflight. The universal init stays
       domain-agnostic.
+    - update rewrites @machineblocks/cli, @machineblocks/core, @blockml/cli, and
+      @blockml/core in an existing project's package.json to the versions of
+      this host, then runs npm install. It does not call updateProject. A
+      specifier that contains ":" stays. BML files, AGENTS.md, and CLAUDE.md
+      stay. --no-install skips npm install. The universal update stays on
+      blockml and pins only @blockml/cli and @blockml/core.
 
     Interop: a later plugin load (targetPackages in blockml.config.json mapping
     machineblocks-v3-scad to @machineblocks/render-target) may let the universal

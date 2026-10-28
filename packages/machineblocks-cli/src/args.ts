@@ -1,4 +1,4 @@
-export type HelpTopic = "validate" | "compile" | "init";
+export type HelpTopic = "validate" | "compile" | "init" | "update";
 
 export interface ValidateArgs {
   command: "validate";
@@ -20,11 +20,17 @@ export interface InitArgs {
   noInstall: boolean;
 }
 
+export interface UpdateArgs {
+  command: "update";
+  noInstall: boolean;
+}
+
 export type HostCommand =
   | { command: "help"; topic?: HelpTopic }
   | ValidateArgs
   | CompileArgs
   | InitArgs
+  | UpdateArgs
   | { command: "usage"; message: string; topic?: HelpTopic };
 
 export function parseArgs(argv: readonly string[]): HostCommand {
@@ -40,6 +46,9 @@ export function parseArgs(argv: readonly string[]): HostCommand {
   }
   if (command === "init") {
     return parseInit(rest);
+  }
+  if (command === "update") {
+    return parseUpdate(rest);
   }
   return { command: "usage", message: `Unknown command: ${command ?? ""}` };
 }
@@ -156,6 +165,24 @@ function parseInit(args: readonly string[]): HostCommand {
     parsed.srcDir = srcDir;
   }
   return parsed;
+}
+
+function parseUpdate(args: readonly string[]): HostCommand {
+  if (args.includes("--help")) {
+    return { command: "help", topic: "update" };
+  }
+  let noInstall = false;
+  for (const arg of args) {
+    if (arg === "--no-install") {
+      noInstall = true;
+      continue;
+    }
+    if (arg.startsWith("--")) {
+      return { command: "usage", message: `Unknown option: ${arg}`, topic: "update" };
+    }
+    return { command: "usage", message: `Unexpected argument: ${arg}`, topic: "update" };
+  }
+  return { command: "update", noInstall };
 }
 
 /** A final .* or .** segment denotes a package. An exact type FQN does not. */

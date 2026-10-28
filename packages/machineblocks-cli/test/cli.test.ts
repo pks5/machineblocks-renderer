@@ -276,7 +276,12 @@ describe("machineblocks init", () => {
     expect(agents).toContain("# BlockML Project Instructions");
     expect(agents).toContain("# Tools");
     expect(agents).toContain("# MachineBlocks CLI");
-    expect(agents).toContain("When a command exists on both CLIs, prefer `machineblocks`.");
+    expect(agents).toContain("`machineblocks` extends the BlockML CLI; it does not replace it.");
+    expect(agents).toContain(
+      "Use `machineblocks` for `validate`, `compile`, `init`, and `update`. Use `blockml` for model discovery, inspection, transformations, and other generic operations.",
+    );
+    expect(agents).toContain("## Validation and Compilation");
+    expect(agents).toContain("Do not use `blockml compile` for MachineBlocks SCAD generation");
     expect(agents.indexOf("# MachineBlocks CLI")).toBeGreaterThan(agents.indexOf("# Tools"));
     expect(agents.indexOf("# Rules")).toBeGreaterThan(agents.indexOf("# MachineBlocks CLI"));
     expect(result.lines.join("\n")).toContain("Created AGENTS.md");
@@ -375,6 +380,153 @@ describe("machineblocks init", () => {
   });
 });
 
+describe("machineblocks update", () => {
+  it("rewrites registry ranges to this host and skips install when --no-install is set", () => {
+    const root = blockmlProject({
+      dependencies: { "@blockml/core": "^1.0.0", "@machineblocks/core": "^1.0.0" },
+      devDependencies: { "@blockml/cli": "^0.1.0", "@machineblocks/cli": "^0.0.1" },
+    });
+    mkdirSync(join(root, "blocks"));
+    writeFileSync(join(root, "blocks/keep.bml"), "stay\n");
+    writeFileSync(join(root, "AGENTS.md"), "stay\n");
+    writeFileSync(join(root, "CLAUDE.md"), "stay\n");
+
+    const result = execute(["update", "--no-install"], root);
+
+    expect(result.code).toBe(0);
+    const pkg = readPackage(root);
+    expect(pkg.dependencies?.["@blockml/core"]).toBe(blockmlCoreRange());
+    expect(pkg.dependencies?.["@machineblocks/core"]).toBe(coreRange());
+    expect(pkg.devDependencies?.["@blockml/cli"]).toBe(blockmlCliRange());
+    expect(pkg.devDependencies?.["@machineblocks/cli"]).toBe(cliRange());
+    expect(result.lines.join("\n")).toContain(`Updated devDependencies.@machineblocks/cli from ^0.0.1 to ${cliRange()}`);
+    expect(result.lines.join("\n")).toContain("Next: npm install");
+    expect(existsSync(join(root, "node_modules"))).toBe(false);
+    expect(readFileSync(join(root, "blocks/keep.bml"), "utf8")).toBe("stay\n");
+    expect(readFileSync(join(root, "AGENTS.md"), "utf8")).toBe("stay\n");
+    expect(readFileSync(join(root, "CLAUDE.md"), "utf8")).toBe("stay\n");
+  });
+
+  it("adds missing pins in the init fields", () => {
+    const root = blockmlProject({});
+
+    const result = execute(["update", "--no-install"], root);
+
+    expect(result.code).toBe(0);
+    const pkg = readPackage(root);
+    expect(pkg.dependencies?.["@blockml/core"]).toBe(blockmlCoreRange());
+    expect(pkg.dependencies?.["@machineblocks/core"]).toBe(coreRange());
+    expect(pkg.devDependencies?.["@blockml/cli"]).toBe(blockmlCliRange());
+    expect(pkg.devDependencies?.["@machineblocks/cli"]).toBe(cliRange());
+    expect(result.lines.join("\n")).toContain(`Added devDependencies.@machineblocks/cli ${cliRange()}`);
+    expect(result.lines.join("\n")).toContain(`Added dependencies.@machineblocks/core ${coreRange()}`);
+  });
+
+  it("updates a pin that already lives in another dependency field", () => {
+    const root = blockmlProject({
+      dependencies: {
+        "@blockml/core": blockmlCoreRange(),
+        "@machineblocks/core": coreRange(),
+        "@machineblocks/cli": "^0.0.1",
+      },
+      devDependencies: { "@blockml/cli": blockmlCliRange() },
+    });
+
+    const result = execute(["update", "--no-install"], root);
+
+    expect(result.code).toBe(0);
+    const pkg = readPackage(root);
+    expect(pkg.dependencies?.["@machineblocks/cli"]).toBe(cliRange());
+    expect(pkg.devDependencies?.["@machineblocks/cli"]).toBeUndefined();
+    expect(result.lines.join("\n")).toContain(`Updated dependencies.@machineblocks/cli from ^0.0.1 to ${cliRange()}`);
+  });
+
+  it("leaves a specifier that contains a colon", () => {
+    const root = blockmlProject({
+      dependencies: { "@blockml/core": blockmlCoreRange(), "@machineblocks/core": "workspace:*" },
+      devDependencies: { "@blockml/cli": blockmlCliRange(), "@machineblocks/cli": cliRange() },
+    });
+
+    const result = execute(["update", "--no-install"], root);
+
+    expect(result.code).toBe(0);
+    expect(readPackage(root).dependencies?.["@machineblocks/core"]).toBe("workspace:*");
+    expect(result.lines.join("\n")).toContain("Left dependencies.@machineblocks/core at workspace:*");
+    expect(result.lines.join("\n")).not.toContain("Next: npm install");
+  });
+
+  it("leaves package.json byte for byte when the ranges already match", () => {
+    const root = blockmlProject({
+      dependencies: { "@blockml/core": blockmlCoreRange(), "@machineblocks/core": coreRange() },
+      devDependencies: { "@blockml/cli": blockmlCliRange(), "@machineblocks/cli": cliRange() },
+    });
+    const before = readFileSync(join(root, "package.json"), "utf8");
+
+    const skipped = execute(["update", "--no-install"], root);
+    expect(skipped.code).toBe(0);
+    expect(skipped.lines).toEqual(["package.json already matches this CLI."]);
+    expect(readFileSync(join(root, "package.json"), "utf8")).toBe(before);
+    expect(existsSync(join(root, "node_modules"))).toBe(false);
+
+    const installed = execute(["update"], root);
+    expect(installed.code).toBe(0);
+    expect(installed.lines).toEqual(["package.json already matches this CLI."]);
+    expect(existsSync(join(root, "node_modules"))).toBe(true);
+    expect(readFileSync(join(root, "package.json"), "utf8")).toBe(before);
+  });
+
+  it("writes nothing when the directory is not a BlockML project", () => {
+    const missing = emptyDir();
+    const missingResult = execute(["update", "--no-install"], missing);
+    expect(missingResult.code).toBe(2);
+    expect(missingResult.lines).toEqual(["Not a BlockML project. package.json is missing."]);
+    expect(existsSync(join(missing, "package.json"))).toBe(false);
+
+    const plain = emptyDir();
+    const original = `${JSON.stringify({ name: "app", dependencies: { "@machineblocks/core": "^1.0.0" } }, null, 2)}\n`;
+    writeFileSync(join(plain, "package.json"), original);
+    const plainResult = execute(["update"], plain);
+    expect(plainResult.code).toBe(2);
+    expect(plainResult.lines).toEqual(["Not a BlockML project. package.json has no blockml key."]);
+    expect(readFileSync(join(plain, "package.json"), "utf8")).toBe(original);
+    expect(existsSync(join(plain, "node_modules"))).toBe(false);
+
+    const broken = emptyDir();
+    writeFileSync(join(broken, "package.json"), "{");
+    const brokenResult = execute(["update"], broken);
+    expect(brokenResult.code).toBe(2);
+    expect(brokenResult.lines).toEqual(["Could not parse package.json."]);
+    expect(readFileSync(join(broken, "package.json"), "utf8")).toBe("{");
+  });
+
+  it("writes nothing when a dependency field cannot hold a pin", () => {
+    const root = emptyDir();
+    const original = `${JSON.stringify({ name: "app", blockml: {}, dependencies: [] })}\n`;
+    writeFileSync(join(root, "package.json"), original);
+
+    const result = execute(["update", "--no-install"], root);
+
+    expect(result.code).toBe(2);
+    expect(result.lines).toEqual(["Could not update package.json dependencies."]);
+    expect(readFileSync(join(root, "package.json"), "utf8")).toBe(original);
+  });
+
+  it("rejects an unexpected argument and an unknown option", () => {
+    const root = blockmlProject({});
+    const before = readFileSync(join(root, "package.json"), "utf8");
+
+    const positional = execute(["update", "now"], root);
+    expect(positional.code).toBe(2);
+    expect(positional.lines[0]).toBe("Unexpected argument: now");
+    expect(positional.lines.join("\n")).toContain("machineblocks update [--no-install]");
+
+    const option = execute(["update", "--force"], root);
+    expect(option.code).toBe(2);
+    expect(option.lines[0]).toBe("Unknown option: --force");
+    expect(readFileSync(join(root, "package.json"), "utf8")).toBe(before);
+  });
+});
+
 function hostPackage(): { version?: string; dependencies?: Record<string, string> } {
   return JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "../package.json"), "utf8")) as {
     version?: string;
@@ -388,6 +540,34 @@ function cliRange(): string {
 
 function coreRange(): string {
   return hostPackage().dependencies?.["@machineblocks/core"] ?? "";
+}
+
+function blockmlCliRange(): string {
+  return hostPackage().dependencies?.["@blockml/cli"] ?? "";
+}
+
+function blockmlCoreRange(): string {
+  return hostPackage().dependencies?.["@blockml/core"] ?? "";
+}
+
+function blockmlProject(pins: {
+  dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
+}): string {
+  const root = emptyDir();
+  writeFileSync(
+    join(root, "package.json"),
+    `${JSON.stringify(
+      {
+        name: "app",
+        blockml: { library: "./blocks/com/example/bml/Library.bml" },
+        ...pins,
+      },
+      null,
+      2,
+    )}\n`,
+  );
+  return root;
 }
 
 function emptyDir(): string {

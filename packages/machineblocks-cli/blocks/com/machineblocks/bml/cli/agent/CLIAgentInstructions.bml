@@ -42,7 +42,7 @@
 npx machineblocks <command>
 ```
 
-Use `machineblocks` for `validate`, `compile`, and `init`. Use `blockml` for model discovery, inspection, transformations, and other generic operations.
+Use `machineblocks` for `validate`, `compile`, `init`, and `update`. Use `blockml` for model discovery, inspection, transformations, and other generic operations.
 
 Run `npx machineblocks --help` and the command-specific `--help` before first use. Do not install or upgrade `@machineblocks/cli` unless asked. If the CLI is missing, report it and stop.
 

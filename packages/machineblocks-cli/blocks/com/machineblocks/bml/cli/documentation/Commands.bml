@@ -16,6 +16,8 @@
     • validate — parser + semantic check; no SCAD target; no output files
     • compile — render machineblocks-v3-scad for one type selector; writes under srcDir
     • init — scaffold a BlockML project and record the MachineBlocks profile
+    • update — point @machineblocks/cli, @machineblocks/core, @blockml/cli, and
+      @blockml/core at this host's versions
 
     Not on this host (use blockml when that package is installed): watch, search,
     scan, inspect, graph, transform, new, agents-md, xsd toggle, thumbnail generation.
@@ -33,5 +35,6 @@
     <see type="clidoc:ValidateCommand" relation="SeeAlso" />
     <see type="clidoc:CompileCommand" relation="SeeAlso" />
     <see type="clidoc:InitCommand" relation="SeeAlso" />
+    <see type="clidoc:UpdateCommand" relation="SeeAlso" />
   </references>
 </clidoc:Commands>

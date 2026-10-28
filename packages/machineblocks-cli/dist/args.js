@@ -12,6 +12,9 @@ export function parseArgs(argv) {
     if (command === "init") {
         return parseInit(rest);
     }
+    if (command === "update") {
+        return parseUpdate(rest);
+    }
     return { command: "usage", message: `Unknown command: ${command ?? ""}` };
 }
 function parseValidate(args) {
@@ -125,6 +128,23 @@ function parseInit(args) {
         parsed.srcDir = srcDir;
     }
     return parsed;
+}
+function parseUpdate(args) {
+    if (args.includes("--help")) {
+        return { command: "help", topic: "update" };
+    }
+    let noInstall = false;
+    for (const arg of args) {
+        if (arg === "--no-install") {
+            noInstall = true;
+            continue;
+        }
+        if (arg.startsWith("--")) {
+            return { command: "usage", message: `Unknown option: ${arg}`, topic: "update" };
+        }
+        return { command: "usage", message: `Unexpected argument: ${arg}`, topic: "update" };
+    }
+    return { command: "update", noInstall };
 }
 /** A final .* or .** segment denotes a package. An exact type FQN does not. */
 export function sourcePackageFromSelector(selector) {

@@ -44,7 +44,7 @@ npx blockml validate
 | `npm run validate` | `blockml validate` |
 | `npm run search:index` | `blockml search index` |
 
-`npx blockml` is the toolchain CLI used to check these libraries. The MachineBlocks user commands are `machineblocks init <package-fqn>` and `machineblocks compile <source-selector>`. Compile writes selected blocks to SCAD under the configured `srcDir`. How to stand up that command in another Node project is the next section.
+`npx blockml` is the toolchain CLI used to check these libraries. The MachineBlocks user commands are `machineblocks init <package-fqn>`, `machineblocks update`, and `machineblocks compile <source-selector>`. Compile writes selected blocks to SCAD under the configured `srcDir`. How to stand up that command in another Node project is the next section.
 
 Toolchain: `@blockml/cli` ^0.9.14, with the other `@blockml/*` 0.9 packages at 0.9.14. `@blockml/core` ^1.4.5. Domain library: `@machineblocks/core` ^3.0.0-A4.
 
@@ -76,6 +76,16 @@ npx @machineblocks/cli init com.example.bml
 `@machineblocks/cli` depends on `@machineblocks/render-target` ^0.1.0, `@blockml/block-render-engine` ^0.1.0, and `@machineblocks/core` ^3.0.0-A4. `@machineblocks/render-target` peers `@machineblocks/core`. npm installs the engine and the target with the CLI. The project dependency selects the core version.
 
 On a project that `blockml init` already created, `npx machineblocks init com.example.bml` adds the core dependency, the devDependency, and the library dependency. BML files and `CLAUDE.md` stay. `AGENTS.md` is regenerated. If `@machineblocks/cli` or `@machineblocks/core` is already listed under `dependencies`, that entry stays there.
+
+### Update an existing project
+
+`update` points the project at the versions of the CLI you invoke. It rewrites `@machineblocks/cli`, `@machineblocks/core`, `@blockml/cli`, and `@blockml/core` in `package.json`, then runs `npm install`. It does not change BML files, `AGENTS.md`, or `CLAUDE.md`.
+
+```bash
+npx @machineblocks/cli update
+```
+
+`@machineblocks/cli` becomes the caret range of that CLI. The other three become the ranges that CLI depends on. An entry that already lives in another dependency field is updated there. A specifier that contains `:` (`workspace:`, `file:`, `npm:`, git, http) stays as authored. `--no-install` skips `npm install`. A directory whose `package.json` has no `blockml` key exits 2 and writes nothing.
 
 Check the project:
 

@@ -32,6 +32,9 @@
     - Write .scad files, preset JSON, and source maps under the configured
       srcDir. The published writer does not enforce that root; this host checks
       the resolved real paths, then calls it with cleaning disabled.
+    - Rewrite package.json pins for @machineblocks/cli, @machineblocks/core,
+      @blockml/cli, and @blockml/core to this host's versions. Leaves BML,
+      AGENTS.md, and CLAUDE.md unchanged.
 
     This host does not:
 

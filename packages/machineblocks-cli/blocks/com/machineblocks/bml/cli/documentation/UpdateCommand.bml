@@ -1,0 +1,83 @@
+<!--CLI Documentation — UpdateCommand
+  FQN: com.machineblocks.bml.cli.documentation.UpdateCommand-->
+<clidoc:UpdateCommand xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:clidoc="com.machineblocks.bml.cli.documentation">
+
+  <baseType>
+    core:Documentation
+  </baseType>
+  <is>
+    machineblocks update specification
+  </is>
+  <documentation>
+    <![CDATA[
+    Syntax:
+        machineblocks update [--no-install]
+
+        The command parses flags and rewrites package.json, then prints its
+        lines. An unexpected positional argument exits 2 and also prints the
+        short usage. An unknown option exits 2 and prints the short usage.
+
+        A project is BlockML when package.json has a blockml key. A missing
+        package.json, a package.json without that key, or an unreadable
+        package.json exits 2 and writes nothing.
+
+        Does not call updateProject from @blockml/cli. Version source is this
+        host's own package.json, the same source init uses when it first adds
+        the MachineBlocks pins. @machineblocks/cli becomes ^ plus this host's
+        version. @machineblocks/core, @blockml/cli, and @blockml/core become
+        the ranges this host declares in dependencies.
+
+        Each pin is updated in the dependency field that already holds it
+        (dependencies, devDependencies, peerDependencies, optionalDependencies).
+        A missing @machineblocks/cli or @blockml/cli is added to devDependencies.
+        A missing @machineblocks/core or @blockml/core is added to dependencies.
+        A specifier that contains ":" (workspace:, file:, npm:, git, http, and
+        the like) stays as authored. When every registry range already matches,
+        package.json is left byte for byte and the result is code 0.
+
+        Unless --no-install, runs npm install in the project root after a
+        successful check. npm install still runs when the ranges were already
+        current. --no-install skips that install and, when package.json changed,
+        prints Next: npm install. Writes package.json only. Leaves BML files,
+        AGENTS.md, and CLAUDE.md unchanged. Does not load blockml.config.json.
+
+        Exit 0 when the ranges are written or already match, including when
+        npm install succeeds. Exit 1 when package.json cannot be written or
+        npm install fails. Exit 2 on usage, a missing or unreadable package.json,
+        a package.json without a blockml key, a dependency field that cannot
+        hold a pin, or a missing dependency range in this host's package.json.
+
+    Printed help:
+    Usage: machineblocks update [--no-install]
+           machineblocks update --help
+
+    When: point an existing BlockML project at the versions of this CLI.
+
+    Rewrites @machineblocks/cli, @machineblocks/core, @blockml/cli, and @blockml/core
+    in package.json, then runs npm install.
+    A project is BlockML when package.json has a blockml key. Otherwise exit 2
+    and nothing is written.
+
+    @machineblocks/cli becomes ^<this CLI version>. @machineblocks/core, @blockml/cli,
+    and @blockml/core become the ranges this CLI depends on. A missing
+    @machineblocks/cli or @blockml/cli is added in devDependencies. A missing
+    @machineblocks/core or @blockml/core is added in dependencies. An entry that
+    already lives in another dependency field is updated there. A specifier that
+    contains ":" (workspace:, file:, npm:, git, http, …) stays as authored.
+
+    Writes package.json only. BML files, AGENTS.md, and CLAUDE.md stay as they are.
+    --no-install skips npm install. Ranges that already match exit 0.
+    npm install still runs in that case unless --no-install.
+
+    Run with npx @machineblocks/cli update so the invoked CLI is the version source.
+
+    Related: init.
+    ]]>
+  </documentation>
+  <references>
+    <see type="clidoc:Commands" relation="SeeAlso" />
+    <see type="clidoc:InitCommand" relation="SeeAlso" />
+  </references>
+</clidoc:UpdateCommand>

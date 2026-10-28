@@ -2,6 +2,7 @@
 export const USAGE = `Usage: machineblocks validate [--all] [<file>]
        machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
        machineblocks init <package-fqn> [--src dir] [--no-install]
+       machineblocks update [--no-install]
        machineblocks --help`;
 export const VALIDATE_USAGE = `Usage: machineblocks validate [--all] [<file>]
        machineblocks validate --help`;
@@ -9,6 +10,8 @@ export const COMPILE_USAGE = `Usage: machineblocks compile <source-selector> [--
        machineblocks compile --help`;
 export const INIT_USAGE = `Usage: machineblocks init <package-fqn> [--src dir] [--no-install]
        machineblocks init --help`;
+export const UPDATE_USAGE = `Usage: machineblocks update [--no-install]
+       machineblocks update --help`;
 /** Root help page. SSOT: com.machineblocks.bml.cli.documentation.Help */
 export const HELP = `Usage: machineblocks <command> [options]
        machineblocks --help
@@ -31,6 +34,9 @@ Commands:
               machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
   init        Scaffold a BlockML project and record the MachineBlocks profile.
               machineblocks init <package-fqn> [--src dir] [--no-install]
+  update      Point @machineblocks/cli, @machineblocks/core, @blockml/cli, and
+              @blockml/core at this CLI's versions.
+              machineblocks update [--no-install]
 
 Search, scan, inspect, graph, new, agents-md, and transform stay on blockml.
 Exit codes: 0 success, 1 diagnostic errors, 2 usage or configuration error.
@@ -147,6 +153,31 @@ Exit codes match initProject: 0 success, 1 write, rename, or install failure,
 2 usage, an invalid package FQN, or a failed preflight.
 
 Related: validate, compile. agents-md and new stay on blockml.`;
+/** Printed help. SSOT: com.machineblocks.bml.cli.documentation.UpdateCommand */
+export const UPDATE_HELP = `Usage: machineblocks update [--no-install]
+       machineblocks update --help
+
+When: point an existing BlockML project at the versions of this CLI.
+
+Rewrites @machineblocks/cli, @machineblocks/core, @blockml/cli, and @blockml/core
+in package.json, then runs npm install.
+A project is BlockML when package.json has a blockml key. Otherwise exit 2
+and nothing is written.
+
+@machineblocks/cli becomes ^<this CLI version>. @machineblocks/core, @blockml/cli,
+and @blockml/core become the ranges this CLI depends on. A missing
+@machineblocks/cli or @blockml/cli is added in devDependencies. A missing
+@machineblocks/core or @blockml/core is added in dependencies. An entry that
+already lives in another dependency field is updated there. A specifier that
+contains ":" (workspace:, file:, npm:, git, http, …) stays as authored.
+
+Writes package.json only. BML files, AGENTS.md, and CLAUDE.md stay as they are.
+--no-install skips npm install. Ranges that already match exit 0.
+npm install still runs in that case unless --no-install.
+
+Run with npx @machineblocks/cli update so the invoked CLI is the version source.
+
+Related: init.`;
 export function helpFor(topic) {
     switch (topic) {
         case "validate":
@@ -155,6 +186,8 @@ export function helpFor(topic) {
             return COMPILE_HELP;
         case "init":
             return INIT_HELP;
+        case "update":
+            return UPDATE_HELP;
         default:
             return HELP;
     }
@@ -167,6 +200,8 @@ export function usageFor(topic) {
             return COMPILE_USAGE;
         case "init":
             return INIT_USAGE;
+        case "update":
+            return UPDATE_USAGE;
         default:
             return USAGE;
     }

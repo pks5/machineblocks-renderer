@@ -1,6 +1,6 @@
 {
   "name": "@machineblocks/cli",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "MachineBlocks host CLI — simplified BlockML entry that renders BML to SCAD",
   "license": "Apache-2.0",
   "publishConfig": {
@@ -30,16 +30,16 @@
     "test": "vitest run --root ../.. packages/machineblocks-cli/test"
   },
   "dependencies": {
-    "@blockml/block-render-engine": "^0.1.6",
-    "@blockml/builder": "^0.9.18",
-    "@blockml/cli": "^0.9.18",
-    "@blockml/compiler": "^0.9.18",
+    "@blockml/block-render-engine": "^0.1.7",
+    "@blockml/builder": "^0.9.19",
+    "@blockml/cli": "^0.9.19",
+    "@blockml/compiler": "^0.9.19",
     "@blockml/core": "^1.4.6",
-    "@blockml/framework": "^0.9.18",
-    "@blockml/parser": "^0.9.18",
-    "@blockml/serializer": "^0.9.18",
+    "@blockml/framework": "^0.9.19",
+    "@blockml/parser": "^0.9.19",
+    "@blockml/serializer": "^0.9.19",
     "@machineblocks/core": "^3.0.0-A5",
-    "@machineblocks/render-target": "^0.1.6"
+    "@machineblocks/render-target": "^0.1.7"
   },
   "engines": {
     "node": ">=20"

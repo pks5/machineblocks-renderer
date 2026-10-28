@@ -29,6 +29,15 @@
     preflight. On a project that blockml init already created, the same
     command adds only the missing profile. BML files and CLAUDE.md stay.
 
+    Point an existing project at this host:
+
+        npx @machineblocks/cli update
+
+    update rewrites @machineblocks/cli, @machineblocks/core, @blockml/cli, and
+    @blockml/core to the versions of the invoked CLI, then runs npm install.
+    It writes package.json only. --no-install skips npm install. A directory
+    whose package.json has no blockml key exits 2 and writes nothing.
+
     That install brings @machineblocks/render-target and
     @blockml/block-render-engine, plus the BlockML compiler packages.
     The render target peers @machineblocks/core, so the project dependency

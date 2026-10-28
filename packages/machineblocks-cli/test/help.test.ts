@@ -3,7 +3,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { execute } from "../src/execute.js";
-import { COMPILE_HELP, COMPILE_USAGE, HELP, INIT_HELP, VALIDATE_HELP } from "../src/help.js";
+import { COMPILE_HELP, COMPILE_USAGE, HELP, INIT_HELP, UPDATE_HELP, VALIDATE_HELP } from "../src/help.js";
 
 const docs = join(
   dirname(fileURLToPath(import.meta.url)),
@@ -36,6 +36,7 @@ describe("machineblocks help", () => {
     expect(VALIDATE_HELP).toBe(printed("ValidateCommand"));
     expect(COMPILE_HELP).toBe(printed("CompileCommand"));
     expect(INIT_HELP).toBe(printed("InitCommand"));
+    expect(UPDATE_HELP).toBe(printed("UpdateCommand"));
   });
 
   it("prints a page per command", () => {
@@ -43,6 +44,7 @@ describe("machineblocks help", () => {
     expect(execute(["validate", "--help"], ".").lines).toEqual([VALIDATE_HELP]);
     expect(execute(["compile", "--help"], ".").lines).toEqual([COMPILE_HELP]);
     expect(execute(["init", "--help"], ".").lines).toEqual([INIT_HELP]);
+    expect(execute(["update", "--help"], ".").lines).toEqual([UPDATE_HELP]);
   });
 
   it("prints short usage when compile has no selector", () => {

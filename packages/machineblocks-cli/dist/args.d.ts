@@ -1,4 +1,4 @@
-export type HelpTopic = "validate" | "compile" | "init";
+export type HelpTopic = "validate" | "compile" | "init" | "update";
 export interface ValidateArgs {
     command: "validate";
     file?: string;
@@ -16,10 +16,14 @@ export interface InitArgs {
     srcDir?: string;
     noInstall: boolean;
 }
+export interface UpdateArgs {
+    command: "update";
+    noInstall: boolean;
+}
 export type HostCommand = {
     command: "help";
     topic?: HelpTopic;
-} | ValidateArgs | CompileArgs | InitArgs | {
+} | ValidateArgs | CompileArgs | InitArgs | UpdateArgs | {
     command: "usage";
     message: string;
     topic?: HelpTopic;
