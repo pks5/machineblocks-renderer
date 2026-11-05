@@ -8,12 +8,14 @@
     core:Documentation
   </baseType>
   <is>
-    Set processor: STEPS, bounding box, and view submodules
+    Set processor: STEPS and total, print, step, instance views
   </is>
   <documentation>
     A block whose baseType chain includes com.machineblocks.bml.core.Set is
-    rendered by ScadSetProcessor as a SCAD file with a STEPS array and four
-    view submodules.
+    rendered by ScadSetProcessor as a SCAD set file. The file follows
+    FileStructure. STEPS is a file-scope array in the customizer section
+    /* [Hidden] */. The main module takes config and settings and dispatches
+    on mode. Total, Print, and Step each wrap their children in mb_block.
 
     A MachineBlocks set uses three aggregations. _presets and _parts are
     inherited. _steps is declared on Set.
@@ -21,7 +23,9 @@
     - _presets — palette; configurations referenced by appliedPresets on _parts
     - _parts — placed instances (direction, offset, appliedPresets; id becomes
       the SCAD instance id)
-    - _steps — assembly order; optional; default is _parts document order
+    - _steps — assembly order; optional; default is _parts document order.
+      Repeating an id emits that same placement again. One instance module is
+      emitted per distinct id. Its part type is the first placement with that id.
 
     STEPS is generated from the placement list. Each entry:
 
@@ -43,41 +47,74 @@
             ["00002", [4, 4, 9], "west", [0, 0, 1]]
         ];
 
-    The set bounding box is computed at SCAD render time by the Core function
-    mb_parts_total_size, which reads size, direction, and offset from each
-    STEPS row:
+    The set bounding box is computed at SCAD render time by mb_parts_total_size.
+    Total, Print, and Step pass it as the wrapper size:
 
+        ["id", blockId],
+        ["base", false],
+        ["studs", false],
+        ["align", align],
+        ["offset", offset],
+        ["direction", direction],
         ["size", mb_parts_total_size(STEPS)]
 
-    Four submodules, PascalCase suffixes of the set module:
+    id, align, offset, and direction of that wrapper are the set's own
+    placement, read with mb_param_*. base and studs are false, so the wrapper
+    draws no brick. Children render inside it. A parent can place the set.
+
+    Four submodules, PascalCase suffixes, each (config, settings):
 
         ...DefaultEnclosure__Total
         ...DefaultEnclosure__Print
         ...DefaultEnclosure__Step
         ...DefaultEnclosure__Instance
 
-    The Instance submodule dispatches with if / else if on instanceId to
-    per-instance modules named with the id appended by underscore
-    (...__Instance_00001). Each of those modules calls the manifestation
-    module of the placed part's type FQN with config and settings for size,
-    offset, and direction. mb_block applies that offset and direction. The
-    set does not add a translate around the call. STEPS feeds only
-    mb_parts_total_size.
+    Total walks every STEPS row and calls __Instance with settings taken from
+    that row: id via mb_block_id(blockId, instanceId), instanceId, size,
+    direction, offset, baseColor, and assembly "merged".
 
-    Total and Print call every instance module in STEPS order. Step calls the
-    prefix of that list whose index is less than or equal to the customizer
-    variable step. When _steps is absent, STEPS follows _parts document order.
-    A missing direction defaults to "west". A missing offset defaults to
-    [0, 0, 0]. A missing id, a missing size, or a size expression that is not
-    constant returns files: [] and diagnostic BML_SET_PART_INCOMPLETE.
+    Print walks every row the same way. offset is
+    mb_set_step_print_position(assembly, STEPS, i). direction is omitted, so
+    the part stays on its default direction. assembly is mb_param_assembly of
+    the caller. Parts sit in a row along X. The gap comes from the previous
+    row's size. Unassembled assembly doubles that gap when the size is taller
+    than it is wide.
 
-    Set customizer variables:
+    Step reads step, combined, and highlightColor. The module default for
+    combined is false. The generated main call passes combined true, so the
+    customizer shows steps before the current one in baseColor and the current
+    step in highlightColor. With combined false, only the current step is
+    drawn, in baseColor. Position and direction come from STEPS. assembly is
+    "merged". The current step is drawn when step is an index of STEPS.
 
-        mode       = "total"; // [total:Total, print:3D Print, step:Step, instance:Instance]
-        step       = 0;       // [0:9]
-        instanceId = "00001";
-        assembly   = "merged"; // [unassembled:Unassembled, assembled:Assembled, merged:Merged]
-        baseColor  = "#EAC645";
+    __Instance reads instanceId and dispatches with if / else if to
+    ...__Instance_00001. Those modules are templates. They read id, size,
+    direction, offset, baseColor, and assembly from the settings of that call
+    and forward them to the part manifestation. config is forwarded unchanged.
+    The part's mb_block applies offset and direction. The same template can
+    be called from several STEPS rows. Instance mode forwards the caller
+    settings and does not copy a STEPS row. A customizer instance view then
+    uses the part defaults for size, direction, and offset unless the caller
+    supplied them.
+
+    When _steps is absent, STEPS follows _parts document order. A missing
+    direction defaults to "west". A missing offset defaults to [0, 0, 0].
+    A missing id, a missing size, or a size expression that is not constant
+    returns files: [] and diagnostic BML_SET_PART_INCOMPLETE.
+
+    Customizer variables, then hidden STEPS:
+
+        mode           = "total"; // [total:Total, print:3D Print, step:Step, instance:Instance]
+        step           = 0;       // [0:n]  n is the last STEPS index, or 0 when empty
+        instanceId     = first STEPS id, or "00001" when STEPS is empty
+        baseColor      = string property, otherwise "#EAC645"
+        highlightColor = string property, otherwise "#55AB68"
+        assembly       = "merged"; // [unassembled:Unassembled, assembled:Assembled, merged:Merged]
+
+    baseColor and highlightColor use the MachineBlocks color dropdown
+    (Turquoise through Asbestos). The main call passes mode, step, instanceId,
+    baseColor, highlightColor, assembly, and combined true. The main module
+    reads mode with mb_param(config, settings, "mode", default="total").
 
   </documentation>
   <references>

@@ -276,12 +276,17 @@ describe("emit gaps", () => {
     const content = result.files[0]?.content ?? "";
     expect(content).toContain('["00001", [4, 2, 3], "west", [0, 0, 0]]');
     expect(content).toContain('["00002", [4, 2, 3], "west", [0, 0, 0]]');
+    expect(content).toContain('["size", STEPS[i][1]]');
+    expect(content).toContain('["direction", STEPS[i][2]]');
     expect(content).toContain(`mb__com__machineblocks__scad__bricks__Brick(
-        config = mb_config,
+        config = config,
         settings = [
-            ["size", [4, 2, 3]],
-            ["offset", [0, 0, 0]],
-            ["direction", "west"]
+            ["id", blockId],
+            ["size", size],
+            ["direction", direction],
+            ["offset", offset],
+            ["baseColor", baseColor],
+            ["assembly", assembly]
         ]
     );`);
     expect(content).not.toContain("translate(");

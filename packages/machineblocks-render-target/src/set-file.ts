@@ -17,6 +17,10 @@ interface Placement {
   offset: string;
 }
 
+/** MachineBlocks customizer palette, shared by baseColor and highlightColor. */
+const COLOR_DROPDOWN =
+  "[#58B99D:Turquoise, #4A9E86:Green Sea, #65C97A:Emerald, #55AB68:Nephritis, #5296D5:Peter River, #437EB4:Belize Hole, #925CB1:Amethyst, #8548A8:Wisteria, #38485C:Wet Asphalt, #303D4E:Midnight Blue, #EAC645:Sun Flower, #E7A03C:Orange, #D4813A:Carrot, #C05A23:Pumpkin, #D65745:Alizarin, #B14434:Pomegranate, #EDF0F1:Clouds, #BEC3C6:Silver, #98A4A6:Concrete, #98A4A6:Asbestos]";
+
 type Registry = RenderContext["session"]["typeRegistry"];
 
 export function renderSetFile(
@@ -63,39 +67,27 @@ export function renderSetFile(
     `include <${relativePosix(outputDir, joinPosix(mbLibPath, "config/mb_config.scad"))}>;`,
     ...distinctTypeImports(ordered, outputDir, outputBasePath, typeManifestations),
   ];
-  const firstId = ordered[0]?.id ?? "00001";
-  const baseColor = block.members.find((member) => member.kind === "property" && member.name === "baseColor");
-  const baseColorValue =
-    baseColor && baseColor.kind === "property" && baseColor.value?.kind === "literal" && typeof baseColor.value.value === "string"
-      ? baseColor.value.value
-      : "#EAC645";
+  const instances = distinctById(ordered);
+  const firstId = escapeScad(ordered[0]?.id ?? "00001");
+  const baseColorValue = escapeScad(literalColor(block, "baseColor", "#EAC645"));
+  const highlightColorValue = escapeScad(literalColor(block, "highlightColor", "#55AB68"));
+  const stepMax = Math.max(ordered.length - 1, 0);
   const steps = ordered
-    .map((placement) => `        ["${placement.id}", ${placement.size}, ${placement.direction}, ${placement.offset}]`)
+    .map(
+      (placement) =>
+        `    ["${escapeScad(placement.id)}", ${placement.size}, ${placement.direction}, ${placement.offset}]`,
+    )
     .join(",\n");
-  const instanceCalls = ordered.map((placement) => `    ${moduleName}__Instance_${placement.id}();`).join("\n");
-  const stepCalls = ordered
-    .map((placement, index) => `    if (step >= ${index}) ${moduleName}__Instance_${placement.id}();`)
-    .join("\n");
-  const dispatch = ordered
+  const dispatch = instances
     .map((placement, index) => {
       const keyword = index === 0 ? "if" : "else if";
-      return `    ${keyword} (instanceId == "${placement.id}") ${moduleName}__Instance_${placement.id}();`;
+      return `        ${keyword} (instanceId == "${escapeScad(placement.id)}") ${moduleName}__Instance_${placement.id}(config = config, settings = settings);`;
     })
     .join("\n");
-  const instanceModules = ordered
-    .map(
-      (placement) => `module ${moduleName}__Instance_${placement.id}() {
-    ${moduleNameForManifestation(manifestedType(placement.typeFqn, typeManifestations))}(
-        config = mb_config,
-        settings = [
-            ["size", ${placement.size}],
-            ["offset", ${placement.offset}],
-            ["direction", ${placement.direction}]
-        ]
-    );
-}`,
-    )
+  const instanceModules = instances
+    .map((placement) => instanceModule(moduleName, placement, typeManifestations))
     .join("\n\n");
+  const viewId = escapeScad(block.type);
 
   const content = `/**
  * MachineBlocks.com Block File
@@ -111,46 +103,176 @@ ${imports.join("\n")}
 
 /* Customization */
 mode = "total"; // [total:Total, print:3D Print, step:Step, instance:Instance]
-step = 0; // [0:9]
+step = 0; // [0:${stepMax}]
 instanceId = "${firstId}";
+baseColor = "${baseColorValue}"; // ${COLOR_DROPDOWN}
+highlightColor = "${highlightColorValue}"; // ${COLOR_DROPDOWN}
 assembly = "merged"; // [unassembled:Unassembled, assembled:Assembled, merged:Merged]
-baseColor = "${baseColorValue}";
+
+/* [Hidden] */
+STEPS = [
+${steps}
+];
 
 /* Main Module Call */
-${moduleName}(config = mb_config);
+${moduleName}(
+    config = mb_config,
+    settings = [
+        ["baseColor", baseColor],
+        ["highlightColor", highlightColor],
+        ["mode", mode],
+        ["step", step],
+        ["instanceId", instanceId],
+        ["combined", true],
+        ["assembly", assembly]
+    ]
+);
 
 /* Main Module Definition */
-module ${moduleName}(config = undef) {
-    STEPS = [
-${steps}
-    ];
-    mb_block(
-        config = config,
-        settings = [
-            ["size", mb_parts_total_size(STEPS)]
-        ]
-    );
-    if (mode == "total") ${moduleName}__Total();
-    else if (mode == "print") ${moduleName}__Print();
-    else if (mode == "step") ${moduleName}__Step();
-    else if (mode == "instance") ${moduleName}__Instance();
+module ${moduleName}(config = undef, settings = undef) {
+    mode = mb_param(config, settings, "mode", default="total");
+
+    if (mode == "total") ${moduleName}__Total(config = config, settings = settings);
+    else if (mode == "print") ${moduleName}__Print(config = config, settings = settings);
+    else if (mode == "step") ${moduleName}__Step(config = config, settings = settings);
+    else if (mode == "instance") ${moduleName}__Instance(config = config, settings = settings);
 }
 
 /* Optional Sub Modules */
-module ${moduleName}__Total() {
-${instanceCalls}
+module ${moduleName}__Total(config = undef, settings = undef) {
+    blockId = mb_param_id(config, settings, "${viewId}.total");
+    baseColor = mb_param_baseColor(config, settings);
+    align = mb_param_align(config, settings);
+    direction = mb_param_direction(config, settings);
+    offset = mb_param_offset(config, settings);
+
+    mb_block(
+        config = config,
+        settings = [
+            ["id", blockId],
+            ["base", false],
+            ["studs", false],
+            ["align", align],
+            ["offset", offset],
+            ["direction", direction],
+            ["size", mb_parts_total_size(STEPS)]
+        ]
+    ) {
+        for (i = [0 : len(STEPS) - 1]) {
+            ${moduleName}__Instance(
+                config = config,
+                settings = [
+                    ["id", mb_block_id(blockId, STEPS[i][0])],
+                    ["instanceId", STEPS[i][0]],
+                    ["size", STEPS[i][1]],
+                    ["direction", STEPS[i][2]],
+                    ["offset", STEPS[i][3]],
+                    ["baseColor", baseColor],
+                    ["assembly", "merged"]
+                ]
+            );
+        }
+    }
 }
 
-module ${moduleName}__Print() {
-${instanceCalls}
+module ${moduleName}__Print(config = undef, settings = undef) {
+    blockId = mb_param_id(config, settings, "${viewId}.print");
+    baseColor = mb_param_baseColor(config, settings);
+    align = mb_param_align(config, settings);
+    direction = mb_param_direction(config, settings);
+    offset = mb_param_offset(config, settings);
+    assembly = mb_param_assembly(config, settings);
+
+    mb_block(
+        config = config,
+        settings = [
+            ["id", blockId],
+            ["base", false],
+            ["studs", false],
+            ["align", align],
+            ["offset", offset],
+            ["direction", direction],
+            ["size", mb_parts_total_size(STEPS)]
+        ]
+    ) {
+        for (i = [0 : len(STEPS) - 1]) {
+            ${moduleName}__Instance(
+                config = config,
+                settings = [
+                    ["id", mb_block_id(blockId, STEPS[i][0])],
+                    ["instanceId", STEPS[i][0]],
+                    ["size", STEPS[i][1]],
+                    ["offset", mb_set_step_print_position(assembly, STEPS, i)],
+                    ["assembly", assembly],
+                    ["baseColor", baseColor]
+                ]
+            );
+        }
+    }
 }
 
-module ${moduleName}__Step() {
-${stepCalls}
+module ${moduleName}__Step(config = undef, settings = undef) {
+    blockId = mb_param_id(config, settings, "${viewId}.step");
+    step = mb_param(config, settings, "step");
+    combined = mb_param(config, settings, "combined", false);
+    highlightColor = mb_param(config, settings, "highlightColor", "#EAC645");
+    baseColor = mb_param_baseColor(config, settings);
+    align = mb_param_align(config, settings);
+    direction = mb_param_direction(config, settings);
+    offset = mb_param_offset(config, settings);
+    instanceId = step < len(STEPS) ? STEPS[step][0] : undef;
+
+    if (instanceId != undef) {
+        mb_block(
+            config = config,
+            settings = [
+                ["id", blockId],
+                ["base", false],
+                ["studs", false],
+                ["align", align],
+                ["offset", offset],
+                ["direction", direction],
+                ["size", mb_parts_total_size(STEPS)]
+            ]
+        ) {
+            if (combined) {
+                for (i = [0 : step - 1]) {
+                    ${moduleName}__Instance(
+                        config = config,
+                        settings = [
+                            ["id", mb_block_id(blockId, STEPS[i][0])],
+                            ["instanceId", STEPS[i][0]],
+                            ["size", STEPS[i][1]],
+                            ["direction", STEPS[i][2]],
+                            ["offset", STEPS[i][3]],
+                            ["baseColor", baseColor],
+                            ["assembly", "merged"]
+                        ]
+                    );
+                }
+            }
+            ${moduleName}__Instance(
+                config = config,
+                settings = [
+                    ["id", mb_block_id(blockId, instanceId)],
+                    ["instanceId", instanceId],
+                    ["size", STEPS[step][1]],
+                    ["direction", STEPS[step][2]],
+                    ["offset", STEPS[step][3]],
+                    ["baseColor", combined ? highlightColor : baseColor],
+                    ["assembly", "merged"]
+                ]
+            );
+        }
+    }
 }
 
-module ${moduleName}__Instance() {
+module ${moduleName}__Instance(config = undef, settings = undef) {
+    instanceId = mb_param(config, settings, "instanceId");
+
+    if (instanceId != undef) {
 ${dispatch}
+    }
 }
 
 ${instanceModules}
@@ -160,6 +282,64 @@ ${instanceModules}
 `;
 
   return { files: [withSourceMap(block, { path: outputRelativePath, content })] };
+}
+
+function instanceModule(
+  moduleName: string,
+  placement: Placement,
+  typeManifestations: ReadonlyMap<string, string>,
+): string {
+  const part = moduleNameForManifestation(manifestedType(placement.typeFqn, typeManifestations));
+  return `module ${moduleName}__Instance_${placement.id}(config = undef, settings = undef) {
+    blockId = mb_param_id(config, settings);
+    baseColor = mb_param_baseColor(config, settings);
+    assembly = mb_param_assembly(config, settings);
+    size = mb_param_size(config, settings);
+    direction = mb_param_direction(config, settings);
+    offset = mb_param_offset(config, settings);
+
+    ${part}(
+        config = config,
+        settings = [
+            ["id", blockId],
+            ["size", size],
+            ["direction", direction],
+            ["offset", offset],
+            ["baseColor", baseColor],
+            ["assembly", assembly]
+        ]
+    );
+}`;
+}
+
+function distinctById(placements: readonly Placement[]): Placement[] {
+  const seen = new Set<string>();
+  const instances: Placement[] = [];
+  for (const placement of placements) {
+    if (seen.has(placement.id)) {
+      continue;
+    }
+    seen.add(placement.id);
+    instances.push(placement);
+  }
+  return instances;
+}
+
+function literalColor(block: BlockDefinition, name: string, fallback: string): string {
+  const property = block.members.find((member) => member.kind === "property" && member.name === name);
+  if (
+    property &&
+    property.kind === "property" &&
+    property.value?.kind === "literal" &&
+    typeof property.value.value === "string"
+  ) {
+    return property.value.value;
+  }
+  return fallback;
+}
+
+function escapeScad(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
 function placementOf(

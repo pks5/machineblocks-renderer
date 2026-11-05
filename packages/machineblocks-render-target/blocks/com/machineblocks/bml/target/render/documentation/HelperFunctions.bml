@@ -21,6 +21,7 @@
     - mb_group_render(renderGroups, group)
     - mb_block_id(blockId, partId)
     - mb_parts_total_size(parts)
+    - mb_set_step_print_position(assembly, steps, step)
 
     The assembly helpers and mb_group_render read assembly mode or
     renderGroups.
@@ -45,9 +46,14 @@
 
         size = mb_parts_total_size(parts);
 
-    A set passes STEPS to the same function:
+    A set passes STEPS to the same function as the wrapper size of Total,
+    Print, and Step:
 
         ["size", mb_parts_total_size(STEPS)]
+
+    Print view uses mb_set_step_print_position(assembly, STEPS, i) as each
+    row's offset. Total and Step pass the offset stored on the STEPS row.
+    See SetRendering.
 
     Rule: render-dependent values (assembly, renderGroups, overridable
     blockId) resolve at SCAD runtime. Structural and static values are

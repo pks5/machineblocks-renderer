@@ -176,10 +176,10 @@ module mb__com__machineblocks__scad__bricks__Fixture(config = undef, settings = 
     expect(result.diagnostics ?? []).toEqual([]);
     const content = result.files[0]?.content ?? "";
     expect(content).toContain("STEPS = [");
-    expect(content).toContain("module mb__com__example__scad__sets__Kit__Total()");
-    expect(content).toContain("module mb__com__example__scad__sets__Kit__Print()");
-    expect(content).toContain("module mb__com__example__scad__sets__Kit__Step()");
-    expect(content).toContain("module mb__com__example__scad__sets__Kit__Instance()");
+    expect(content).toContain("module mb__com__example__scad__sets__Kit__Total(config = undef, settings = undef)");
+    expect(content).toContain("module mb__com__example__scad__sets__Kit__Print(config = undef, settings = undef)");
+    expect(content).toContain("module mb__com__example__scad__sets__Kit__Step(config = undef, settings = undef)");
+    expect(content).toContain("module mb__com__example__scad__sets__Kit__Instance(config = undef, settings = undef)");
     expect(content).toContain("mb_parts_total_size(STEPS)");
   });
 

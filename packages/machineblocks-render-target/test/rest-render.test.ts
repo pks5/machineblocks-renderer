@@ -124,17 +124,27 @@ describe("composite, set, presets, source map", () => {
     expect(content).toContain('["00002", [4, 4, 9], "west", [0, 0, 1]]');
     expect(content).toContain('["00001", [16, 16, 1], "north", [0, 0, 0]]');
     expect(content).toContain("mb_parts_total_size(STEPS)");
-    expect(content).toContain("if (instanceId == \"00002\")");
-    expect(content).toContain("else if (instanceId == \"00001\")");
+    expect(content).toContain('["base", false]');
+    expect(content).toContain('["studs", false]');
+    expect(content).toContain("mb_set_step_print_position(assembly, STEPS, i)");
+    expect(content).toContain('["assembly", "merged"]');
+    expect(content).toContain("combined ? highlightColor : baseColor");
+    expect(content).toContain('["combined", true]');
+    expect(content).toContain('highlightColor = "#55AB68"');
+    expect(content).toContain('mb_param(config, settings, "mode", default="total")');
+    expect(content).toContain('if (instanceId == "00002")');
+    expect(content).toContain('else if (instanceId == "00001")');
     expect(content).toContain(`mb__com__machineblocks__scad__bricks__Standard(
-        config = mb_config,
+        config = config,
         settings = [
-            ["size", [4, 4, 9]],
-            ["offset", [0, 0, 1]],
-            ["direction", "west"]
+            ["id", blockId],
+            ["size", size],
+            ["direction", direction],
+            ["offset", offset],
+            ["baseColor", baseColor],
+            ["assembly", assembly]
         ]
     );`);
-    expect(content).toContain(`["direction", "north"]`);
     expect(content).toContain("use <../../../machineblocks/scad/bricks/Standard.scad>;");
     const map = JSON.parse((result.files[0] as { sourceMap?: string }).sourceMap ?? "{}") as { mappings?: string };
     const lineCount = content.endsWith("\n") ? content.slice(0, -1).split("\n").length : content.split("\n").length;
