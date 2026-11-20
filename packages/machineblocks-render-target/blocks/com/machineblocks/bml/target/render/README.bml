@@ -17,12 +17,12 @@
     V3 library in @machineblocks/core can render. Registry name:
     machineblocks-v3-scad.
 
-    This library is the SSOT for target registration, the two V1 processors,
+    This library is the SSOT for target registration, the three V1 processors,
     FQN-to-module naming, imports, settings emission, assembly patterns, sets,
     the customizer, source maps, and MBOM-to-SCAD serialization. Type shapes and
     the mb_block runtime stay in @machineblocks/core.
 
-    The target calls @blockml/block-render-engine (compile strategy for both
+    The target calls @blockml/block-render-engine (compile strategy for the
     V1 processors). It is browser and Node compatible.
 
     Start at com.machineblocks.bml.target.render.documentation.Introduction.

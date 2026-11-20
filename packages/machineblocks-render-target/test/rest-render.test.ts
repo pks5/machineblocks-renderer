@@ -5,8 +5,9 @@ import { buildRenderSession, createRenderContext } from "@blockml/compiler";
 import type { BomDocument } from "@blockml/bom";
 import { BlockRenderEngine } from "@blockml/block-render-engine";
 import { MachineBlocksRenderTarget } from "@machineblocks/render-target";
+import { SHOP_OPTIONS, shopDocument } from "./shop-fixture.js";
 
-const LIB = { "machineblocks-v3-scad": { mbLibPath: "/mb" } };
+const LIB = SHOP_OPTIONS;
 
 function document(source: string, filePath: string): BomDocument {
   const parsed = parse(source, { filePath });
@@ -18,6 +19,7 @@ function document(source: string, filePath: string): BomDocument {
 
 function render(source: string, filePath: string, extras: BomDocument[] = []) {
   const registry = new TypeRegistry();
+  registry.register(shopDocument());
   for (const extra of extras) {
     registry.register(extra);
   }
@@ -83,10 +85,10 @@ describe("composite, set, presets, source map", () => {
     expect(content).toContain('label = mb_param(config, settings, "label", "hi");');
     expect(content).toContain('["base", false]');
     expect(content).toContain('["studs", false]');
-    expect(content).toContain("mb_assembly_groove(assembly, renderGroups, group_top)");
-    expect(content).toContain("mb_assembly_tongue(assembly, renderGroups, group_bottom)");
-    expect(content).toContain('part_top = "top";');
-    expect(content).toContain("mb_block_id(blockId, part_bottom)");
+    expect(content).toContain("mb_assembly_groove(gen_assembly, gen_renderGroups, gen_group_top)");
+    expect(content).toContain("mb_assembly_tongue(gen_assembly, gen_renderGroups, gen_group_bottom)");
+    expect(content).toContain('gen_part_top = "top";');
+    expect(content).toContain("mb_block_id(gen_blockId, gen_part_bottom)");
   });
 
   it("reports an empty block", () => {
@@ -123,10 +125,10 @@ describe("composite, set, presets, source map", () => {
     const content = result.files[0]?.content ?? "";
     expect(content).toContain('["00002", [4, 4, 9], "west", [0, 0, 1]]');
     expect(content).toContain('["00001", [16, 16, 1], "north", [0, 0, 0]]');
-    expect(content).toContain("mb_parts_total_size(STEPS)");
+    expect(content).toContain("mb_parts_total_size(gen_STEPS)");
     expect(content).toContain('["base", false]');
     expect(content).toContain('["studs", false]');
-    expect(content).toContain("mb_set_step_print_position(assembly, STEPS, i)");
+    expect(content).toContain("mb_set_step_print_position(assembly, gen_STEPS, gen_i)");
     expect(content).toContain('["assembly", "merged"]');
     expect(content).toContain("combined ? highlightColor : baseColor");
     expect(content).toContain('["combined", true]');
@@ -137,7 +139,7 @@ describe("composite, set, presets, source map", () => {
     expect(content).toContain(`mb__com__machineblocks__scad__bricks__Standard(
         config = config,
         settings = [
-            ["id", blockId],
+            ["id", gen_blockId],
             ["size", size],
             ["direction", direction],
             ["offset", offset],

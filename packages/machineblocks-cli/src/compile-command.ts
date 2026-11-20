@@ -1,14 +1,19 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import type { Diagnostic } from "@blockml/bom";
 import { bootstrapProjectTypeRegistry, loadConfig, writeOutputFiles, type BomConfig } from "@blockml/cli";
 import { compileToOutput, registerTarget, type RenderOutputFile } from "@blockml/compiler";
 import { scanTypes } from "@blockml/framework";
 import { BlockRenderEngine } from "@blockml/block-render-engine";
 import {
+  CONFIG_SET_UNEXPECTED,
   MachineBlocksRenderTarget,
   SELECTOR_EMPTY,
+  isConfigSet,
+  needsConfigSet,
+  requireConfigSet,
+  resolveConfigSet,
   SOURCE_PACKAGE_ALONE,
   SOURCE_PACKAGE_REQUIRED,
   TARGET_COLLISION,
@@ -22,6 +27,7 @@ import { sourcePackageFromSelector, type CompileArgs } from "./args.js";
 import { resolveOutputPath } from "./output-gate.js";
 
 const TARGET_NAME = "machineblocks-v3-scad";
+const MACHINEBLOCKS_CORE = "@machineblocks/core";
 
 export interface HostResult {
   code: number;
@@ -108,8 +114,26 @@ export function runCompile(args: CompileArgs, rootDir: string): HostResult {
     });
   }
 
+  if (args.configSet !== undefined && selected.some((document) => isConfigSet(document.block, bootstrap.registry))) {
+    return {
+      code: 1,
+      lines: [`${CONFIG_SET_UNEXPECTED}: --config-set cannot be set when compiling a ConfigSet.`],
+    };
+  }
+  let configSet: string | undefined;
+  if (selected.some((document) => needsConfigSet(document.block, bootstrap.registry))) {
+    const resolved =
+      args.configSet !== undefined
+        ? requireConfigSet(bootstrap.registry, args.configSet)
+        : resolveConfigSet(bootstrap.registry, srcDir);
+    if (!resolved.ok) {
+      return { code: 1, lines: [`${resolved.code}: ${resolved.message}`] };
+    }
+    configSet = resolved.fqn;
+  }
+
   registerTarget(new MachineBlocksRenderTarget(new BlockRenderEngine()));
-  const targetOptions = buildTargetOptions(config, libPath, mapping.mapping);
+  const targetOptions = buildTargetOptions(config, libPath, mapping.mapping, configSet);
   const emitted: RenderOutputFile[] = [];
   for (const item of planned) {
     const source = readFileSync(item.filePath, "utf8");
@@ -200,17 +224,21 @@ function buildTargetOptions(
   config: BomConfig,
   mbLibPath: string,
   mapping: ManifestationMapping,
+  configSet: string | undefined,
 ): Record<string, unknown> {
   const configured = config.targetOptions?.[TARGET_NAME];
   const nested: Record<string, unknown> = {};
   if (configured !== null && typeof configured === "object") {
     for (const [key, value] of Object.entries(configured)) {
-      if (key !== "sourcePackage" && key !== "targetPackage" && key !== "mbLibPath") {
+      if (key !== "sourcePackage" && key !== "targetPackage" && key !== "mbLibPath" && key !== "configSet") {
         nested[key] = value;
       }
     }
   }
   nested.mbLibPath = mbLibPath;
+  if (configSet !== undefined) {
+    nested.configSet = configSet;
+  }
   if (mapping.kind === "explicit") {
     nested.sourcePackage = mapping.sourcePackage;
     nested.targetPackage = mapping.targetPackage;
@@ -230,11 +258,23 @@ function resolveMbLibPath(rootDir: string, config: BomConfig): string | undefine
       return resolve(rootDir, fromTarget);
     }
   }
+  if (isCorePackage(rootDir)) {
+    return rootDir;
+  }
   try {
     const require = createRequire(import.meta.url);
-    return dirname(require.resolve("@machineblocks/core/package.json"));
+    return dirname(require.resolve(`${MACHINEBLOCKS_CORE}/package.json`));
   } catch {
     return undefined;
+  }
+}
+
+function isCorePackage(rootDir: string): boolean {
+  try {
+    const pkg = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf8")) as { name?: unknown };
+    return pkg.name === MACHINEBLOCKS_CORE && existsSync(join(rootDir, "lib", "block.scad"));
+  } catch {
+    return false;
   }
 }
 

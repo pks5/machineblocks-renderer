@@ -19,5 +19,9 @@ export declare const TARGET_COLLISION = "MB_TARGET_COLLISION";
 export declare const OUTPUT_ESCAPES_SRC = "MB_OUTPUT_ESCAPES_SRC";
 export declare const OUTPUT_OVERWRITES_BML = "MB_OUTPUT_OVERWRITES_BML";
 export declare const SELECTOR_EMPTY = "MB_SELECTOR_EMPTY";
+export declare const CONFIG_SET_UNEXPECTED = "MB_CONFIG_SET_UNEXPECTED";
+export declare const CONFIG_SET_UNKNOWN = "MB_CONFIG_SET_UNKNOWN";
+export declare const CONFIG_SET_MISSING = "MB_CONFIG_SET_MISSING";
+export declare const CONFIG_PROFILE_INCOMPLETE = "MB_CONFIG_PROFILE_INCOMPLETE";
 export declare function errorOutput(code: string, message: string, source?: SourceLocation): RenderOutput;
 //# sourceMappingURL=diagnostics.d.ts.map

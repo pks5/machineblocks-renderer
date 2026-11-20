@@ -17,6 +17,13 @@ export type ManifestationFailure = {
 };
 export type ManifestationResult = ManifestationSuccess | ManifestationFailure;
 export declare const AUTOMATIC_MAPPING: ManifestationMapping;
+/**
+ * Prefix for SCAD locals the generator invents.
+ * Property locals and customizer parameters stay unprefixed.
+ * Change this constant and recompile to rewrite every generated file.
+ */
+export declare const GENERATED_LOCAL_PREFIX = "gen_";
+export declare function generatedLocal(name: string): string;
 export declare function mappingFromPackages(sourcePackage: string | undefined, targetPackage: string | undefined): ManifestationMapping | ManifestationFailure;
 export declare function isMappingFailure(value: ManifestationMapping | ManifestationFailure): value is ManifestationFailure;
 export declare function mapManifestation(definitionFqn: string, mapping?: ManifestationMapping, role?: ManifestationRole): ManifestationResult;

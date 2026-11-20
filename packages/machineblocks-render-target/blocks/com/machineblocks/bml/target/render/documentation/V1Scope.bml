@@ -11,15 +11,18 @@
     V1 base types handled by this target
   </is>
   <documentation>
-    V1 supports exactly two base types:
+    V1 supports three base types:
 
     - com.machineblocks.bml.core.Block — ScadBlockProcessor
       Standard SCAD block module.
     - com.machineblocks.bml.core.Set — ScadSetProcessor
       STEPS-based set with view submodules.
+    - com.machineblocks.bml.core.ConfigSet — ScadConfigSetProcessor
+      Profile functions. A concrete set extends ConfigSet and fills profiles.
 
-    User types that inherit either base type use the same processor.
-    ScadSetProcessor is registered first because it is more specific.
+    User types that inherit a base type use that processor.
+    ScadSetProcessor and ScadConfigSetProcessor are more specific than
+    ScadBlockProcessor. Dispatch picks the nearest baseType.
     ScadBlockProcessor is the fallback for Block.
 
     A block whose baseType chain does not include
@@ -34,7 +37,11 @@
 
     ScadBlockProcessor emits a leaf, a composite module, or a preset JSON file.
     ScadSetProcessor emits a SCAD file with a STEPS array and four view
-    submodules. Before that emit, on a working copy, bml:with becomes SCAD
+    submodules. ScadConfigSetProcessor emits mb__…__func__config and one
+    function per profile. The body is a ternary chain. The final branch returns
+    the first profile. Each profile function returns the properties set on that
+    profile, except name, as a pseudo-map. The file imports nothing.
+    Before a composite emit, on a working copy, bml:with becomes SCAD
     assignments, bml:each over a count becomes a for-range, bml:each over a
     list becomes list iteration, and bml:if / bml:unless become a SCAD if.
     The canonical BOM is not rewritten. A directive shape this walk does not

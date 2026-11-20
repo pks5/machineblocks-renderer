@@ -23,7 +23,6 @@
           outputBasePath
           targetName
           documentKind
-          activeConfig     optional
           mbLibPath        optional — domain library root for relative imports
 
     Per-node fields:

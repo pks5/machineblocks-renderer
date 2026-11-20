@@ -1,0 +1,26 @@
+<playground:Stack xmlns="http://blockml.org/bml"
+  xmlns:core="com.machineblocks.bml.core"
+  xmlns:playground="com.machineblocks.bml.renderer.workspace.playground"
+  xmlns:type="org.blockml.bml.type"
+  xmlns:bml="org.blockml.bml.annotation.BmlAnnotation">
+
+  <baseType>
+    core:CompositeBlock
+  </baseType>
+  <is>
+    Two playground plates stacked in y
+  </is>
+  <properties>
+    <baseColor type="type:Color">
+      <value>#EAC645</value>
+    </baseColor>
+  </properties>
+  <aggregations>
+    <_parts override="true">
+      <composition>
+        <core:NativeBlock bml:id="south" size="{x:4,y:2,z:1}" offset="{x:0,y:0,z:0}" baseColor="${ baseColor }" />
+        <core:NativeBlock bml:id="north" size="{x:4,y:2,z:1}" offset="{x:0,y:2,z:0}" baseColor="${ baseColor }" />
+      </composition>
+    </_parts>
+  </aggregations>
+</playground:Stack>

@@ -2,6 +2,7 @@ import type { BlockDefinition } from "@blockml/bom";
 import type { RenderContext, RenderOutput } from "@blockml/compiler";
 import type { BlockProcessor, CompileBlock, RenderEngine } from "@blockml/block-render-engine";
 import { compositionChildren, hasDirectives } from "./composition.js";
+import { renderConfigSetFile } from "./config-set.js";
 import { renderCompositeFile } from "./composite.js";
 import {
   DIRECTIVE_DEFERRED,
@@ -15,7 +16,7 @@ import type { ManifestationMapping } from "./naming.js";
 import type { MachineBlocksTargetOptions } from "./options.js";
 import { renderPresetFile } from "./presets.js";
 import { renderSetFile } from "./set-file.js";
-import { BLOCK_FQN, NATIVE_BLOCK_FQN, SET_FQN } from "./version.js";
+import { BLOCK_FQN, CONFIG_SET_FQN, NATIVE_BLOCK_FQN, SET_FQN } from "./version.js";
 
 /** Reads options captured for the current render call. */
 export interface OptionSlot {
@@ -50,7 +51,25 @@ export class ScadSetProcessor implements BlockProcessor {
       mbLibPath,
       this.options.mapping,
       context.session.typeRegistry,
+      this.options.current.configSet,
     );
+  }
+}
+
+export class ScadConfigSetProcessor implements BlockProcessor {
+  readonly baseType = CONFIG_SET_FQN;
+
+  constructor(private readonly options: OptionSlot) {}
+
+  process(block: CompileBlock, engine: RenderEngine, context: RenderContext): RenderOutput {
+    return engine.compile(block, this, context);
+  }
+
+  compile(block: CompileBlock, context: RenderContext): RenderOutput {
+    if (!isDefinition(block)) {
+      return errorOutput(LEAF_VALUE_UNSUPPORTED, "ScadConfigSetProcessor compiles a block definition.", blockSource(block));
+    }
+    return renderConfigSetFile(block, context.outputRelativePath, context.session.typeRegistry, this.options.mapping);
   }
 }
 
@@ -88,6 +107,7 @@ export class ScadBlockProcessor implements BlockProcessor {
         mbLibPath,
         context.session.typeRegistry,
         this.options.mapping,
+        this.options.current.configSet,
       );
     }
     return renderCompositeFile(
@@ -97,6 +117,7 @@ export class ScadBlockProcessor implements BlockProcessor {
       mbLibPath,
       context.session.typeRegistry,
       this.options.mapping,
+      this.options.current.configSet,
     );
   }
 }

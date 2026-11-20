@@ -19,24 +19,25 @@
     MBOM semantic value to SCAD output:
 
     - baseCutoutType = "groove" on a top part
-      -> mb_assembly_groove(assembly, renderGroups, group_top)
+      -> mb_assembly_groove(gen_assembly, gen_renderGroups, gen_group_top)
     - tongue = true on a bottom part
-      -> mb_assembly_tongue(assembly, renderGroups, group_bottom)
+      -> mb_assembly_tongue(gen_assembly, gen_renderGroups, gen_group_bottom)
     - offset on an assembly-dependent part
-      -> mb_assembly_offset([x, y, z], assembly, renderGroups, group_top)
+      -> mb_assembly_offset([x, y, z], gen_assembly, gen_renderGroups, gen_group_top)
     - render per part
-      -> mb_group_render(renderGroups, group_bottom)
+      -> mb_group_render(gen_renderGroups, gen_group_bottom)
     - id per part
-      -> mb_block_id(blockId, part_bottom)
+      -> mb_block_id(gen_blockId, gen_part_bottom)
     - baseAdjustment, namespace-filtered
-      -> mb_params_filter(baseAdjustment, ns_bottom)
+      -> mb_params_filter(baseAdjustment, gen_ns_bottom)
 
     For each composition child the renderer emits part variables inside the
-    wrapper children block:
+    wrapper children block. The names use the generated-local prefix from
+    FqnNaming:
 
-        part_bottom  = "bottom";
-        group_bottom = part_bottom;
-        ns_bottom    = part_bottom;
+        gen_part_bottom  = "bottom";
+        gen_group_bottom = gen_part_bottom;
+        gen_ns_bottom    = gen_part_bottom;
 
     The part name is the composition child id.
 

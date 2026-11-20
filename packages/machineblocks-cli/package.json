@@ -38,7 +38,7 @@
     "@blockml/framework": "^0.9.19",
     "@blockml/parser": "^0.9.19",
     "@blockml/serializer": "^0.9.19",
-    "@machineblocks/core": "^3.0.0-A5",
+    "@machineblocks/core": "^3.0.0-A7",
     "@machineblocks/render-target": "^0.2.0"
   },
   "engines": {

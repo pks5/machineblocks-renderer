@@ -19,14 +19,17 @@
     - Register the render target before compile. The universal bootstrapTargets
       path is not used for this name. validate does not need the target registry;
       compile does.
-    - Pass mbLibPath so generated SCAD can import lib/block.scad and
-      config/mb_config.scad from the installed @machineblocks/core (or an
-      override path).
+    - Pass mbLibPath so generated SCAD can import lib/block.scad and, for a
+      core ConfigSet, that set's manifestation under the core blocks folder.
     - Default the compile target to machineblocks-v3-scad. The command does not
       take a target name.
     - Resolve the type selector with the framework scan, keep blocks whose
       baseType chain includes Block or Set, and pass the resolved mapping
       (automatic, or sourcePackage plus targetPackage) on targetOptions.
+    - Resolve the ConfigSet for a geometry block or set. --config-set names it.
+      Otherwise the first concrete ConfigSet under srcDir wins, ordered by
+      relative path, otherwise the first concrete ConfigSet in the
+      @machineblocks/core blocks folder. The FQN is passed as configSet.
     - Compute every target FQN and output path before writing. One failure
       writes nothing.
     - Write .scad files, preset JSON, and source maps under the configured

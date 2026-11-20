@@ -21,6 +21,9 @@ export function readTargetOptions(targetOptions) {
     if (typeof record.targetPackage === "string" && record.targetPackage.length > 0) {
         options.targetPackage = record.targetPackage;
     }
+    if (typeof record.configSet === "string" && record.configSet.length > 0) {
+        options.configSet = record.configSet;
+    }
     return options;
 }
 //# sourceMappingURL=options.js.map

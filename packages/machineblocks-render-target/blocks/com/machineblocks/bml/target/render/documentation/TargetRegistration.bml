@@ -30,12 +30,13 @@
           engine = new BlockRenderEngine()
           processors = [
             new ScadSetProcessor(),
+            new ScadConfigSetProcessor(),
             new ScadBlockProcessor()
           ]
           delegates = []
         }
 
-    Both V1 processors use the engine compile strategy.
+    The V1 processors use the engine compile strategy.
     delegates stays empty. Other domain targets may list this target as a
     delegate and ship no processors of their own.
 
@@ -51,8 +52,9 @@
     sourceFilePath. No match returns files: [] and diagnostic
     BML_RENDER_DOCUMENT_NOT_FOUND.
 
-    targetOptions.machineblocks-v3-scad carries mbLibPath and settingsFormat
-    (pseudo-map or object).
+    targetOptions.machineblocks-v3-scad carries mbLibPath, settingsFormat
+    (pseudo-map or object), and configSet. configSet is the resolved ConfigSet
+    FQN for a geometry block or a set. A ConfigSet compile omits it.
 
   </documentation>
   <references>

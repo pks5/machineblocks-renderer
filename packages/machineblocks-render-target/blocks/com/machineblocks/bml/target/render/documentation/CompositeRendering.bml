@@ -18,12 +18,22 @@
 
     1. Native parameters via mb_param_* getters.
     2. Custom parameters via mb_param.
-    3. assembly = mb_assembly(config, settings, size, direction)
-       and renderGroups = mb_param_renderGroups(config, settings).
+    3. gen_assembly = mb_assembly(config, settings, size, direction)
+       and gen_renderGroups = mb_param_renderGroups(config, settings).
+       When every child has a literal size and the block does not declare
+       size, size is assigned once, before mb_assembly:
+
+           gen_parts = [ ... ];
+           size = mb_parts_total_size(gen_parts);
+
+       That assignment replaces mb_param_size. OpenSCAD reads size at the
+       mb_assembly call. gen_blockId, gen_assembly, gen_renderGroups, and
+       gen_parts are generated locals from FqnNaming.
     4. Wrapper mb_block with id, base false, studs false, size, align, offset,
        direction.
-    5. One child region per composition child: part_/group_/ns_ locals, then
-       mb_block with id mb_block_id(...), render mb_group_render(...), size
+    5. One child region per composition child: gen_part_ / gen_group_ /
+       gen_ns_ locals, then mb_block with id mb_block_id(...), render
+       mb_group_render(...), size
        expression, and assembly helpers from AssemblyPatterns.
 
     Wrapper decision:

@@ -11,16 +11,37 @@
     use and include paths emitted into each SCAD file
   </is>
   <documentation><![CDATA[
-    Every generated file imports the MachineBlocks V3 library and the project
-    config. Paths are relative to the output file, using mbLibPath from
-    targetOptions under the key machineblocks-v3-scad. The compiler
-    RenderSession has no mbLibPath field. When mbLibPath is absent this slice
-    returns files: [] and diagnostic BML_MB_LIB_PATH_MISSING.
+    Every generated geometry file imports the MachineBlocks V3 library and the
+    selected ConfigSet. Paths are relative to the output file. The library path
+    uses mbLibPath from targetOptions under the key machineblocks-v3-scad. The
+    compiler RenderSession has no mbLibPath field. When mbLibPath is absent this
+    slice returns files: [] and diagnostic BML_MB_LIB_PATH_MISSING.
 
-    Standard imports (angle brackets are SCAD include syntax):
+    A ConfigSet file exports functions only. It imports neither the library nor
+    another ConfigSet.
+
+    Standard imports for a leaf, a composite, and a set (angle brackets are
+    SCAD include syntax):
 
         use <{relative_path_to_scad_lib}/lib/block.scad>;
-        include <{relative_path_to_scad_lib}/config/mb_config.scad>;
+        use <{relative_path_to_the_ConfigSet_manifestation}>;
+
+    The ConfigSet path is the output path under srcDir when the set lives in
+    the project, using the same package mapping as the compile. A core set is
+    mbLibPath/blocks/ plus the automatic manifestation, for example
+    blocks/com/machineblocks/scad/config/DefaultConfigSet.scad.
+
+    The customizer dropdown is built from that set's profiles, in profile
+    order. The default is the bml:id of the first profile. Each option is
+    bml:id:name. Hidden assigns mb_config once from that set's function:
+
+        /* [Config] */
+        configProfile = "fine"; // [fine:Fine, standard:Standard]
+        /* [Hidden] */
+        mb_config = mb__…__func__config(configProfile);
+
+    A different set writes its own ids, labels, and function name. A profile
+    without name returns files: [] and diagnostic MB_CONFIG_PROFILE_INCOMPLETE.
 
     Ordinary composite compositions render leaf instances as mb_block()
     (NativeBlock). They do not use-import dependency block SCAD files.

@@ -1,7 +1,7 @@
 import type { BlockDefinition } from "@blockml/bom";
 import type { RenderContext } from "@blockml/compiler";
 import type { BlockProcessor } from "@blockml/block-render-engine";
-import { BLOCK_FQN, SET_FQN } from "./version.js";
+import { BLOCK_FQN, CONFIG_SET_FQN, SET_FQN } from "./version.js";
 
 export interface DispatchTarget {
   processors: readonly BlockProcessor[];
@@ -19,6 +19,13 @@ export function baseTypeChain(block: BlockDefinition, registry: RenderContext["s
     base = registry.get(base)?.block.baseType;
   }
   return chain;
+}
+
+export function isConfigSet(
+  block: BlockDefinition,
+  registry: RenderContext["session"]["typeRegistry"],
+): boolean {
+  return baseTypeChain(block, registry).includes(CONFIG_SET_FQN);
 }
 
 export function isRenderBlock(

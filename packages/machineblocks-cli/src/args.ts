@@ -11,6 +11,7 @@ export interface CompileArgs {
   selector: string;
   sourcePackage?: string;
   targetPackage?: string;
+  configSet?: string;
 }
 
 export interface InitArgs {
@@ -85,20 +86,24 @@ function parseCompile(args: readonly string[]): HostCommand {
   let selector: string | undefined;
   let sourcePackage: string | undefined;
   let targetPackage: string | undefined;
+  let configSet: string | undefined;
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index];
     if (arg === undefined) {
       continue;
     }
-    if (arg === "--source-package" || arg === "--target-package") {
+    if (arg === "--source-package" || arg === "--target-package" || arg === "--config-set") {
       const value = args[index + 1];
       if (value === undefined || value.startsWith("--")) {
-        return { command: "usage", message: `${arg} requires a package FQN.`, topic: "compile" };
+        const noun = arg === "--config-set" ? "ConfigSet FQN" : "package FQN";
+        return { command: "usage", message: `${arg} requires a ${noun}.`, topic: "compile" };
       }
       if (arg === "--source-package") {
         sourcePackage = value;
-      } else {
+      } else if (arg === "--target-package") {
         targetPackage = value;
+      } else {
+        configSet = value;
       }
       index += 1;
       continue;
@@ -120,6 +125,9 @@ function parseCompile(args: readonly string[]): HostCommand {
   }
   if (targetPackage !== undefined) {
     parsed.targetPackage = targetPackage;
+  }
+  if (configSet !== undefined) {
+    parsed.configSet = configSet;
   }
   return parsed;
 }

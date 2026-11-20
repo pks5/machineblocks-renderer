@@ -75,6 +75,130 @@ describe("machineblocks compile", () => {
     expect(map.version).toBe(3);
   });
 
+  it("assigns a composite size once from the parts list", () => {
+    const root = project();
+    writeComposite(root, "com.example.bml.bricks.Stack");
+
+    const result = execute(["compile", "com.example.bml.bricks.Stack"], root);
+
+    expect(result.code).toBe(0);
+    const text = readFileSync(scad(root, "com/example/scad/bricks/Stack.scad"), "utf8");
+    expect(text).toContain("size = mb_parts_total_size(gen_parts);");
+    expect(text).not.toContain("size = mb_param_size");
+    expect(text.match(/^\s*size = .*$/gm)).toEqual(["    size = mb_parts_total_size(gen_parts);"]);
+    expect(text.indexOf("size = mb_parts_total_size(gen_parts);")).toBeLessThan(text.indexOf("gen_assembly = mb_assembly"));
+  });
+
+  it("uses the first project ConfigSet, then a named set", () => {
+    const root = project();
+    writeBlock(root, "com.example.bml.bricks.Brick");
+    writeConfigSet(root, "com.example.bml.config.Later", "beta", "Beta");
+    writeConfigSet(root, "com.example.bml.config.First", "alpha", "Alpha");
+
+    const chosen = execute(["compile", "com.example.bml.bricks.Brick"], root);
+    expect(chosen.code).toBe(0);
+    const first = readFileSync(scad(root, "com/example/scad/bricks/Brick.scad"), "utf8");
+    expect(first).toContain('configProfile = "alpha"; // [alpha:Alpha]');
+    expect(first).toContain("use <../config/First.scad>;");
+    expect(first).toContain("mb__com__example__scad__config__First__func__config(configProfile);");
+    expect(first).not.toContain("DefaultConfigSet");
+
+    const named = execute(["compile", "com.example.bml.bricks.Brick", "--config-set", "com.example.bml.config.Later"], root);
+    expect(named.code).toBe(0);
+    const later = readFileSync(scad(root, "com/example/scad/bricks/Brick.scad"), "utf8");
+    expect(later).toContain('configProfile = "beta"; // [beta:Beta]');
+    expect(later).toContain("mb__com__example__scad__config__Later__func__config(configProfile);");
+  });
+
+  it("falls back to the first ConfigSet in @machineblocks/core", () => {
+    const root = project();
+    writeBlock(root, "com.example.bml.bricks.Brick");
+
+    const result = execute(["compile", "com.example.bml.bricks.Brick"], root);
+
+    expect(result.code).toBe(0);
+    const text = readFileSync(scad(root, "com/example/scad/bricks/Brick.scad"), "utf8");
+    expect(text).toContain('configProfile = "fine"; // [fine:Fine, standard:Standard]');
+    expect(text).toContain("mb__com__machineblocks__scad__config__DefaultConfigSet__func__config(configProfile);");
+    expect(text).toContain("DefaultConfigSet.scad");
+  });
+
+  it("uses the project root when the project is @machineblocks/core", () => {
+    const root = project({ name: "@machineblocks/core", mbLibPath: undefined, coreLib: true });
+    writeBlock(root, "com.example.bml.bricks.Brick");
+
+    const result = execute(["compile", "com.example.bml.bricks.Brick"], root);
+
+    expect(result.code).toBe(0);
+    const text = readFileSync(scad(root, "com/example/scad/bricks/Brick.scad"), "utf8");
+    expect(text).toContain("use <../../../../../lib/block.scad>;");
+  });
+
+  it("keeps a configured mbLibPath when the project is @machineblocks/core", () => {
+    const root = project({ name: "@machineblocks/core", mbLibPath: "/mb", coreLib: true });
+    writeBlock(root, "com.example.bml.bricks.Brick");
+
+    const result = execute(["compile", "com.example.bml.bricks.Brick"], root);
+
+    expect(result.code).toBe(0);
+    const text = readFileSync(scad(root, "com/example/scad/bricks/Brick.scad"), "utf8");
+    expect(text).toContain("mb/lib/block.scad");
+    expect(text).not.toContain("use <../../../../../lib/block.scad>;");
+  });
+
+  it("uses the installed core when the core package has no lib/block.scad", () => {
+    const root = project({ name: "@machineblocks/core", mbLibPath: undefined });
+    writeBlock(root, "com.example.bml.bricks.Brick");
+
+    const result = execute(["compile", "com.example.bml.bricks.Brick"], root);
+
+    expect(result.code).toBe(0);
+    const text = readFileSync(scad(root, "com/example/scad/bricks/Brick.scad"), "utf8");
+    expect(text).toContain("node_modules/@machineblocks/core/lib/block.scad");
+  });
+
+  it("uses the installed core for a consumer project", () => {
+    const root = project({ mbLibPath: undefined });
+    writeBlock(root, "com.example.bml.bricks.Brick");
+
+    const result = execute(["compile", "com.example.bml.bricks.Brick"], root);
+
+    expect(result.code).toBe(0);
+    const text = readFileSync(scad(root, "com/example/scad/bricks/Brick.scad"), "utf8");
+    expect(text).toContain("node_modules/@machineblocks/core/lib/block.scad");
+  });
+
+  it("rejects --config-set when the selection is a ConfigSet", () => {
+    const root = project();
+    writeConfigSet(root, "com.example.bml.config.First", "alpha", "Alpha");
+
+    const blocked = execute(
+      ["compile", "com.example.bml.config.First", "--config-set", "com.machineblocks.bml.config.DefaultConfigSet"],
+      root,
+    );
+    expect(blocked.code).toBe(1);
+    expect(blocked.lines.join("\n")).toContain("MB_CONFIG_SET_UNEXPECTED");
+    expect(existsSync(scad(root, "com/example/scad/config/First.scad"))).toBe(false);
+
+    const compiled = execute(["compile", "com.example.bml.config.First"], root);
+    expect(compiled.code).toBe(0);
+    const text = readFileSync(scad(root, "com/example/scad/config/First.scad"), "utf8");
+    expect(text).toContain("mb__com__example__scad__config__First__func__config(profile)");
+    expect(text).toContain('["printerLayerHeight", 0.2]');
+    expect(text).not.toContain("configProfile");
+  });
+
+  it("rejects a --config-set that is not a concrete ConfigSet", () => {
+    const root = project();
+    writeBlock(root, "com.example.bml.bricks.Brick");
+
+    const result = execute(["compile", "com.example.bml.bricks.Brick", "--config-set", "com.machineblocks.bml.core.ConfigSet"], root);
+
+    expect(result.code).toBe(1);
+    expect(result.lines.join("\n")).toContain("MB_CONFIG_SET_UNKNOWN");
+    expect(existsSync(scad(root, "com/example/scad/bricks/Brick.scad"))).toBe(false);
+  });
+
   it("derives the source package from a package selector", () => {
     const root = project();
     writeBlock(root, "com.example.models.bricks.Brick");
@@ -586,30 +710,93 @@ function readPackage(root: string): PackageJson {
   return JSON.parse(readFileSync(join(root, "package.json"), "utf8")) as PackageJson;
 }
 
-function project(): string {
+function project(options: { name?: string; mbLibPath?: string; coreLib?: boolean } = {}): string {
   const root = mkdtempSync(join(tmpdir(), "mb-cli-"));
   directories.push(root);
   const core = require.resolve("@blockml/core/blocks/org/blockml/bml/Library.bml");
   const machineblocks = require.resolve("@machineblocks/core/blocks/com/machineblocks/bml/Library.bml");
-  writeFileSync(join(root, "package.json"), `${JSON.stringify({ name: "fixture", type: "module" })}\n`);
+  const mbLibPath = "mbLibPath" in options ? options.mbLibPath : "/mb";
+  writeFileSync(
+    join(root, "package.json"),
+    `${JSON.stringify({ name: options.name ?? "fixture", type: "module" })}\n`,
+  );
   writeFileSync(
     join(root, "blockml.config.json"),
     `${JSON.stringify(
       {
         srcDir: "blocks",
         libraries: [core, machineblocks],
-        targetOptions: { "machineblocks-v3-scad": { mbLibPath: "/mb" } },
+        ...(mbLibPath ? { targetOptions: { "machineblocks-v3-scad": { mbLibPath } } } : {}),
       },
       null,
       2,
     )}\n`,
   );
   mkdirSync(join(root, "blocks"), { recursive: true });
+  if (options.coreLib) {
+    mkdirSync(join(root, "lib"), { recursive: true });
+    writeFileSync(join(root, "lib", "block.scad"), "");
+  }
   return root;
 }
 
 function writeBlock(root: string, fqn: string): void {
   writeType(root, fqn, "mbcore:Block", false);
+}
+
+function writeComposite(root: string, fqn: string): void {
+  const parts = fqn.split(".");
+  const name = parts[parts.length - 1] ?? "Stack";
+  const packageFqn = parts.slice(0, -1).join(".");
+  const directory = join(root, "blocks", ...parts.slice(0, -1));
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(
+    join(directory, `${name}.bml`),
+    `<?xml version="1.0"?>
+<t:${name} xmlns="http://blockml.org/bml"
+  xmlns:bml="org.blockml.bml.annotation.BmlAnnotation"
+  xmlns:mbcore="com.machineblocks.bml.core"
+  xmlns:t="${packageFqn}">
+  <baseType>mbcore:CompositeBlock</baseType>
+  <is>Two plates</is>
+  <aggregations>
+    <_parts override="true">
+      <composition>
+        <mbcore:NativeBlock bml:id="south" size="{x:4,y:2,z:1}" offset="{x:0,y:0,z:0}" />
+        <mbcore:NativeBlock bml:id="north" size="{x:4,y:2,z:1}" offset="{x:0,y:2,z:0}" />
+      </composition>
+    </_parts>
+  </aggregations>
+</t:${name}>
+`,
+  );
+}
+
+function writeConfigSet(root: string, fqn: string, id: string, label: string): void {
+  const parts = fqn.split(".");
+  const name = parts[parts.length - 1] ?? "Set";
+  const packageFqn = parts.slice(0, -1).join(".");
+  const directory = join(root, "blocks", ...parts.slice(0, -1));
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(
+    join(directory, `${name}.bml`),
+    `<?xml version="1.0"?>
+<config:${name} xmlns="http://blockml.org/bml"
+  xmlns:bml="org.blockml.bml.annotation.BmlAnnotation"
+  xmlns:config="${packageFqn}"
+  xmlns:mbcore="com.machineblocks.bml.core">
+  <baseType>mbcore:ConfigSet</baseType>
+  <is>A config set</is>
+  <aggregations>
+    <profiles override="true">
+      <composition>
+        <mbcore:ConfigProfile bml:id="${id}" name="${label}" printerLayerHeight="0.2" />
+      </composition>
+    </profiles>
+  </aggregations>
+</config:${name}>
+`,
+  );
 }
 
 function writeNotes(root: string, fqn: string): void {

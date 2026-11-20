@@ -42,17 +42,18 @@
     mb_parts_total_size(parts) is the Core SCAD bounding box of the parts
     after direction resolution. Each entry is [id, size, direction, offset].
     id is required. size, direction, and offset are indexes 1, 2, and 3.
-    A STEPS row uses that same layout. A composite emits:
+    A gen_STEPS row uses that same layout. A composite emits:
 
-        size = mb_parts_total_size(parts);
+        size = mb_parts_total_size(gen_parts);
 
-    A set passes STEPS to the same function as the wrapper size of Total,
+    A set passes gen_STEPS to the same function as the wrapper size of Total,
     Print, and Step:
 
-        ["size", mb_parts_total_size(STEPS)]
+        ["size", mb_parts_total_size(gen_STEPS)]
 
-    Print view uses mb_set_step_print_position(assembly, STEPS, i) as each
-    row's offset. Total and Step pass the offset stored on the STEPS row.
+    Print view uses mb_set_step_print_position(assembly, gen_STEPS, gen_i) as
+    each row's offset. assembly there is the customizer parameter. Total and
+    Step pass the offset stored on the gen_STEPS row.
     See SetRendering.
 
     Rule: render-dependent values (assembly, renderGroups, overridable

@@ -5,5 +5,6 @@ export const TARGET_NAME = "machineblocks-v3-scad";
 
 export const BLOCK_FQN = "com.machineblocks.bml.core.Block";
 export const SET_FQN = "com.machineblocks.bml.core.Set";
+export const CONFIG_SET_FQN = "com.machineblocks.bml.core.ConfigSet";
 export const NATIVE_BLOCK_FQN = "com.machineblocks.bml.core.NativeBlock";
 export const SIZE_XYZ_FQN = "com.machineblocks.bml.type.SizeXYZ";

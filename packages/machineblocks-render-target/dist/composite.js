@@ -1,13 +1,14 @@
 import { parseExpression, resolveEffectiveMembers } from "@blockml/framework";
+import { loadConfigPrelude } from "./config-set.js";
 import { compositionChildren } from "./composition.js";
 import { DIRECTIVE_DEFERRED, FUNCTION_NO_RUNTIME, LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
 import { lowerExpression, propertyTypesOf } from "./lower.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
-import { mapManifestation, moduleNameForManifestation } from "./naming.js";
+import { generatedLocal, mapManifestation, moduleNameForManifestation } from "./naming.js";
 import { isIdentifier, serializeLiteral } from "./serialize.js";
 import { withSourceMap } from "./source-map.js";
 import { NATIVE_BLOCK_FQN, RENDER_TARGET_VERSION } from "./version.js";
-export function renderCompositeFile(block, outputRelativePath, outputBasePath, mbLibPath, registry, mapping) {
+export function renderCompositeFile(block, outputRelativePath, outputBasePath, mbLibPath, registry, mapping, configSet) {
     const source = block.source ?? { file: "", line: 1, column: 1 };
     const template = partsTemplate(block);
     const children = compositionChildren(block, "parts").flatMap((child) => child.kind === "blockInstance" ? [child.instance] : []);
@@ -25,7 +26,10 @@ export function renderCompositeFile(block, outputRelativePath, outputBasePath, m
     const filename = outputRelativePath.split("/").pop() ?? `${block.name}.scad`;
     const outputDir = dirnamePosix(joinPosix(outputBasePath, outputRelativePath));
     const blockImport = relativePosix(outputDir, joinPosix(mbLibPath, "lib/block.scad"));
-    const configImport = relativePosix(outputDir, joinPosix(mbLibPath, "config/mb_config.scad"));
+    const config = loadConfigPrelude(registry, configSet, outputRelativePath, outputBasePath, mbLibPath, mapping);
+    if (!config.ok) {
+        return config.output;
+    }
     const scope = {
         registry,
         block,
@@ -56,18 +60,26 @@ export function renderCompositeFile(block, outputRelativePath, outputBasePath, m
         }
     }
     const declaresSize = properties.some((property) => property.name === "size");
-    const partsLine = !declaresSize && partsHaveSize
-        ? `    parts = [\n${partRows.join(",\n")}\n    ];\n    size = mb_parts_total_size(parts);\n`
+    const deriveSize = !declaresSize && partsHaveSize;
+    const partsLocal = generatedLocal("parts");
+    const partsLine = deriveSize
+        ? `    ${partsLocal} = [\n${partRows.join(",\n")}\n    ];\n    size = mb_parts_total_size(${partsLocal});\n`
         : "";
+    const blockIdLocal = generatedLocal("blockId");
+    const assemblyLocal = generatedLocal("assembly");
+    const renderGroupsLocal = generatedLocal("renderGroups");
     const passed = ready.filter((property) => property.scad !== undefined);
     const content = `${header(block, filename)}
 
 /* Imports */
 use <${blockImport}>;
-include <${configImport}>;
+${config.prelude.useLine}
 
 /* Customization */
-${customizerLines(passed)}
+${[config.prelude.dropdown, customizerLines(passed)].filter((part) => part.length > 0).join("\n\n")}
+
+/* [Hidden] */
+${config.prelude.hidden}
 
 /* Main Module Call */
 ${moduleName}(
@@ -78,14 +90,14 @@ ${moduleName}(
 /* Main Module Definition */
 module ${moduleName}(config = undef, settings = undef) {
 ${propertyGetters(ready)}
-    blockId = mb_param_id(config, settings, "${block.type}");
-${fixedGetters(properties)}
-    assembly = mb_assembly(config, settings, size, direction);
-    renderGroups = mb_param_renderGroups(config, settings);
-${partsLine}    mb_block(
+    ${blockIdLocal} = mb_param_id(config, settings, "${block.type}");
+${fixedGetters(properties, deriveSize ? ["size"] : [])}
+${partsLine}    ${assemblyLocal} = mb_assembly(config, settings, size, direction);
+    ${renderGroupsLocal} = mb_param_renderGroups(config, settings);
+    mb_block(
         config = config,
         settings = [
-            ["id", blockId],
+            ["id", ${blockIdLocal}],
             ["base", false],
             ["studs", false],
             ["size", size],
@@ -191,13 +203,15 @@ function eachCollection(each, scope) {
 }
 function renderInstance(instance, scope, indent) {
     const partId = literalText(instance.id);
-    if (!partId || !isIdentifier(`part_${partId}`)) {
+    const partLocal = generatedLocal(`part_${partId ?? ""}`);
+    if (!partId || !isIdentifier(partLocal)) {
         return errorOutput(LEAF_VALUE_UNSUPPORTED, "A composite child needs an identifier id.", instance.source ?? scope.source);
     }
-    const group = `group_${partId}`;
+    const groupLocal = generatedLocal(`group_${partId}`);
+    const nsLocal = generatedLocal(`ns_${partId}`);
     const settings = [
-        { parameter: "id", expression: `mb_block_id(blockId, part_${partId})` },
-        { parameter: "render", expression: `mb_group_render(renderGroups, group_${partId})` },
+        { parameter: "id", expression: `mb_block_id(${generatedLocal("blockId")}, ${partLocal})` },
+        { parameter: "render", expression: `mb_group_render(${generatedLocal("renderGroups")}, ${groupLocal})` },
     ];
     for (const [parameter, member] of Object.entries(instance.memberValues)) {
         const expression = childExpression(scope, instance, partId, parameter, member);
@@ -209,9 +223,9 @@ function renderInstance(instance, scope, indent) {
     const body = settings
         .map((setting) => `${indent}        ["${setting.parameter}", ${setting.expression}]`)
         .join(",\n");
-    return `${indent}part_${partId} = "${partId}";
-${indent}group_${partId} = part_${partId};
-${indent}ns_${partId} = part_${partId};
+    return `${indent}${partLocal} = "${partId}";
+${indent}${groupLocal} = ${partLocal};
+${indent}${nsLocal} = ${partLocal};
 ${indent}mb_block(
 ${indent}    config = config,
 ${indent}    settings = [
@@ -220,8 +234,8 @@ ${indent}    ]
 ${indent});`;
 }
 function childExpression(scope, instance, partId, parameter, member) {
-    const group = `group_${partId}`;
-    const namespace = `ns_${partId}`;
+    const group = generatedLocal(`group_${partId}`);
+    const namespace = generatedLocal(`ns_${partId}`);
     const parameterType = propertyOn(instance.typeFqn, parameter, scope.registry);
     const lowered = member.kind === "expression"
         ? lowerExpression(member.raw, {
@@ -236,16 +250,16 @@ function childExpression(scope, instance, partId, parameter, member) {
         return errorOutput(lowered.code, lowered.message, ("source" in member ? member.source : undefined) ?? instance.source ?? scope.source);
     }
     if (parameter === "offset") {
-        return `mb_assembly_offset(${lowered.scad}, assembly, renderGroups, ${group})`;
+        return `mb_assembly_offset(${lowered.scad}, ${generatedLocal("assembly")}, ${generatedLocal("renderGroups")}, ${group})`;
     }
     if (parameter === "baseAdjustment" && isIdentifier(lowered.scad)) {
         return `mb_params_filter(${lowered.scad}, ${namespace})`;
     }
     if (parameter === "baseCutoutType" && cutoutToken(lowered.scad, scope.block, member) === "groove") {
-        return `mb_assembly_groove(assembly, renderGroups, ${group})`;
+        return `mb_assembly_groove(${generatedLocal("assembly")}, ${generatedLocal("renderGroups")}, ${group})`;
     }
     if (parameter === "tongue" && tongueEnabled(lowered.scad, scope.block, member)) {
-        return `mb_assembly_tongue(assembly, renderGroups, ${group})`;
+        return `mb_assembly_tongue(${generatedLocal("assembly")}, ${generatedLocal("renderGroups")}, ${group})`;
     }
     return lowered.scad;
 }
@@ -326,10 +340,11 @@ function propertyGetters(properties) {
     })
         .join("\n");
 }
-function fixedGetters(properties) {
+function fixedGetters(properties, skip = []) {
     const declared = new Set(properties.map((property) => property.name));
+    const skipped = new Set(skip);
     return ["size", "align", "offset", "direction"]
-        .filter((name) => !declared.has(name))
+        .filter((name) => !declared.has(name) && !skipped.has(name))
         .map((name) => `    ${name} = mb_param_${name}(config, settings);`)
         .join("\n");
 }

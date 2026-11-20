@@ -7,6 +7,7 @@ export interface DispatchTarget {
 }
 /** Authored baseType FQNs, then ancestors loaded in the registry. Nearest type first. */
 export declare function baseTypeChain(block: BlockDefinition, registry: RenderContext["session"]["typeRegistry"]): string[];
+export declare function isConfigSet(block: BlockDefinition, registry: RenderContext["session"]["typeRegistry"]): boolean;
 export declare function isRenderBlock(block: BlockDefinition, registry: RenderContext["session"]["typeRegistry"]): boolean;
 /** Exact FQN, then the nearest baseType. Delegates use the same two steps. */
 export declare function selectProcessor(block: BlockDefinition, registry: RenderContext["session"]["typeRegistry"], target: DispatchTarget): BlockProcessor | undefined;

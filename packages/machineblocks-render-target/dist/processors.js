@@ -1,10 +1,11 @@
 import { compositionChildren, hasDirectives } from "./composition.js";
+import { renderConfigSetFile } from "./config-set.js";
 import { renderCompositeFile } from "./composite.js";
 import { DIRECTIVE_DEFERRED, EMPTY_BLOCK, LEAF_VALUE_UNSUPPORTED, MB_LIB_PATH_MISSING, errorOutput, } from "./diagnostics.js";
 import { renderLeafFile } from "./leaf.js";
 import { renderPresetFile } from "./presets.js";
 import { renderSetFile } from "./set-file.js";
-import { BLOCK_FQN, NATIVE_BLOCK_FQN, SET_FQN } from "./version.js";
+import { BLOCK_FQN, CONFIG_SET_FQN, NATIVE_BLOCK_FQN, SET_FQN } from "./version.js";
 export class ScadSetProcessor {
     options;
     baseType = SET_FQN;
@@ -25,7 +26,23 @@ export class ScadSetProcessor {
         if (hasDirectives(block)) {
             return errorOutput(DIRECTIVE_DEFERRED, "bml:each, bml:if, and bml:with are not expanded for a Set.", blockSource(block));
         }
-        return renderSetFile(block, context.outputRelativePath, context.session.outputBasePath, mbLibPath, this.options.mapping, context.session.typeRegistry);
+        return renderSetFile(block, context.outputRelativePath, context.session.outputBasePath, mbLibPath, this.options.mapping, context.session.typeRegistry, this.options.current.configSet);
+    }
+}
+export class ScadConfigSetProcessor {
+    options;
+    baseType = CONFIG_SET_FQN;
+    constructor(options) {
+        this.options = options;
+    }
+    process(block, engine, context) {
+        return engine.compile(block, this, context);
+    }
+    compile(block, context) {
+        if (!isDefinition(block)) {
+            return errorOutput(LEAF_VALUE_UNSUPPORTED, "ScadConfigSetProcessor compiles a block definition.", blockSource(block));
+        }
+        return renderConfigSetFile(block, context.outputRelativePath, context.session.typeRegistry, this.options.mapping);
     }
 }
 export class ScadBlockProcessor {
@@ -55,9 +72,9 @@ export class ScadBlockProcessor {
         }
         const only = parts.length === 1 ? parts[0] : undefined;
         if (!hasDirectives(block) && only?.kind === "blockInstance" && only.instance.typeFqn === NATIVE_BLOCK_FQN) {
-            return renderLeafFile(block, context.outputRelativePath, context.session.outputBasePath, mbLibPath, context.session.typeRegistry, this.options.mapping);
+            return renderLeafFile(block, context.outputRelativePath, context.session.outputBasePath, mbLibPath, context.session.typeRegistry, this.options.mapping, this.options.current.configSet);
         }
-        return renderCompositeFile(block, context.outputRelativePath, context.session.outputBasePath, mbLibPath, context.session.typeRegistry, this.options.mapping);
+        return renderCompositeFile(block, context.outputRelativePath, context.session.outputBasePath, mbLibPath, context.session.typeRegistry, this.options.mapping, this.options.current.configSet);
     }
 }
 function isDefinition(block) {

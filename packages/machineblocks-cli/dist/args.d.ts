@@ -9,6 +9,7 @@ export interface CompileArgs {
     selector: string;
     sourcePackage?: string;
     targetPackage?: string;
+    configSet?: string;
 }
 export interface InitArgs {
     command: "init";

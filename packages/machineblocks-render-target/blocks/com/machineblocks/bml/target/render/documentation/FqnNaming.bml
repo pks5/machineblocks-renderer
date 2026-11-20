@@ -75,6 +75,30 @@
 
     The names help and func are reserved and cannot be subclass names.
 
+    Generated locals:
+
+    A name the generator invents is a generated local. It is not a block
+    property and not a customizer parameter. Every generated local starts
+    with one prefix. The prefix is GENERATED_LOCAL_PREFIX in the render
+    target naming module. The value is gen_. Change that constant and
+    recompile; the new prefix is written into every generated SCAD file.
+
+    gen_ stays clear of BlockML visibility names. One leading underscore is
+    protected. Two leading underscores are private.
+
+    Customizer parameters and property locals keep the property name:
+    size, studs, baseColor, configProfile, and the set fields mode, step,
+    instanceId, highlightColor, and assembly. mb_config stays. Settings
+    keys stay the parameter name.
+
+    Generated locals are gen_blockId, gen_assembly for the mb_assembly
+    result, gen_renderGroups, gen_parts, gen_part_ plus the child id,
+    gen_group_ plus the child id, gen_ns_ plus the child id, gen_STEPS,
+    and gen_i for a generator for-loop. Each name
+    is assigned once in its scope. OpenSCAD reads the local after that
+    assignment. A second assignment of the same name hides locals assigned
+    between the two.
+
     Multiple block classes may share one SCAD file. The file is named after the
     primary class. The output root is srcDir.
 

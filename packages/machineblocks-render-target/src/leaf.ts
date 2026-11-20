@@ -1,6 +1,7 @@
 import type { BlockDefinition, BlockInstance, PropertyDefinition } from "@blockml/bom";
 import type { RenderContext, RenderOutput } from "@blockml/compiler";
 import { resolveEffectiveMembers } from "@blockml/framework";
+import { loadConfigPrelude, type ConfigPrelude } from "./config-set.js";
 import { compositionChildren } from "./composition.js";
 import { LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
 import { lowerExpression, propertyTypesOf, type LowerScope, type Lowered, type PropertyType } from "./lower.js";
@@ -28,6 +29,7 @@ export function renderLeafFile(
   mbLibPath: string,
   registry: Registry,
   mapping: ManifestationMapping,
+  configSet: string | undefined,
 ): RenderOutput {
   const source = block.source ?? { file: "", line: 1, column: 1 };
   const child = singleNativeBlock(block);
@@ -80,7 +82,10 @@ export function renderLeafFile(
 
   const outputDir = dirnamePosix(joinPosix(outputBasePath, outputRelativePath));
   const blockImport = relativePosix(outputDir, joinPosix(mbLibPath, "lib/block.scad"));
-  const configImport = relativePosix(outputDir, joinPosix(mbLibPath, "config/mb_config.scad"));
+  const config = loadConfigPrelude(registry, configSet, outputRelativePath, outputBasePath, mbLibPath, mapping);
+  if (!config.ok) {
+    return config.output;
+  }
   const filename = outputRelativePath.split("/").pop() ?? `${block.name}.scad`;
   const moduleName = moduleNameForManifestation(root.fqn);
   const ordered = [...slots.values()];
@@ -88,7 +93,7 @@ export function renderLeafFile(
     files: [
       withSourceMap(block, {
         path: outputRelativePath,
-        content: fileText(block, filename, moduleName, blockImport, configImport, ordered, childScad),
+        content: fileText(block, filename, moduleName, blockImport, config.prelude, ordered, childScad),
       }),
     ],
   };
@@ -153,11 +158,12 @@ function fileText(
   filename: string,
   moduleName: string,
   blockImport: string,
-  configImport: string,
+  config: ConfigPrelude,
   slots: readonly Slot[],
   childScad: ReadonlyMap<string, string>,
 ): string {
-  const customizer = slots.map((slot) => `${slot.name} = ${slot.scad};`).join("\n");
+  const geometry = slots.map((slot) => `${slot.name} = ${slot.scad};`).join("\n");
+  const customizer = [config.dropdown, geometry].filter((part) => part.length > 0).join("\n\n");
   const passed = slots.map((slot) => `        ["${slot.name}", ${slot.name}]`).join(",\n");
   const settingsBody = slots.length === 0 ? "" : `\n${passed}\n    `;
   const getterNames = new Set(slots.map((slot) => slot.name));
@@ -186,10 +192,13 @@ function fileText(
 
 /* Imports */
 use <${blockImport}>;
-include <${configImport}>;
+${config.useLine}
 
 /* Customization */
 ${customizer}
+
+/* [Hidden] */
+${config.hidden}
 
 /* Main Module Call */
 ${moduleName}(

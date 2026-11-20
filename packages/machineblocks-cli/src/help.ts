@@ -2,7 +2,7 @@ import type { HelpTopic } from "./args.js";
 
 /** Short syntax printed on usage errors. Not the --help page. */
 export const USAGE = `Usage: machineblocks validate [--all] [<file>]
-       machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
+       machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>] [--config-set <FQN>]
        machineblocks init <package-fqn> [--src dir] [--no-install]
        machineblocks update [--no-install]
        machineblocks --help`;
@@ -10,7 +10,7 @@ export const USAGE = `Usage: machineblocks validate [--all] [<file>]
 export const VALIDATE_USAGE = `Usage: machineblocks validate [--all] [<file>]
        machineblocks validate --help`;
 
-export const COMPILE_USAGE = `Usage: machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
+export const COMPILE_USAGE = `Usage: machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>] [--config-set <FQN>]
        machineblocks compile --help`;
 
 export const INIT_USAGE = `Usage: machineblocks init <package-fqn> [--src dir] [--no-install]
@@ -38,7 +38,7 @@ Commands:
               Does not write SCAD.
               machineblocks validate [--all] [<file>]
   compile     Render selected Block and Set types to SCAD under srcDir.
-              machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
+              machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>] [--config-set <FQN>]
   init        Scaffold a BlockML project and record the MachineBlocks profile.
               machineblocks init <package-fqn> [--src dir] [--no-install]
   update      Point @machineblocks/cli, @machineblocks/core, @blockml/cli, and
@@ -73,7 +73,7 @@ After diagnostics: Validated N block(s). or Validated N block(s) with errors.
 Related: compile. Search, scan, inspect, and graph stay on blockml.`;
 
 /** Printed help. SSOT: com.machineblocks.bml.cli.documentation.CompileCommand */
-export const COMPILE_HELP = `Usage: machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>]
+export const COMPILE_HELP = `Usage: machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>] [--config-set <FQN>]
        machineblocks compile --help
 
 When: render selected Block and Set types to OpenSCAD. Change BML first, then recompile.
@@ -95,11 +95,19 @@ Explicit mapping swaps --source-package for --target-package and does not apply 
 Flags:
   --source-package <FQN>   source package root for an explicit mapping
   --target-package <FQN>   target package root. Not a directory and not one output file.
+  --config-set <FQN>       ConfigSet used by geometry blocks and sets.
 
 --source-package without --target-package exits 2 (MB_SOURCE_PACKAGE_ALONE).
 --target-package without a derivable source root exits 2 (MB_SOURCE_PACKAGE_REQUIRED).
 A missing selector, an unknown flag, or a selector scanTypes rejects exits 2.
 If no Block or Set remains, exit 1 (MB_SELECTOR_EMPTY) and the message names the selector.
+When --config-set is omitted and the selection needs a ConfigSet, the first concrete
+ConfigSet under srcDir wins, ordered by relative path. Otherwise the first concrete
+ConfigSet in the @machineblocks/core blocks folder wins. Abstract sets are skipped.
+A selection of only ConfigSet types does not resolve a ConfigSet.
+--config-set on a selection that includes a ConfigSet exits 1 (MB_CONFIG_SET_UNEXPECTED).
+An FQN that is not a concrete ConfigSet exits 1 (MB_CONFIG_SET_UNKNOWN).
+No concrete ConfigSet in the project or the core exits 1 (MB_CONFIG_SET_MISSING).
 
 Exit 0 writes the SCAD or preset JSON files and a sibling .map when the target attached a source map.
 The status line is Wrote N file(s) to <srcDir>. N counts every written file, including a sibling .map.
@@ -111,8 +119,13 @@ One failure writes nothing. Mapping failures, collisions, and illegal paths exit
   MB_TARGET_PACKAGE_AMBIGUOUS — the source FQN has more than one bml segment.
   MB_SOURCE_OUTSIDE_ROOT — a selected block is outside --source-package.
   MB_EMPTY_BLOCK — a composite has nothing to render.
+  MB_CONFIG_SET_UNEXPECTED — --config-set while the selection includes a ConfigSet.
+  MB_CONFIG_SET_UNKNOWN — --config-set is not a concrete ConfigSet.
+  MB_CONFIG_SET_MISSING — a geometry block or set needs a ConfigSet and none was found.
 
-blockml.config.json srcDir is the output root. mbLibPath defaults to the installed
+blockml.config.json srcDir is the output root. mbLibPath defaults to the
+project root when package.json name is @machineblocks/core and
+lib/block.scad is at that root. Otherwise it defaults to the installed
 @machineblocks/core package. openscadPath is unused by compile.
 A missing mbLibPath and a missing @machineblocks/core install exit 2.
 

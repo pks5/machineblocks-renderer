@@ -31,14 +31,19 @@
 
     MachineBlocks keys:
 
-    - mbLibPath — root used to compute relative use/include paths to the SCAD
-      library (lib/block.scad, config/mb_config.scad, service .scad files).
-      Default: the installed @machineblocks/core package root.
+    - mbLibPath — root used to compute relative use paths to the SCAD library
+      (lib/block.scad, a core ConfigSet under blocks/, service .scad files).
+      Default: the project root when package.json name is @machineblocks/core
+      and lib/block.scad is at that root. Otherwise the installed
+      @machineblocks/core package root.
     - openscadPath — OpenSCAD executable for later thumbnail or preview commands.
       Not required for compile.
     - thumbsDir — output directory for later thumbnail generation.
-    - activeConfig — named config profile inside the SCAD library. Optional.
     - bmlExtensions — extra filename suffixes treated as BML. Default .bml.
+
+    The ConfigSet used by a geometry compile is not a config-file key. compile
+    takes --config-set. When that flag is omitted, the host searches srcDir and
+    then the @machineblocks/core blocks folder.
 
     targets[] on the universal CLI defaults to ["blockdoc"] and must not be
     required for this host. The host registers machineblocks-v3-scad itself.

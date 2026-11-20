@@ -34,9 +34,10 @@
 
     CompileOptions passed into the compiler set outputBasePath to the real path
     of srcDir. targetOptions["machineblocks-v3-scad"] carries mbLibPath,
-    settingsFormat when set, and, for an explicit mapping, sourcePackage and
-    targetPackage. Automatic mapping omits those two keys. activeConfig is
-    unused by compile.
+    settingsFormat when set, configSet when the selection includes a geometry
+    block or a set, and, for an explicit mapping, sourcePackage and
+    targetPackage. Automatic mapping omits those two keys. configSet is the
+    resolved ConfigSet FQN. A compile of only ConfigSet types omits it.
 
   </documentation>
   <references>

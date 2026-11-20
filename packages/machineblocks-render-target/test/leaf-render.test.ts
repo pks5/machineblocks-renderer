@@ -10,10 +10,9 @@ import {
   scadOutputPath,
   serializeLiteral,
 } from "@machineblocks/render-target";
+import { SHOP_OPTIONS, shopDocument } from "./shop-fixture.js";
 
-const LIB = {
-  "machineblocks-v3-scad": { mbLibPath: "/mb" },
-};
+const LIB = SHOP_OPTIONS;
 
 const FIXTURE = `<?xml version="1.0"?>
 <bricks:Fixture xmlns="http://blockml.org/bml"
@@ -46,6 +45,7 @@ function document(source: string, filePath: string): BomDocument {
 
 function render(source: string, filePath: string, targetOptions: unknown = LIB, extras: BomDocument[] = []) {
   const registry = new TypeRegistry();
+  registry.register(shopDocument());
   for (const extra of extras) {
     registry.register(extra);
   }
@@ -88,11 +88,18 @@ describe("MachineBlocksRenderTarget leaf slice", () => {
 
 /* Imports */
 use <../../../../../mb/lib/block.scad>;
-include <../../../../../mb/config/mb_config.scad>;
+use <../../../example/scad/config/Shop.scad>;
 
 /* Customization */
+/* [Config] */
+// Config profile
+configProfile = "draft"; // [draft:Draft, final:Final]
+
 studs = true;
 grilleCount = 5;
+
+/* [Hidden] */
+mb_config = mb__com__example__scad__config__Shop__func__config(configProfile);
 
 /* Main Module Call */
 mb__com__machineblocks__scad__bricks__Fixture(
@@ -175,12 +182,12 @@ module mb__com__machineblocks__scad__bricks__Fixture(config = undef, settings = 
     );
     expect(result.diagnostics ?? []).toEqual([]);
     const content = result.files[0]?.content ?? "";
-    expect(content).toContain("STEPS = [");
+    expect(content).toContain("gen_STEPS = [");
     expect(content).toContain("module mb__com__example__scad__sets__Kit__Total(config = undef, settings = undef)");
     expect(content).toContain("module mb__com__example__scad__sets__Kit__Print(config = undef, settings = undef)");
     expect(content).toContain("module mb__com__example__scad__sets__Kit__Step(config = undef, settings = undef)");
     expect(content).toContain("module mb__com__example__scad__sets__Kit__Instance(config = undef, settings = undef)");
-    expect(content).toContain("mb_parts_total_size(STEPS)");
+    expect(content).toContain("mb_parts_total_size(gen_STEPS)");
   });
 
   it("reports BML_NO_TARGET when the chain has no Block", () => {

@@ -5,8 +5,9 @@ import { buildRenderSession, createRenderContext } from "@blockml/compiler";
 import type { BomDocument } from "@blockml/bom";
 import { BlockRenderEngine } from "@blockml/block-render-engine";
 import { MachineBlocksRenderTarget } from "@machineblocks/render-target";
+import { SHOP_OPTIONS, shopDocument } from "./shop-fixture.js";
 
-const LIB = { "machineblocks-v3-scad": { mbLibPath: "/mb" } };
+const LIB = SHOP_OPTIONS;
 
 const STUD_TYPE = `<mbt:StudType xmlns="http://blockml.org/bml" xmlns:bml="org.blockml.bml.annotation.BmlAnnotation" xmlns:mbt="com.machineblocks.bml.type">
   <baseType>mbt:MBEnum(org.blockml.bml.type.Text)</baseType>
@@ -61,6 +62,7 @@ function document(source: string, filePath: string): BomDocument {
 
 function render(source: string, filePath: string, extras: BomDocument[] = []) {
   const registry = new TypeRegistry();
+  registry.register(shopDocument());
   for (const extra of extras) {
     registry.register(extra);
   }
@@ -276,12 +278,12 @@ describe("emit gaps", () => {
     const content = result.files[0]?.content ?? "";
     expect(content).toContain('["00001", [4, 2, 3], "west", [0, 0, 0]]');
     expect(content).toContain('["00002", [4, 2, 3], "west", [0, 0, 0]]');
-    expect(content).toContain('["size", STEPS[i][1]]');
-    expect(content).toContain('["direction", STEPS[i][2]]');
+    expect(content).toContain('["size", gen_STEPS[gen_i][1]]');
+    expect(content).toContain('["direction", gen_STEPS[gen_i][2]]');
     expect(content).toContain(`mb__com__machineblocks__scad__bricks__Brick(
         config = config,
         settings = [
-            ["id", blockId],
+            ["id", gen_blockId],
             ["size", size],
             ["direction", direction],
             ["offset", offset],

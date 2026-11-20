@@ -5,6 +5,8 @@ export interface MachineBlocksTargetOptions {
   settingsFormat?: string;
   sourcePackage?: string;
   targetPackage?: string;
+  /** Resolved ConfigSet FQN for a geometry block or a set. */
+  configSet?: string;
 }
 
 export function readTargetOptions(targetOptions: unknown): MachineBlocksTargetOptions {
@@ -28,6 +30,9 @@ export function readTargetOptions(targetOptions: unknown): MachineBlocksTargetOp
   }
   if (typeof record.targetPackage === "string" && record.targetPackage.length > 0) {
     options.targetPackage = record.targetPackage;
+  }
+  if (typeof record.configSet === "string" && record.configSet.length > 0) {
+    options.configSet = record.configSet;
   }
   return options;
 }

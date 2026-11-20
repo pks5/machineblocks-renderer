@@ -1,5 +1,14 @@
 import { SOURCE_OUTSIDE_ROOT, SOURCE_PACKAGE_ALONE, SOURCE_PACKAGE_REQUIRED, TARGET_PACKAGE_AMBIGUOUS, TARGET_PACKAGE_UNDETERMINED, } from "./diagnostics.js";
 export const AUTOMATIC_MAPPING = { kind: "automatic" };
+/**
+ * Prefix for SCAD locals the generator invents.
+ * Property locals and customizer parameters stay unprefixed.
+ * Change this constant and recompile to rewrite every generated file.
+ */
+export const GENERATED_LOCAL_PREFIX = "gen_";
+export function generatedLocal(name) {
+    return `${GENERATED_LOCAL_PREFIX}${name}`;
+}
 export function mappingFromPackages(sourcePackage, targetPackage) {
     if (sourcePackage !== undefined && targetPackage !== undefined) {
         return { kind: "explicit", sourcePackage, targetPackage };

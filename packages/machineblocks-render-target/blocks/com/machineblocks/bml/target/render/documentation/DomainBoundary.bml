@@ -26,11 +26,14 @@
     - com.machineblocks.bml.documentation.scad.ModulePatterns
     - com.machineblocks.bml.documentation.scad.ScadDecisionRules
     - com.machineblocks.bml.core.NativeBlock — parameter inventory
+    - com.machineblocks.bml.core.ConfigSet — profile collection and the config function
+    - com.machineblocks.bml.config.DefaultConfigSet — example set
     - com.machineblocks.bml.type.* — type shapes
     - com.machineblocks.bml.examples.* — example BML
     - blocks/com/machineblocks/scad/** — corresponding SCAD, including
-      examples/Cross.scad and examples/Connector.scad
-    - lib/block.scad and config/mb_config.scad — runtime imports
+      examples/Cross.scad, examples/Connector.scad, and
+      config/DefaultConfigSet.scad
+    - lib/block.scad — runtime import. Config is the selected ConfigSet file.
 
     Do not move those files into this package. When an example .scad and this
     target's emit rules diverge, the BML example plus this library are the

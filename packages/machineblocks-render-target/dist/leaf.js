@@ -1,4 +1,5 @@
 import { resolveEffectiveMembers } from "@blockml/framework";
+import { loadConfigPrelude } from "./config-set.js";
 import { compositionChildren } from "./composition.js";
 import { LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
 import { lowerExpression, propertyTypesOf } from "./lower.js";
@@ -8,7 +9,7 @@ import { isIdentifier, serializeLiteral } from "./serialize.js";
 import { withSourceMap } from "./source-map.js";
 import { NATIVE_BLOCK_FQN, RENDER_TARGET_VERSION } from "./version.js";
 const FIXED = ["size", "align", "offset", "direction"];
-export function renderLeafFile(block, outputRelativePath, outputBasePath, mbLibPath, registry, mapping) {
+export function renderLeafFile(block, outputRelativePath, outputBasePath, mbLibPath, registry, mapping, configSet) {
     const source = block.source ?? { file: "", line: 1, column: 1 };
     const child = singleNativeBlock(block);
     if (!child) {
@@ -59,7 +60,10 @@ export function renderLeafFile(block, outputRelativePath, outputBasePath, mbLibP
     }
     const outputDir = dirnamePosix(joinPosix(outputBasePath, outputRelativePath));
     const blockImport = relativePosix(outputDir, joinPosix(mbLibPath, "lib/block.scad"));
-    const configImport = relativePosix(outputDir, joinPosix(mbLibPath, "config/mb_config.scad"));
+    const config = loadConfigPrelude(registry, configSet, outputRelativePath, outputBasePath, mbLibPath, mapping);
+    if (!config.ok) {
+        return config.output;
+    }
     const filename = outputRelativePath.split("/").pop() ?? `${block.name}.scad`;
     const moduleName = moduleNameForManifestation(root.fqn);
     const ordered = [...slots.values()];
@@ -67,7 +71,7 @@ export function renderLeafFile(block, outputRelativePath, outputBasePath, mbLibP
         files: [
             withSourceMap(block, {
                 path: outputRelativePath,
-                content: fileText(block, filename, moduleName, blockImport, configImport, ordered, childScad),
+                content: fileText(block, filename, moduleName, blockImport, config.prelude, ordered, childScad),
             }),
         ],
     };
@@ -116,8 +120,9 @@ function nativeNamesOf(registry) {
     }
     return names;
 }
-function fileText(block, filename, moduleName, blockImport, configImport, slots, childScad) {
-    const customizer = slots.map((slot) => `${slot.name} = ${slot.scad};`).join("\n");
+function fileText(block, filename, moduleName, blockImport, config, slots, childScad) {
+    const geometry = slots.map((slot) => `${slot.name} = ${slot.scad};`).join("\n");
+    const customizer = [config.dropdown, geometry].filter((part) => part.length > 0).join("\n\n");
     const passed = slots.map((slot) => `        ["${slot.name}", ${slot.name}]`).join(",\n");
     const settingsBody = slots.length === 0 ? "" : `\n${passed}\n    `;
     const getterNames = new Set(slots.map((slot) => slot.name));
@@ -145,10 +150,13 @@ function fileText(block, filename, moduleName, blockImport, configImport, slots,
 
 /* Imports */
 use <${blockImport}>;
-include <${configImport}>;
+${config.useLine}
 
 /* Customization */
 ${customizer}
+
+/* [Hidden] */
+${config.hidden}
 
 /* Main Module Call */
 ${moduleName}(

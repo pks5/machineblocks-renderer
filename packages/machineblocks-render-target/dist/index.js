@@ -1,8 +1,9 @@
 export { MachineBlocksRenderTarget } from "./machineblocks-render-target.js";
 export { artifactExtension } from "./composition.js";
-export { isRenderBlock } from "./dispatch.js";
-export { AUTOMATIC_MAPPING, isMappingFailure, jsonOutputPath, mapManifestation, mappingFromPackages, moduleNameForManifestation, pathForManifestation, scadModuleName, scadOutputPath, } from "./naming.js";
-export { OUTPUT_ESCAPES_SRC, OUTPUT_OVERWRITES_BML, SELECTOR_EMPTY, SOURCE_OUTSIDE_ROOT, SOURCE_PACKAGE_ALONE, SOURCE_PACKAGE_REQUIRED, TARGET_COLLISION, TARGET_PACKAGE_AMBIGUOUS, TARGET_PACKAGE_UNDETERMINED, } from "./diagnostics.js";
+export { needsConfigSet, requireConfigSet, resolveConfigSet } from "./config-set.js";
+export { isConfigSet, isRenderBlock } from "./dispatch.js";
+export { AUTOMATIC_MAPPING, isMappingFailure, jsonOutputPath, GENERATED_LOCAL_PREFIX, generatedLocal, mapManifestation, mappingFromPackages, moduleNameForManifestation, pathForManifestation, scadModuleName, scadOutputPath, } from "./naming.js";
+export { OUTPUT_ESCAPES_SRC, OUTPUT_OVERWRITES_BML, CONFIG_PROFILE_INCOMPLETE, CONFIG_SET_MISSING, CONFIG_SET_UNEXPECTED, CONFIG_SET_UNKNOWN, SELECTOR_EMPTY, SOURCE_OUTSIDE_ROOT, SOURCE_PACKAGE_ALONE, SOURCE_PACKAGE_REQUIRED, TARGET_COLLISION, TARGET_PACKAGE_AMBIGUOUS, TARGET_PACKAGE_UNDETERMINED, } from "./diagnostics.js";
 export { serializeLiteral } from "./serialize.js";
 export { RENDER_TARGET_VERSION } from "./version.js";
 //# sourceMappingURL=index.js.map

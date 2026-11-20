@@ -48,21 +48,26 @@ function parseCompile(args) {
     let selector;
     let sourcePackage;
     let targetPackage;
+    let configSet;
     for (let index = 0; index < args.length; index += 1) {
         const arg = args[index];
         if (arg === undefined) {
             continue;
         }
-        if (arg === "--source-package" || arg === "--target-package") {
+        if (arg === "--source-package" || arg === "--target-package" || arg === "--config-set") {
             const value = args[index + 1];
             if (value === undefined || value.startsWith("--")) {
-                return { command: "usage", message: `${arg} requires a package FQN.`, topic: "compile" };
+                const noun = arg === "--config-set" ? "ConfigSet FQN" : "package FQN";
+                return { command: "usage", message: `${arg} requires a ${noun}.`, topic: "compile" };
             }
             if (arg === "--source-package") {
                 sourcePackage = value;
             }
-            else {
+            else if (arg === "--target-package") {
                 targetPackage = value;
+            }
+            else {
+                configSet = value;
             }
             index += 1;
             continue;
@@ -84,6 +89,9 @@ function parseCompile(args) {
     }
     if (targetPackage !== undefined) {
         parsed.targetPackage = targetPackage;
+    }
+    if (configSet !== undefined) {
+        parsed.configSet = configSet;
     }
     return parsed;
 }

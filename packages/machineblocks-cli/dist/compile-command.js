@@ -1,14 +1,15 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { createRequire } from "node:module";
-import { dirname, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { bootstrapProjectTypeRegistry, loadConfig, writeOutputFiles } from "@blockml/cli";
 import { compileToOutput, registerTarget } from "@blockml/compiler";
 import { scanTypes } from "@blockml/framework";
 import { BlockRenderEngine } from "@blockml/block-render-engine";
-import { MachineBlocksRenderTarget, SELECTOR_EMPTY, SOURCE_PACKAGE_ALONE, SOURCE_PACKAGE_REQUIRED, TARGET_COLLISION, artifactExtension, isRenderBlock, mapManifestation, pathForManifestation, } from "@machineblocks/render-target";
+import { CONFIG_SET_UNEXPECTED, MachineBlocksRenderTarget, SELECTOR_EMPTY, isConfigSet, needsConfigSet, requireConfigSet, resolveConfigSet, SOURCE_PACKAGE_ALONE, SOURCE_PACKAGE_REQUIRED, TARGET_COLLISION, artifactExtension, isRenderBlock, mapManifestation, pathForManifestation, } from "@machineblocks/render-target";
 import { sourcePackageFromSelector } from "./args.js";
 import { resolveOutputPath } from "./output-gate.js";
 const TARGET_NAME = "machineblocks-v3-scad";
+const MACHINEBLOCKS_CORE = "@machineblocks/core";
 export function runCompile(args, rootDir) {
     const mapping = resolveMapping(args);
     if (!mapping.ok) {
@@ -83,8 +84,24 @@ export function runCompile(args, rootDir) {
             filePath,
         });
     }
+    if (args.configSet !== undefined && selected.some((document) => isConfigSet(document.block, bootstrap.registry))) {
+        return {
+            code: 1,
+            lines: [`${CONFIG_SET_UNEXPECTED}: --config-set cannot be set when compiling a ConfigSet.`],
+        };
+    }
+    let configSet;
+    if (selected.some((document) => needsConfigSet(document.block, bootstrap.registry))) {
+        const resolved = args.configSet !== undefined
+            ? requireConfigSet(bootstrap.registry, args.configSet)
+            : resolveConfigSet(bootstrap.registry, srcDir);
+        if (!resolved.ok) {
+            return { code: 1, lines: [`${resolved.code}: ${resolved.message}`] };
+        }
+        configSet = resolved.fqn;
+    }
     registerTarget(new MachineBlocksRenderTarget(new BlockRenderEngine()));
-    const targetOptions = buildTargetOptions(config, libPath, mapping.mapping);
+    const targetOptions = buildTargetOptions(config, libPath, mapping.mapping, configSet);
     const emitted = [];
     for (const item of planned) {
         const source = readFileSync(item.filePath, "utf8");
@@ -154,17 +171,20 @@ function resolveMapping(args) {
     }
     return { ok: true, mapping: { kind: "automatic" } };
 }
-function buildTargetOptions(config, mbLibPath, mapping) {
+function buildTargetOptions(config, mbLibPath, mapping, configSet) {
     const configured = config.targetOptions?.[TARGET_NAME];
     const nested = {};
     if (configured !== null && typeof configured === "object") {
         for (const [key, value] of Object.entries(configured)) {
-            if (key !== "sourcePackage" && key !== "targetPackage" && key !== "mbLibPath") {
+            if (key !== "sourcePackage" && key !== "targetPackage" && key !== "mbLibPath" && key !== "configSet") {
                 nested[key] = value;
             }
         }
     }
     nested.mbLibPath = mbLibPath;
+    if (configSet !== undefined) {
+        nested.configSet = configSet;
+    }
     if (mapping.kind === "explicit") {
         nested.sourcePackage = mapping.sourcePackage;
         nested.targetPackage = mapping.targetPackage;
@@ -183,12 +203,24 @@ function resolveMbLibPath(rootDir, config) {
             return resolve(rootDir, fromTarget);
         }
     }
+    if (isCorePackage(rootDir)) {
+        return rootDir;
+    }
     try {
         const require = createRequire(import.meta.url);
-        return dirname(require.resolve("@machineblocks/core/package.json"));
+        return dirname(require.resolve(`${MACHINEBLOCKS_CORE}/package.json`));
     }
     catch {
         return undefined;
+    }
+}
+function isCorePackage(rootDir) {
+    try {
+        const pkg = JSON.parse(readFileSync(join(rootDir, "package.json"), "utf8"));
+        return pkg.name === MACHINEBLOCKS_CORE && existsSync(join(rootDir, "lib", "block.scad"));
+    }
+    catch {
+        return false;
     }
 }
 function withSourceMaps(files) {

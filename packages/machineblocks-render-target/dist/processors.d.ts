@@ -14,6 +14,13 @@ export declare class ScadSetProcessor implements BlockProcessor {
     process(block: CompileBlock, engine: RenderEngine, context: RenderContext): RenderOutput;
     compile(block: CompileBlock, context: RenderContext): RenderOutput;
 }
+export declare class ScadConfigSetProcessor implements BlockProcessor {
+    private readonly options;
+    readonly baseType = "com.machineblocks.bml.core.ConfigSet";
+    constructor(options: OptionSlot);
+    process(block: CompileBlock, engine: RenderEngine, context: RenderContext): RenderOutput;
+    compile(block: CompileBlock, context: RenderContext): RenderOutput;
+}
 export declare class ScadBlockProcessor implements BlockProcessor {
     private readonly options;
     readonly baseType = "com.machineblocks.bml.core.Block";

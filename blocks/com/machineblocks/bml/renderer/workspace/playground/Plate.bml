@@ -1,0 +1,28 @@
+<playground:Plate xmlns="http://blockml.org/bml"
+  xmlns:core="com.machineblocks.bml.core"
+  xmlns:mbt="com.machineblocks.bml.type"
+  xmlns:playground="com.machineblocks.bml.renderer.workspace.playground"
+  xmlns:type="org.blockml.bml.type">
+
+  <baseType>
+    core:CompositeBlock
+  </baseType>
+  <is>
+    A small playground plate
+  </is>
+  <properties>
+    <size type="mbt:SizeXYZ">
+      <value>{x:4,y:2,z:1}</value>
+    </size>
+    <studs type="type:Boolean">
+      <value>true</value>
+    </studs>
+  </properties>
+  <aggregations>
+    <_parts override="true">
+      <composition>
+        <core:NativeBlock size="${ size }" studs="${ studs }" />
+      </composition>
+    </_parts>
+  </aggregations>
+</playground:Plate>

@@ -1,4 +1,4 @@
-import { BLOCK_FQN, SET_FQN } from "./version.js";
+import { BLOCK_FQN, CONFIG_SET_FQN, SET_FQN } from "./version.js";
 /** Authored baseType FQNs, then ancestors loaded in the registry. Nearest type first. */
 export function baseTypeChain(block, registry) {
     const chain = [block.type];
@@ -10,6 +10,9 @@ export function baseTypeChain(block, registry) {
         base = registry.get(base)?.block.baseType;
     }
     return chain;
+}
+export function isConfigSet(block, registry) {
+    return baseTypeChain(block, registry).includes(CONFIG_SET_FQN);
 }
 export function isRenderBlock(block, registry) {
     const chain = baseTypeChain(block, registry);

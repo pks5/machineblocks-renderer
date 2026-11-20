@@ -1,14 +1,15 @@
 import { evaluateExpression, parseExpression, resolveEffectiveMembers } from "@blockml/framework";
+import { loadConfigPrelude } from "./config-set.js";
 import { compositionChildren } from "./composition.js";
 import { SET_PART_INCOMPLETE, errorOutput } from "./diagnostics.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
-import { mapManifestation, moduleNameForManifestation, pathForManifestation } from "./naming.js";
+import { generatedLocal, mapManifestation, moduleNameForManifestation, pathForManifestation, } from "./naming.js";
 import { serializeLiteral, serializeTyped } from "./serialize.js";
 import { withSourceMap } from "./source-map.js";
 import { RENDER_TARGET_VERSION } from "./version.js";
 /** MachineBlocks customizer palette, shared by baseColor and highlightColor. */
 const COLOR_DROPDOWN = "[#58B99D:Turquoise, #4A9E86:Green Sea, #65C97A:Emerald, #55AB68:Nephritis, #5296D5:Peter River, #437EB4:Belize Hole, #925CB1:Amethyst, #8548A8:Wisteria, #38485C:Wet Asphalt, #303D4E:Midnight Blue, #EAC645:Sun Flower, #E7A03C:Orange, #D4813A:Carrot, #C05A23:Pumpkin, #D65745:Alizarin, #B14434:Pomegranate, #EDF0F1:Clouds, #BEC3C6:Silver, #98A4A6:Concrete, #98A4A6:Asbestos]";
-export function renderSetFile(block, outputRelativePath, outputBasePath, mbLibPath, mapping, registry) {
+export function renderSetFile(block, outputRelativePath, outputBasePath, mbLibPath, mapping, registry, configSet) {
     const source = block.source ?? { file: "", line: 1, column: 1 };
     const placements = [];
     for (const child of compositionChildren(block, "parts")) {
@@ -40,9 +41,13 @@ export function renderSetFile(block, outputRelativePath, outputBasePath, mbLibPa
         }
         typeManifestations.set(placement.typeFqn, manifested.fqn);
     }
+    const config = loadConfigPrelude(registry, configSet, outputRelativePath, outputBasePath, mbLibPath, mapping);
+    if (!config.ok) {
+        return config.output;
+    }
     const imports = [
         `use <${relativePosix(outputDir, joinPosix(mbLibPath, "lib/block.scad"))}>;`,
-        `include <${relativePosix(outputDir, joinPosix(mbLibPath, "config/mb_config.scad"))}>;`,
+        config.prelude.useLine,
         ...distinctTypeImports(ordered, outputDir, outputBasePath, typeManifestations),
     ];
     const instances = distinctById(ordered);
@@ -63,6 +68,9 @@ export function renderSetFile(block, outputRelativePath, outputBasePath, mbLibPa
         .map((placement) => instanceModule(moduleName, placement, typeManifestations))
         .join("\n\n");
     const viewId = escapeScad(block.type);
+    const stepsLocal = generatedLocal("STEPS");
+    const blockIdLocal = generatedLocal("blockId");
+    const indexLocal = generatedLocal("i");
     const content = `/**
  * MachineBlocks.com Block File
  *
@@ -76,6 +84,8 @@ export function renderSetFile(block, outputRelativePath, outputBasePath, mbLibPa
 ${imports.join("\n")}
 
 /* Customization */
+${config.prelude.dropdown}
+
 mode = "total"; // [total:Total, print:3D Print, step:Step, instance:Instance]
 step = 0; // [0:${stepMax}]
 instanceId = "${firstId}";
@@ -84,7 +94,8 @@ highlightColor = "${highlightColorValue}"; // ${COLOR_DROPDOWN}
 assembly = "merged"; // [unassembled:Unassembled, assembled:Assembled, merged:Merged]
 
 /* [Hidden] */
-STEPS = [
+${config.prelude.hidden}
+${stepsLocal} = [
 ${steps}
 ];
 
@@ -114,7 +125,7 @@ module ${moduleName}(config = undef, settings = undef) {
 
 /* Optional Sub Modules */
 module ${moduleName}__Total(config = undef, settings = undef) {
-    blockId = mb_param_id(config, settings, "${viewId}.total");
+    ${blockIdLocal} = mb_param_id(config, settings, "${viewId}.total");
     baseColor = mb_param_baseColor(config, settings);
     align = mb_param_align(config, settings);
     direction = mb_param_direction(config, settings);
@@ -123,24 +134,24 @@ module ${moduleName}__Total(config = undef, settings = undef) {
     mb_block(
         config = config,
         settings = [
-            ["id", blockId],
+            ["id", ${blockIdLocal}],
             ["base", false],
             ["studs", false],
             ["align", align],
             ["offset", offset],
             ["direction", direction],
-            ["size", mb_parts_total_size(STEPS)]
+            ["size", mb_parts_total_size(${stepsLocal})]
         ]
     ) {
-        for (i = [0 : len(STEPS) - 1]) {
+        for (${indexLocal} = [0 : len(${stepsLocal}) - 1]) {
             ${moduleName}__Instance(
                 config = config,
                 settings = [
-                    ["id", mb_block_id(blockId, STEPS[i][0])],
-                    ["instanceId", STEPS[i][0]],
-                    ["size", STEPS[i][1]],
-                    ["direction", STEPS[i][2]],
-                    ["offset", STEPS[i][3]],
+                    ["id", mb_block_id(${blockIdLocal}, ${stepsLocal}[${indexLocal}][0])],
+                    ["instanceId", ${stepsLocal}[${indexLocal}][0]],
+                    ["size", ${stepsLocal}[${indexLocal}][1]],
+                    ["direction", ${stepsLocal}[${indexLocal}][2]],
+                    ["offset", ${stepsLocal}[${indexLocal}][3]],
                     ["baseColor", baseColor],
                     ["assembly", "merged"]
                 ]
@@ -150,7 +161,7 @@ module ${moduleName}__Total(config = undef, settings = undef) {
 }
 
 module ${moduleName}__Print(config = undef, settings = undef) {
-    blockId = mb_param_id(config, settings, "${viewId}.print");
+    ${blockIdLocal} = mb_param_id(config, settings, "${viewId}.print");
     baseColor = mb_param_baseColor(config, settings);
     align = mb_param_align(config, settings);
     direction = mb_param_direction(config, settings);
@@ -160,23 +171,23 @@ module ${moduleName}__Print(config = undef, settings = undef) {
     mb_block(
         config = config,
         settings = [
-            ["id", blockId],
+            ["id", ${blockIdLocal}],
             ["base", false],
             ["studs", false],
             ["align", align],
             ["offset", offset],
             ["direction", direction],
-            ["size", mb_parts_total_size(STEPS)]
+            ["size", mb_parts_total_size(${stepsLocal})]
         ]
     ) {
-        for (i = [0 : len(STEPS) - 1]) {
+        for (${indexLocal} = [0 : len(${stepsLocal}) - 1]) {
             ${moduleName}__Instance(
                 config = config,
                 settings = [
-                    ["id", mb_block_id(blockId, STEPS[i][0])],
-                    ["instanceId", STEPS[i][0]],
-                    ["size", STEPS[i][1]],
-                    ["offset", mb_set_step_print_position(assembly, STEPS, i)],
+                    ["id", mb_block_id(${blockIdLocal}, ${stepsLocal}[${indexLocal}][0])],
+                    ["instanceId", ${stepsLocal}[${indexLocal}][0]],
+                    ["size", ${stepsLocal}[${indexLocal}][1]],
+                    ["offset", mb_set_step_print_position(assembly, ${stepsLocal}, ${indexLocal})],
                     ["assembly", assembly],
                     ["baseColor", baseColor]
                 ]
@@ -186,7 +197,7 @@ module ${moduleName}__Print(config = undef, settings = undef) {
 }
 
 module ${moduleName}__Step(config = undef, settings = undef) {
-    blockId = mb_param_id(config, settings, "${viewId}.step");
+    ${blockIdLocal} = mb_param_id(config, settings, "${viewId}.step");
     step = mb_param(config, settings, "step");
     combined = mb_param(config, settings, "combined", false);
     highlightColor = mb_param(config, settings, "highlightColor", "#EAC645");
@@ -194,31 +205,31 @@ module ${moduleName}__Step(config = undef, settings = undef) {
     align = mb_param_align(config, settings);
     direction = mb_param_direction(config, settings);
     offset = mb_param_offset(config, settings);
-    instanceId = step < len(STEPS) ? STEPS[step][0] : undef;
+    instanceId = step < len(${stepsLocal}) ? ${stepsLocal}[step][0] : undef;
 
     if (instanceId != undef) {
         mb_block(
             config = config,
             settings = [
-                ["id", blockId],
+                ["id", ${blockIdLocal}],
                 ["base", false],
                 ["studs", false],
                 ["align", align],
                 ["offset", offset],
                 ["direction", direction],
-                ["size", mb_parts_total_size(STEPS)]
+                ["size", mb_parts_total_size(${stepsLocal})]
             ]
         ) {
             if (combined) {
-                for (i = [0 : step - 1]) {
+                for (${indexLocal} = [0 : step - 1]) {
                     ${moduleName}__Instance(
                         config = config,
                         settings = [
-                            ["id", mb_block_id(blockId, STEPS[i][0])],
-                            ["instanceId", STEPS[i][0]],
-                            ["size", STEPS[i][1]],
-                            ["direction", STEPS[i][2]],
-                            ["offset", STEPS[i][3]],
+                            ["id", mb_block_id(${blockIdLocal}, ${stepsLocal}[${indexLocal}][0])],
+                            ["instanceId", ${stepsLocal}[${indexLocal}][0]],
+                            ["size", ${stepsLocal}[${indexLocal}][1]],
+                            ["direction", ${stepsLocal}[${indexLocal}][2]],
+                            ["offset", ${stepsLocal}[${indexLocal}][3]],
                             ["baseColor", baseColor],
                             ["assembly", "merged"]
                         ]
@@ -228,11 +239,11 @@ module ${moduleName}__Step(config = undef, settings = undef) {
             ${moduleName}__Instance(
                 config = config,
                 settings = [
-                    ["id", mb_block_id(blockId, instanceId)],
+                    ["id", mb_block_id(${blockIdLocal}, instanceId)],
                     ["instanceId", instanceId],
-                    ["size", STEPS[step][1]],
-                    ["direction", STEPS[step][2]],
-                    ["offset", STEPS[step][3]],
+                    ["size", ${stepsLocal}[step][1]],
+                    ["direction", ${stepsLocal}[step][2]],
+                    ["offset", ${stepsLocal}[step][3]],
                     ["baseColor", combined ? highlightColor : baseColor],
                     ["assembly", "merged"]
                 ]
@@ -258,8 +269,9 @@ ${instanceModules}
 }
 function instanceModule(moduleName, placement, typeManifestations) {
     const part = moduleNameForManifestation(manifestedType(placement.typeFqn, typeManifestations));
+    const blockIdLocal = generatedLocal("blockId");
     return `module ${moduleName}__Instance_${placement.id}(config = undef, settings = undef) {
-    blockId = mb_param_id(config, settings);
+    ${blockIdLocal} = mb_param_id(config, settings);
     baseColor = mb_param_baseColor(config, settings);
     assembly = mb_param_assembly(config, settings);
     size = mb_param_size(config, settings);
@@ -269,7 +281,7 @@ function instanceModule(moduleName, placement, typeManifestations) {
     ${part}(
         config = config,
         settings = [
-            ["id", blockId],
+            ["id", ${blockIdLocal}],
             ["size", size],
             ["direction", direction],
             ["offset", offset],

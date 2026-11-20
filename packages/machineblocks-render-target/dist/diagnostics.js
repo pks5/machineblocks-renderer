@@ -18,6 +18,10 @@ export const TARGET_COLLISION = "MB_TARGET_COLLISION";
 export const OUTPUT_ESCAPES_SRC = "MB_OUTPUT_ESCAPES_SRC";
 export const OUTPUT_OVERWRITES_BML = "MB_OUTPUT_OVERWRITES_BML";
 export const SELECTOR_EMPTY = "MB_SELECTOR_EMPTY";
+export const CONFIG_SET_UNEXPECTED = "MB_CONFIG_SET_UNEXPECTED";
+export const CONFIG_SET_UNKNOWN = "MB_CONFIG_SET_UNKNOWN";
+export const CONFIG_SET_MISSING = "MB_CONFIG_SET_MISSING";
+export const CONFIG_PROFILE_INCOMPLETE = "MB_CONFIG_PROFILE_INCOMPLETE";
 export function errorOutput(code, message, source = EMPTY_SOURCE) {
     const diagnostic = {
         severity: "error",
