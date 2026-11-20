@@ -32,7 +32,8 @@ Commands:
               machineblocks validate [--all] [<file>]
   compile     Render selected Block and Set types to SCAD under srcDir.
               machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>] [--config-set <FQN>]
-  init        Scaffold a BlockML project and record the MachineBlocks profile.
+  init        Scaffold a BlockML project, record the MachineBlocks profile,
+              and add a default ConfigSet.
               machineblocks init <package-fqn> [--src dir] [--no-install]
   update      Point @machineblocks/cli, @machineblocks/core, @blockml/cli, and
               @blockml/core at this CLI's versions.
@@ -126,7 +127,7 @@ export const INIT_HELP = `Usage: machineblocks init <package-fqn> [--src dir] [-
        machineblocks init --help
 
 When: turn a directory into a MachineBlocks project. Scaffolds a BlockML project,
-then records the MachineBlocks profile.
+then records the MachineBlocks profile and writes a default ConfigSet.
 
 PACKAGE-FQN is a dotted package identifier (not …Library). A bml segment after
 the domain is recommended. Compile maps a bml segment to scad.
@@ -148,6 +149,10 @@ The profile adds @machineblocks/cli to devDependencies when that package is
 absent from dependencies and devDependencies. The range is the caret range of
 this host. An existing dependencies entry stays put.
 The project Library.bml gains com.machineblocks.bml.Library.
+The package gains DefaultConfigSet.bml beside Library.bml when that file
+is absent. The block extends com.machineblocks.bml.core.ConfigSet and
+holds one ConfigProfile. That profile's bml:id and name are default. It
+sets no other properties. An existing DefaultConfigSet.bml stays put.
 CLAUDE.md (@AGENTS.md) is written when missing.
 
 Runs npm install, then generates AGENTS.md, unless --no-install is passed.

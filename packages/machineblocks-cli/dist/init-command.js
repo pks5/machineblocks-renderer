@@ -12,6 +12,10 @@ const BLOCKML_CORE = "@blockml/core";
 const MACHINEBLOCKS_LIBRARY = "com.machineblocks.bml.Library";
 const MACHINEBLOCKS_NAMESPACE = "com.machineblocks.bml";
 const BLOCK_LIBRARY_BASE = "org.blockml.bml.core.BlockLibrary";
+const CONFIG_SET = "com.machineblocks.bml.core.ConfigSet";
+const CONFIG_PROFILE = "com.machineblocks.bml.core.ConfigProfile";
+const DEFAULT_CONFIG_SET = "DefaultConfigSet";
+const DEFAULT_PROFILE = "default";
 export function runInit(args, rootDir) {
     const scaffold = initProject({
         packageFqn: args.packageFqn,
@@ -38,6 +42,11 @@ export function runInit(args, rootDir) {
     lines.push(...library.lines);
     if (library.code !== 0) {
         return { code: library.code, lines };
+    }
+    const configSet = ensureDefaultConfigSet(rootDir, srcDir, args.packageFqn);
+    lines.push(...configSet.lines);
+    if (configSet.code !== 0) {
+        return { code: configSet.code, lines };
     }
     if (!args.packageFqn.split(".").includes("bml")) {
         lines.push("Package FQN has no bml segment. Compile maps a bml segment to scad.");
@@ -126,6 +135,44 @@ function ensureLibraryDependency(rootDir, srcDir, packageFqn) {
     }
     writeFileSync(libraryPath, emitted.text, "utf8");
     return { code: 0, lines: [`Updated ${display}`] };
+}
+function ensureDefaultConfigSet(rootDir, srcDir, packageFqn) {
+    const filePath = join(rootDir, srcDir, ...packageFqn.split("."), `${DEFAULT_CONFIG_SET}.bml`);
+    const display = displayPath(filePath, rootDir);
+    if (existsSync(filePath)) {
+        return { code: 0, lines: [`Skipped existing ${display}`] };
+    }
+    const builder = BomBuilder.create({
+        type: `${packageFqn}.${DEFAULT_CONFIG_SET}`,
+        name: DEFAULT_CONFIG_SET,
+        baseType: CONFIG_SET,
+        is: "A default config profile set",
+        filePath,
+    });
+    builder.addAggregation({ name: "profiles", typeFqn: CONFIG_PROFILE, override: true });
+    builder.addCompositionChild("profiles", CONFIG_PROFILE);
+    const document = builder.seal();
+    const aggregation = profilesAggregation(document.block);
+    const child = aggregation?.composition?.children[0];
+    if (!aggregation || !child || child.kind !== "blockInstance") {
+        return { code: 1, lines: [`Failed to build ${display}`] };
+    }
+    delete aggregation.type;
+    child.instance.id = profileLiteral(DEFAULT_PROFILE);
+    child.instance.memberValues.name = { ...profileLiteral(DEFAULT_PROFILE), authoredPlacement: "attribute" };
+    const emitted = serialize(document);
+    if (!emitted.success || emitted.text === null) {
+        return { code: 1, lines: [`Failed to serialize ${display}`] };
+    }
+    writeFileSync(filePath, emitted.text, "utf8");
+    return { code: 0, lines: [`Created ${display}`] };
+}
+function profileLiteral(value) {
+    return { kind: "literal", value, typeFqn: CONFIG_PROFILE };
+}
+function profilesAggregation(block) {
+    const member = block.members.find((entry) => entry.kind === "aggregation" && entry.name === "profiles");
+    return member?.kind === "aggregation" ? member : undefined;
 }
 function dependsOn(block, typeFqn) {
     const aggregation = dependenciesAggregation(block);

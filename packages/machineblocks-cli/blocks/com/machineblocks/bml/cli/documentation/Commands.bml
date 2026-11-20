@@ -15,7 +15,7 @@
     Host commands:
     • validate — parser + semantic check; no SCAD target; no output files
     • compile — render machineblocks-v3-scad for one type selector; writes under srcDir
-    • init — scaffold a BlockML project and record the MachineBlocks profile
+    • init — scaffold a BlockML project, record the MachineBlocks profile, and add a default ConfigSet
     • update — point @machineblocks/cli, @machineblocks/core, @blockml/cli, and
       @blockml/core at this host's versions
 

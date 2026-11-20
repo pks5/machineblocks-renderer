@@ -20,14 +20,17 @@
     init calls the universal project scaffold, then records @machineblocks/core
     in dependencies beside @blockml/core, records @machineblocks/cli as a
     devDependency, and adds com.machineblocks.bml.Library to the project
-    library. Preflight runs inside that scaffold before any write. A BlockML
+    library. It also writes DefaultConfigSet.bml in that package when the file
+    is absent: one ConfigProfile whose bml:id and name are default, with no
+    other properties. Preflight runs inside that scaffold before any write. A BlockML
     project keeps AGENTS.md, and generation overwrites it after npm install.
     Otherwise an existing AGENTS.md is renamed to AGENTS.md.pre-blockml.
     By default npm install then runs and AGENTS.md is generated the same way
     blockml init does. The profile is recorded before npm install.
     --no-install skips npm install and AGENTS.md generation and does not skip
     preflight. On a project that blockml init already created, the same
-    command adds only the missing profile. BML files and CLAUDE.md stay.
+    command adds the missing profile and, when absent, DefaultConfigSet.bml.
+    Other BML files and CLAUDE.md stay.
 
     Point an existing project at this host:
 

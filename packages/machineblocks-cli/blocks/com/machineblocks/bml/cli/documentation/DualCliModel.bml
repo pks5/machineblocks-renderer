@@ -31,7 +31,9 @@
       preflight before any write, including the foreign AGENTS.md rename.
       Then this host adds dependency @machineblocks/core beside @blockml/core,
       devDependency @machineblocks/cli, and library dependency
-      com.machineblocks.bml.Library. Unless --no-install, it then
+      com.machineblocks.bml.Library. It writes DefaultConfigSet.bml in the
+      package when that file is absent: one ConfigProfile named default, with
+      no other properties. Unless --no-install, it then
       runs npm install and GenerateAgentsMd, which overwrites AGENTS.md.
       Profile first, then the same install and AGENTS.md step as initProject.
       --no-install does not skip preflight. The universal init stays

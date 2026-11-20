@@ -31,7 +31,8 @@
                   machineblocks validate [--all] [<file>]
       compile     Render selected Block and Set types to SCAD under srcDir.
                   machineblocks compile <source-selector> [--source-package <FQN>] [--target-package <FQN>] [--config-set <FQN>]
-      init        Scaffold a BlockML project and record the MachineBlocks profile.
+      init        Scaffold a BlockML project, record the MachineBlocks profile,
+                  and add a default ConfigSet.
                   machineblocks init <package-fqn> [--src dir] [--no-install]
       update      Point @machineblocks/cli, @machineblocks/core, @blockml/cli, and
                   @blockml/core at this CLI's versions.

@@ -314,6 +314,7 @@ describe("machineblocks init", () => {
     const root = emptyDir();
     expect(execute(["init", "com.example.bml"], root).code).toBe(0);
     const library = readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8");
+    const configSet = readFileSync(join(root, "blocks/com/example/bml/DefaultConfigSet.bml"), "utf8");
     const pkg = readFileSync(join(root, "package.json"), "utf8");
 
     const again = execute(["init", "com.example.bml"], root);
@@ -322,7 +323,9 @@ describe("machineblocks init", () => {
     expect(again.lines.join("\n")).toContain("Skipped existing @machineblocks/cli");
     expect(again.lines.join("\n")).toContain("Skipped existing @machineblocks/core");
     expect(again.lines.join("\n")).toContain("Skipped existing com.machineblocks.bml.Library");
+    expect(again.lines.join("\n")).toContain("Skipped existing blocks/com/example/bml/DefaultConfigSet.bml");
     expect(readFileSync(join(root, "blocks/com/example/bml/Library.bml"), "utf8")).toBe(library);
+    expect(readFileSync(join(root, "blocks/com/example/bml/DefaultConfigSet.bml"), "utf8")).toBe(configSet);
     expect(readFileSync(join(root, "package.json"), "utf8")).toBe(pkg);
   });
 
@@ -339,6 +342,9 @@ describe("machineblocks init", () => {
     expect(library).toContain("org.blockml.bml");
     expect(library).toContain("<mb:Library");
     expect(readPackage(root).devDependencies?.["@machineblocks/cli"]).toBe(cliRange());
+    expect(readFileSync(join(root, "blocks/com/example/bml/DefaultConfigSet.bml"), "utf8")).toContain(
+      '<core:ConfigProfile bml:id="default" name="default" />',
+    );
   });
 
   it("leaves an existing dependencies entry in place", () => {
@@ -368,6 +374,27 @@ describe("machineblocks init", () => {
     expect(result.code).toBe(0);
     expect(result.lines.join("\n")).toContain("Skipped existing @machineblocks/core");
     expect(readPackage(root).dependencies?.["@machineblocks/core"]).toBe("9.9.9");
+  });
+
+  it("writes one empty default profile and leaves an existing ConfigSet in place", () => {
+    const root = emptyDir();
+
+    const result = execute(["init", "com.example.bml", "--no-install"], root);
+
+    expect(result.code).toBe(0);
+    const path = join(root, "blocks/com/example/bml/DefaultConfigSet.bml");
+    const text = readFileSync(path, "utf8");
+    expect(text).toContain("core:ConfigSet");
+    expect(text).toContain('<core:ConfigProfile bml:id="default" name="default" />');
+    expect(text).not.toContain("printer");
+    expect(result.lines.join("\n")).toContain("Created blocks/com/example/bml/DefaultConfigSet.bml");
+
+    writeFileSync(path, "keep\n");
+    const again = execute(["init", "com.example.bml", "--no-install"], root);
+
+    expect(again.code).toBe(0);
+    expect(again.lines.join("\n")).toContain("Skipped existing blocks/com/example/bml/DefaultConfigSet.bml");
+    expect(readFileSync(path, "utf8")).toBe("keep\n");
   });
 
   it("rejects an invalid package FQN", () => {

@@ -52,6 +52,11 @@
         range of this host. An existing dependencies entry stays put.
         The project Library.bml gains a dependencies composition child
         com.machineblocks.bml.Library. An existing child is left in place.
+        The package gains DefaultConfigSet.bml beside Library.bml when that
+        file is absent. The block extends com.machineblocks.bml.core.ConfigSet
+        and holds one ConfigProfile. That profile's bml:id and name are
+        default. It sets no other properties. An existing DefaultConfigSet.bml
+        stays put.
         Existing BML files and CLAUDE.md are not replaced. AGENTS.md is the
         generated artifact described above.
         A package FQN without a bml segment still exits 0 and warns:
@@ -64,7 +69,7 @@
            machineblocks init --help
 
     When: turn a directory into a MachineBlocks project. Scaffolds a BlockML project,
-    then records the MachineBlocks profile.
+    then records the MachineBlocks profile and writes a default ConfigSet.
 
     PACKAGE-FQN is a dotted package identifier (not …Library). A bml segment after
     the domain is recommended. Compile maps a bml segment to scad.
@@ -86,6 +91,10 @@
     absent from dependencies and devDependencies. The range is the caret range of
     this host. An existing dependencies entry stays put.
     The project Library.bml gains com.machineblocks.bml.Library.
+    The package gains DefaultConfigSet.bml beside Library.bml when that file
+    is absent. The block extends com.machineblocks.bml.core.ConfigSet and
+    holds one ConfigProfile. That profile's bml:id and name are default. It
+    sets no other properties. An existing DefaultConfigSet.bml stays put.
     CLAUDE.md (@AGENTS.md) is written when missing.
 
     Runs npm install, then generates AGENTS.md, unless --no-install is passed.
