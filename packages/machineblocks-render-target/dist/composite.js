@@ -82,7 +82,7 @@ use <${blockImport}>;
 ${config.prelude.useLine}
 
 /* Customization */
-${[config.prelude.dropdown, customizerLines(passed, projections)].filter((part) => part.length > 0).join("\n\n")}
+${[config.prelude.dropdown, customizerLines(passed, projections, registry)].filter((part) => part.length > 0).join("\n\n")}
 
 /* [Hidden] */
 ${formatHidden(config.prelude.hidden, [...projections.values()])}
@@ -313,7 +313,7 @@ function readyProperties(block, properties, nativeNames, registry, source) {
     for (const property of properties) {
         const native = nativeNames.has(property.name);
         if (!property.value) {
-            ready.push({ name: property.name, constant: false, native });
+            ready.push({ name: property.name, constant: false, native, type: property.type });
             continue;
         }
         if (property.value.kind !== "literal" && property.value.kind !== "expression") {
@@ -331,7 +331,7 @@ function readyProperties(block, properties, nativeNames, registry, source) {
         if (!lowered.ok) {
             return errorOutput(lowered.code === FUNCTION_NO_RUNTIME ? FUNCTION_NO_RUNTIME : LEAF_VALUE_UNSUPPORTED, lowered.message, ("source" in property.value ? property.value.source : undefined) ?? property.source ?? source);
         }
-        ready.push({ name: property.name, scad: lowered.scad, constant: lowered.constant, native });
+        ready.push({ name: property.name, scad: lowered.scad, constant: lowered.constant, native, type: property.type });
     }
     return ready;
 }
@@ -354,10 +354,10 @@ function fixedGetters(properties, skip = []) {
         .map((name) => `    ${name} = mb_param_${name}(config, settings);`)
         .join("\n");
 }
-function customizerLines(properties, projections) {
+function customizerLines(properties, projections, registry) {
     return formatCustomizer(properties.flatMap((property) => property.scad === undefined
         ? []
-        : [{ name: property.name, scad: property.scad, projection: projections.get(property.name) }]));
+        : [{ name: property.name, scad: property.scad, projection: projections.get(property.name), type: property.type }]), registry);
 }
 function settingsBody(lines) {
     if (lines.length === 0) {

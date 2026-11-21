@@ -66,14 +66,15 @@ export declare function projectCustomizer(input: {
     names: ReadonlySet<string>;
 }): CustomizerProjection | undefined;
 export declare function formatHidden(configAssignment: string, projections: readonly CustomizerProjection[]): string;
-export declare function customizerText(name: string, scad: string, projection: CustomizerProjection | undefined): string;
+export declare function customizerText(name: string, scad: string, projection: CustomizerProjection | undefined, type?: TypeExpression, registry?: Registry): string;
 export interface CustomizerEntry {
     name: string;
     scad: string;
     projection?: CustomizerProjection | undefined;
+    type?: TypeExpression | undefined;
 }
 /** Ungrouped parameters stay in order. Grouped projections follow, each in its own tab. */
-export declare function formatCustomizer(entries: readonly CustomizerEntry[]): string;
+export declare function formatCustomizer(entries: readonly CustomizerEntry[], registry?: Registry): string;
 export declare function projectionsOf(block: BlockDefinition, rules: CustomizerRuleSet, registry: Registry): Map<string, CustomizerProjection>;
 export {};
 //# sourceMappingURL=customizer-rules.d.ts.map

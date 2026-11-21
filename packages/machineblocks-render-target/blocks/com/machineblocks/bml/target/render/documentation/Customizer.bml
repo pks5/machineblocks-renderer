@@ -107,6 +107,16 @@
     A three-arm union, such as Auto | Decimal | AxisXYZ(Decimal), matches
     neither rule and stays one variable.
 
+    An enum field keeps its variable. The trailing comment lists the enum
+    values aggregation, in that order. The token is the SCAD value and the
+    member id is the dropdown label, the same shape as the config profile
+    comment. The comment is added when the whole field is one of those
+    tokens, including a union that shows its enum arm. An axis array of
+    enum tokens stays without the comment.
+
+        studType = "solid"; // [solid:Solid, hollow:Hollow]
+        holeXYZType = "pin"; // [axle:Axle, pin:Pin]
+
     suggestions — a dropdown comment from the property suggestions. Each
     suggestion instance is serialized to its SCAD literal:
 

@@ -21,6 +21,18 @@ const STUD_TYPE = `<mbt:StudType xmlns="http://blockml.org/bml" xmlns:bml="org.b
   </aggregations>
 </mbt:StudType>`;
 
+const HOLE_TYPE = `<mbt:HoleType xmlns="http://blockml.org/bml" xmlns:bml="org.blockml.bml.annotation.BmlAnnotation" xmlns:mbt="com.machineblocks.bml.type">
+  <baseType>mbt:MBEnum(org.blockml.bml.type.Text)</baseType>
+  <aggregations>
+    <values override="true">
+      <composition>
+        <mbt:HoleType bml:id="Axle" value="axle" />
+        <mbt:HoleType bml:id="Pin" value="pin" />
+      </composition>
+    </values>
+  </aggregations>
+</mbt:HoleType>`;
+
 const FACE_AXIS = `<mbt:FaceAxisXY xmlns="http://blockml.org/bml" xmlns:bml="org.blockml.bml.annotation.BmlAnnotation" xmlns:mbt="com.machineblocks.bml.type">
   <baseType>mbt:MBEnum(org.blockml.bml.type.Text)</baseType>
   <aggregations>
@@ -157,7 +169,7 @@ describe("emit gaps", () => {
     );
     expect(result.diagnostics ?? []).toEqual([]);
     const content = result.files[0]?.content ?? "";
-    expect(content).toContain('studType = "solid";');
+    expect(content).toContain('studType = "solid"; // [solid:Solid, hollow:Hollow]');
     expect(content).toContain('gap = ["y", 1, 2];');
     expect(content).toContain('full = ["y"];');
     expect(content).toContain("pad = 0.2;");
@@ -165,6 +177,23 @@ describe("emit gaps", () => {
     expect(content).toContain('tint = "#EAC645";');
     expect(content).toContain('faces = [["x-", 1], ["y+", 2]];');
     expect(content).toContain("grid = [[0, 0], [1, 2], true];");
+  });
+
+  it("adds an enum dropdown for a scalar union arm and leaves an enum axis array alone", () => {
+    const result = render(
+      leaf(
+        `<holeXYZType type="mbt:HoleType | mbt:AxisXYZ(mbt:HoleType)"><value>Pin</value></holeXYZType>
+         <perAxis type="mbt:HoleType | mbt:AxisXYZ(mbt:HoleType)"><value>{x:"Pin",y:"Pin",z:"Axle"}</value></perAxis>`,
+        'holeXYZType="${ holeXYZType }" perAxis="${ perAxis }"',
+      ),
+      "plate.bml",
+      [document(HOLE_TYPE, "HoleType.bml")],
+    );
+    expect(result.diagnostics ?? []).toEqual([]);
+    const content = result.files[0]?.content ?? "";
+    expect(content).toContain('holeXYZType = "pin"; // [axle:Axle, pin:Pin]');
+    expect(content).toContain('perAxis = ["Pin", "Axle"];');
+    expect(content).not.toMatch(/perAxis = .*; \/\//);
   });
 
   it("serializes a closed Bevel as corner pairs in declaration order", () => {

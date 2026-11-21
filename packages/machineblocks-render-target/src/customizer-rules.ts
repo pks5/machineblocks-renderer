@@ -2,7 +2,7 @@ import type { BlockDefinition, BlockInstance, LiteralValue, NamedTypeReference, 
 import { resolveEffectiveMembers, type TypeRegistry } from "@blockml/framework";
 import { compositionChildren } from "./composition.js";
 import { hiddenCustomizer } from "./naming.js";
-import { isIdentifier, serializeStructProperty, serializeTyped, structPropertyNames } from "./serialize.js";
+import { enumDropdown, isIdentifier, serializeStructProperty, serializeTyped, structPropertyNames } from "./serialize.js";
 
 export const CUSTOMIZER_RULES_FQN = "com.machineblocks.bml.target.render.CustomizerRules";
 export const SENTINEL_TOGGLE_FQN = "com.machineblocks.bml.target.render.SentinelToggle";
@@ -209,25 +209,32 @@ export function formatHidden(configAssignment: string, projections: readonly Cus
   return lines.length === 0 ? configAssignment : `${configAssignment}\n${lines.join("\n")}`;
 }
 
-export function customizerText(name: string, scad: string, projection: CustomizerProjection | undefined): string {
+export function customizerText(
+  name: string,
+  scad: string,
+  projection: CustomizerProjection | undefined,
+  type?: TypeExpression,
+  registry?: Registry,
+): string {
   if (!projection) {
-    return `${name} = ${scad};`;
+    return assignment(name, scad, enumDropdown(type, scad, registry));
   }
-  return projection.fields.map(fieldText).join("\n");
+  return projection.fields.map((field) => fieldText(field, type, registry)).join("\n");
 }
 
 export interface CustomizerEntry {
   name: string;
   scad: string;
   projection?: CustomizerProjection | undefined;
+  type?: TypeExpression | undefined;
 }
 
 /** Ungrouped parameters stay in order. Grouped projections follow, each in its own tab. */
-export function formatCustomizer(entries: readonly CustomizerEntry[]): string {
+export function formatCustomizer(entries: readonly CustomizerEntry[], registry?: Registry): string {
   const plain: string[] = [];
   const groups: { name: string; lines: string[] }[] = [];
   for (const entry of entries) {
-    const text = customizerText(entry.name, entry.scad, entry.projection);
+    const text = customizerText(entry.name, entry.scad, entry.projection, entry.type, registry);
     const group = entry.projection?.group;
     if (!group) {
       plain.push(text);
@@ -250,10 +257,15 @@ export function formatCustomizer(entries: readonly CustomizerEntry[]): string {
   return sections.join("\n\n");
 }
 
-function fieldText(field: CustomizerField): string {
-  const hint = field.hint ? ` // ${field.hint}` : "";
-  const line = `${field.name} = ${field.scad};${hint}`;
+function fieldText(field: CustomizerField, type: TypeExpression | undefined, registry: Registry | undefined): string {
+  const hint = field.hint ?? enumDropdown(type, field.scad, registry);
+  const suffix = hint ? ` // ${hint}` : "";
+  const line = `${field.name} = ${field.scad};${suffix}`;
   return field.description ? `// ${field.description}\n${line}` : line;
+}
+
+function assignment(name: string, scad: string, hint: string | undefined): string {
+  return hint ? `${name} = ${scad}; // ${hint}` : `${name} = ${scad};`;
 }
 
 function projectTypeSplit(

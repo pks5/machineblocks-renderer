@@ -40,6 +40,7 @@ export function renderLeafFile(block, outputRelativePath, outputBasePath, mbLibP
             scad: lowered.scad,
             constant: lowered.constant,
             native: nativeNames.has(property.name),
+            type: property.type,
         });
     }
     const childScad = new Map();
@@ -56,6 +57,7 @@ export function renderLeafFile(block, outputRelativePath, outputBasePath, mbLibP
                 scad: lowered.scad,
                 constant: true,
                 native: nativeNames.has(parameter),
+                type: parameterType.type,
             });
         }
     }
@@ -77,7 +79,7 @@ export function renderLeafFile(block, outputRelativePath, outputBasePath, mbLibP
         files: [
             withSourceMap(block, {
                 path: outputRelativePath,
-                content: fileText(block, filename, moduleName, blockImport, config.prelude, ordered, childScad, projections),
+                content: fileText(block, filename, moduleName, blockImport, config.prelude, ordered, childScad, projections, registry),
             }),
         ],
     };
@@ -126,8 +128,8 @@ function nativeNamesOf(registry) {
     }
     return names;
 }
-function fileText(block, filename, moduleName, blockImport, config, slots, childScad, projections) {
-    const geometry = formatCustomizer(slots.map((slot) => ({ name: slot.name, scad: slot.scad, projection: projections.get(slot.name) })));
+function fileText(block, filename, moduleName, blockImport, config, slots, childScad, projections, registry) {
+    const geometry = formatCustomizer(slots.map((slot) => ({ name: slot.name, scad: slot.scad, projection: projections.get(slot.name), type: slot.type })), registry);
     const customizer = [config.dropdown, geometry].filter((part) => part.length > 0).join("\n\n");
     const passed = slots.map((slot) => `        ["${slot.name}", ${projections.get(slot.name)?.hiddenName ?? slot.name}]`).join(",\n");
     const settingsBody = slots.length === 0 ? "" : `\n${passed}\n    `;

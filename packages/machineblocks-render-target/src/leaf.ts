@@ -1,4 +1,4 @@
-import type { BlockDefinition, BlockInstance, PropertyDefinition } from "@blockml/bom";
+import type { BlockDefinition, BlockInstance, PropertyDefinition, TypeExpression } from "@blockml/bom";
 import type { RenderContext, RenderOutput } from "@blockml/compiler";
 import { resolveEffectiveMembers } from "@blockml/framework";
 import { loadConfigPrelude, type ConfigPrelude } from "./config-set.js";
@@ -27,6 +27,7 @@ interface Slot {
   scad: string;
   constant: boolean;
   native: boolean;
+  type?: TypeExpression | undefined;
 }
 
 export function renderLeafFile(
@@ -67,6 +68,7 @@ export function renderLeafFile(
       scad: lowered.scad,
       constant: lowered.constant,
       native: nativeNames.has(property.name),
+      type: property.type,
     });
   }
   const childScad = new Map<string, string>();
@@ -83,6 +85,7 @@ export function renderLeafFile(
         scad: lowered.scad,
         constant: true,
         native: nativeNames.has(parameter),
+        type: parameterType.type,
       });
     }
   }
@@ -105,7 +108,7 @@ export function renderLeafFile(
     files: [
       withSourceMap(block, {
         path: outputRelativePath,
-        content: fileText(block, filename, moduleName, blockImport, config.prelude, ordered, childScad, projections),
+        content: fileText(block, filename, moduleName, blockImport, config.prelude, ordered, childScad, projections, registry),
       }),
     ],
   };
@@ -174,9 +177,11 @@ function fileText(
   slots: readonly Slot[],
   childScad: ReadonlyMap<string, string>,
   projections: ReadonlyMap<string, CustomizerProjection>,
+  registry: Registry,
 ): string {
   const geometry = formatCustomizer(
-    slots.map((slot) => ({ name: slot.name, scad: slot.scad, projection: projections.get(slot.name) })),
+    slots.map((slot) => ({ name: slot.name, scad: slot.scad, projection: projections.get(slot.name), type: slot.type })),
+    registry,
   );
   const customizer = [config.dropdown, geometry].filter((part) => part.length > 0).join("\n\n");
   const passed = slots.map((slot) => `        ["${slot.name}", ${projections.get(slot.name)?.hiddenName ?? slot.name}]`).join(",\n");

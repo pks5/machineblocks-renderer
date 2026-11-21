@@ -23,4 +23,12 @@ export declare function serializeTyped(value: unknown, options?: SerializeOption
 export declare function structPropertyNames(fqn: string, registry: TypeRegistry): string[] | undefined;
 /** Serialize one struct property the same way the struct writer does. */
 export declare function serializeStructProperty(value: Record<string, unknown>, field: string, ownerFqn: string, registry: TypeRegistry): SerializeSuccess | SerializeFailure;
+export interface EnumOption {
+    id: string;
+    token: string;
+}
+/** Members of an enum, in values order. Undefined when the type is not an enum. */
+export declare function enumOptions(fqn: string, registry: TypeRegistry | undefined): EnumOption[] | undefined;
+/** Customizer dropdown for a field whose whole value is one enum token. */
+export declare function enumDropdown(type: TypeExpression | undefined, scad: string, registry: TypeRegistry | undefined): string | undefined;
 //# sourceMappingURL=serialize.d.ts.map

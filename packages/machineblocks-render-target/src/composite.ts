@@ -5,6 +5,7 @@ import type {
   DirectiveAttribute,
   EachDirective,
   PropertyDefinition,
+  TypeExpression,
 } from "@blockml/bom";
 import type { RenderContext, RenderOutput } from "@blockml/compiler";
 import { parseExpression, resolveEffectiveMembers } from "@blockml/framework";
@@ -38,6 +39,7 @@ interface ReadyProperty {
   scad?: string;
   constant: boolean;
   native: boolean;
+  type?: TypeExpression | undefined;
 }
 
 interface EmitScope {
@@ -133,7 +135,7 @@ use <${blockImport}>;
 ${config.prelude.useLine}
 
 /* Customization */
-${[config.prelude.dropdown, customizerLines(passed, projections)].filter((part) => part.length > 0).join("\n\n")}
+${[config.prelude.dropdown, customizerLines(passed, projections, registry)].filter((part) => part.length > 0).join("\n\n")}
 
 /* [Hidden] */
 ${formatHidden(config.prelude.hidden, [...projections.values()])}
@@ -418,7 +420,7 @@ function readyProperties(
   for (const property of properties) {
     const native = nativeNames.has(property.name);
     if (!property.value) {
-      ready.push({ name: property.name, constant: false, native });
+      ready.push({ name: property.name, constant: false, native, type: property.type });
       continue;
     }
     if (property.value.kind !== "literal" && property.value.kind !== "expression") {
@@ -441,7 +443,7 @@ function readyProperties(
         ("source" in property.value ? property.value.source : undefined) ?? property.source ?? source,
       );
     }
-    ready.push({ name: property.name, scad: lowered.scad, constant: lowered.constant, native });
+    ready.push({ name: property.name, scad: lowered.scad, constant: lowered.constant, native, type: property.type });
   }
   return ready;
 }
@@ -470,13 +472,15 @@ function fixedGetters(properties: readonly PropertyDefinition[], skip: readonly 
 function customizerLines(
   properties: readonly ReadyProperty[],
   projections: ReadonlyMap<string, CustomizerProjection>,
+  registry: Registry,
 ): string {
   return formatCustomizer(
     properties.flatMap((property) =>
       property.scad === undefined
         ? []
-        : [{ name: property.name, scad: property.scad, projection: projections.get(property.name) }],
+        : [{ name: property.name, scad: property.scad, projection: projections.get(property.name), type: property.type }],
     ),
+    registry,
   );
 }
 

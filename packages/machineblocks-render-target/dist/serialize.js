@@ -511,6 +511,69 @@ function isColor(fqn, registry) {
     }
     return collectBaseTypeChain(block, registry).some((entry) => entry.type === COLOR_TYPE || entry.baseType === COLOR_TYPE);
 }
+/** Members of an enum, in values order. Undefined when the type is not an enum. */
+export function enumOptions(fqn, registry) {
+    if (!registry || !isEnum(fqn, registry)) {
+        return undefined;
+    }
+    const block = registry.get(fqn)?.block;
+    if (!block) {
+        return undefined;
+    }
+    const options = [];
+    for (const child of compositionChildren(block, "values")) {
+        if (child.kind !== "blockInstance") {
+            continue;
+        }
+        const id = child.instance.id;
+        const catalog = child.instance.memberValues.value;
+        if (!id || id.kind !== "literal" || typeof id.value !== "string") {
+            continue;
+        }
+        if (catalog?.kind !== "literal" || typeof catalog.value !== "string") {
+            continue;
+        }
+        options.push({ id: id.value, token: catalog.value });
+    }
+    return options;
+}
+const DROPDOWN_OPTION = /^[^,:\][\n]+$/;
+/** Customizer dropdown for a field whose whole value is one enum token. */
+export function enumDropdown(type, scad, registry) {
+    const token = quotedToken(scad);
+    if (token === undefined || !registry) {
+        return undefined;
+    }
+    for (const fqn of namedFqns(type)) {
+        const options = enumOptions(fqn, registry);
+        if (!options || options.length === 0 || !options.some((option) => option.token === token)) {
+            continue;
+        }
+        if (options.some((option) => !DROPDOWN_OPTION.test(option.token) || !DROPDOWN_OPTION.test(option.id))) {
+            return undefined;
+        }
+        return `[${options.map((option) => `${option.token}:${option.id}`).join(", ")}]`;
+    }
+    return undefined;
+}
+function quotedToken(scad) {
+    if (scad.length < 2 || !scad.startsWith('"') || !scad.endsWith('"')) {
+        return undefined;
+    }
+    return scad.slice(1, -1).replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+}
+function namedFqns(type) {
+    if (type?.kind === "named") {
+        return [type.fqn];
+    }
+    if (type?.kind === "union") {
+        return type.alternatives.flatMap((alternative) => namedFqns(alternative));
+    }
+    if (type?.kind === "grouped") {
+        return namedFqns(type.expression);
+    }
+    return [];
+}
 function enumToken(fqn, memberId, registry) {
     const block = registry?.get(fqn)?.block;
     if (!block) {

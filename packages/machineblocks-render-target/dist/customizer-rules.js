@@ -1,7 +1,7 @@
 import { resolveEffectiveMembers } from "@blockml/framework";
 import { compositionChildren } from "./composition.js";
 import { hiddenCustomizer } from "./naming.js";
-import { isIdentifier, serializeStructProperty, serializeTyped, structPropertyNames } from "./serialize.js";
+import { enumDropdown, isIdentifier, serializeStructProperty, serializeTyped, structPropertyNames } from "./serialize.js";
 export const CUSTOMIZER_RULES_FQN = "com.machineblocks.bml.target.render.CustomizerRules";
 export const SENTINEL_TOGGLE_FQN = "com.machineblocks.bml.target.render.SentinelToggle";
 export const AXIS_VECTOR_FQN = "com.machineblocks.bml.target.render.AxisVector";
@@ -136,18 +136,18 @@ export function formatHidden(configAssignment, projections) {
         : []);
     return lines.length === 0 ? configAssignment : `${configAssignment}\n${lines.join("\n")}`;
 }
-export function customizerText(name, scad, projection) {
+export function customizerText(name, scad, projection, type, registry) {
     if (!projection) {
-        return `${name} = ${scad};`;
+        return assignment(name, scad, enumDropdown(type, scad, registry));
     }
-    return projection.fields.map(fieldText).join("\n");
+    return projection.fields.map((field) => fieldText(field, type, registry)).join("\n");
 }
 /** Ungrouped parameters stay in order. Grouped projections follow, each in its own tab. */
-export function formatCustomizer(entries) {
+export function formatCustomizer(entries, registry) {
     const plain = [];
     const groups = [];
     for (const entry of entries) {
-        const text = customizerText(entry.name, entry.scad, entry.projection);
+        const text = customizerText(entry.name, entry.scad, entry.projection, entry.type, registry);
         const group = entry.projection?.group;
         if (!group) {
             plain.push(text);
@@ -170,10 +170,14 @@ export function formatCustomizer(entries) {
     }
     return sections.join("\n\n");
 }
-function fieldText(field) {
-    const hint = field.hint ? ` // ${field.hint}` : "";
-    const line = `${field.name} = ${field.scad};${hint}`;
+function fieldText(field, type, registry) {
+    const hint = field.hint ?? enumDropdown(type, field.scad, registry);
+    const suffix = hint ? ` // ${hint}` : "";
+    const line = `${field.name} = ${field.scad};${suffix}`;
     return field.description ? `// ${field.description}\n${line}` : line;
+}
+function assignment(name, scad, hint) {
+    return hint ? `${name} = ${scad}; // ${hint}` : `${name} = ${scad};`;
 }
 function projectTypeSplit(name, type, value, registry, rules, names) {
     if (type?.kind !== "named") {
