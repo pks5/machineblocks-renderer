@@ -11,7 +11,7 @@ import {
 } from "./diagnostics.js";
 import { isMappingFailure, mapManifestation, mappingFromPackages, pathForManifestation } from "./naming.js";
 import { readTargetOptions, type MachineBlocksTargetOptions } from "./options.js";
-import { ScadBlockProcessor, ScadConfigSetProcessor, ScadSetProcessor, type OptionSlot } from "./processors.js";
+import { ScadBlockPresetsProcessor, ScadBlockProcessor, ScadConfigSetProcessor, ScadSetProcessor, type OptionSlot } from "./processors.js";
 import { TARGET_NAME } from "./version.js";
 
 export class MachineBlocksRenderTarget implements RenderTarget, DispatchTarget {
@@ -27,6 +27,7 @@ export class MachineBlocksRenderTarget implements RenderTarget, DispatchTarget {
     this.processors = [
       new ScadSetProcessor(this.options),
       new ScadConfigSetProcessor(this.options),
+      new ScadBlockPresetsProcessor(this.options),
       new ScadBlockProcessor(this.options),
     ];
   }

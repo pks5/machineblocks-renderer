@@ -153,14 +153,14 @@ describe("composite, set, presets, source map", () => {
     expect(map.mappings?.split(";").length).toBe(lineCount);
   });
 
-  it("emits preset JSON with defaults omitted and chains merged", () => {
+  it("emits preset JSON beside the target block, with defaults omitted and chains merged", () => {
     const result = render(
       `<?xml version="1.0"?>
 <bricks:Catalog xmlns="http://blockml.org/bml"
   xmlns:bml="org.blockml.bml.annotation.BmlAnnotation"
   xmlns:mbcore="com.machineblocks.bml.core"
   xmlns:bricks="com.machineblocks.bml.bricks">
-  <baseType>mbcore:Block</baseType>
+  <baseType>mbcore:BlockPresets(bricks:Standard)</baseType>
   <is>Presets</is>
   <aggregations>
     <presets override="true">
@@ -179,7 +179,7 @@ describe("composite, set, presets, source map", () => {
       [document(STANDARD, "standard.bml")],
     );
     expect(result.diagnostics ?? []).toEqual([]);
-    expect(result.files[0]?.path).toBe("com/machineblocks/scad/bricks/Catalog.json");
+    expect(result.files[0]?.path).toBe("com/machineblocks/scad/bricks/Standard.json");
     const json = JSON.parse(result.files[0]?.content ?? "{}") as {
       fileFormatVersion: string;
       parameterSets: Record<string, Record<string, string>>;
@@ -191,5 +191,53 @@ describe("composite, set, presets, source map", () => {
       size: "[2, 4, 3]",
       baseColor: "#5296D5",
     });
+  });
+
+  it("follows T when a catalog closes an intermediate generic", () => {
+    const mid = document(
+      `<?xml version="1.0"?>
+<ex:Mid xmlns="http://blockml.org/bml" xmlns:ex="com.example.bml" xmlns:mbcore="com.machineblocks.bml.core">
+  <genericTypes><T baseType="mbcore:Block"/></genericTypes>
+  <baseType>mbcore:BlockPresets(T)</baseType>
+  <is>Open catalog</is>
+</ex:Mid>`,
+      "mid.bml",
+    );
+    const result = render(
+      `<?xml version="1.0"?>
+<ex:Closed xmlns="http://blockml.org/bml"
+  xmlns:bml="org.blockml.bml.annotation.BmlAnnotation"
+  xmlns:ex="com.example.bml"
+  xmlns:mbcore="com.machineblocks.bml.core"
+  xmlns:bricks="com.machineblocks.bml.bricks">
+  <baseType>ex:Mid(bricks:Standard)</baseType>
+  <is>Closed catalog</is>
+  <aggregations>
+    <presets override="true">
+      <composition>
+        <bricks:Standard bml:id="brick_2x4" name="Brick 2x4" size="{x:2,y:4,z:3}" />
+      </composition>
+    </presets>
+  </aggregations>
+</ex:Closed>`,
+      "closed.bml",
+      [document(STANDARD, "standard.bml"), mid],
+    );
+    expect(result.diagnostics ?? []).toEqual([]);
+    expect(result.files[0]?.path).toBe("com/machineblocks/scad/bricks/Standard.json");
+  });
+
+  it("rejects a BlockPresets catalog that leaves T open", () => {
+    const result = render(
+      `<?xml version="1.0"?>
+<ex:Mid xmlns="http://blockml.org/bml" xmlns:ex="com.example.bml" xmlns:mbcore="com.machineblocks.bml.core">
+  <genericTypes><T baseType="mbcore:Block"/></genericTypes>
+  <baseType>mbcore:BlockPresets(T)</baseType>
+  <is>Open catalog</is>
+</ex:Mid>`,
+      "mid.bml",
+    );
+    expect(result.files).toEqual([]);
+    expect(result.diagnostics?.map((diagnostic) => diagnostic.code)).toEqual(["BML_PRESET_TARGET_OPEN"]);
   });
 });

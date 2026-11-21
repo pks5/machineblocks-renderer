@@ -6,7 +6,12 @@ import { presetParameterValue } from "./serialize.js";
 
 type Registry = RenderContext["session"]["typeRegistry"];
 
-export function renderPresetFile(block: BlockDefinition, registry: Registry, outputRelativePath: string): RenderOutput {
+export function renderPresetFile(
+  block: BlockDefinition,
+  registry: Registry,
+  outputRelativePath: string,
+  targetFqn: string,
+): RenderOutput {
   const instances = compositionChildren(block, "presets").flatMap((child) =>
     child.kind === "blockInstance" ? [child.instance] : [],
   );
@@ -18,13 +23,13 @@ export function renderPresetFile(block: BlockDefinition, registry: Registry, out
     }
   }
   const parameterSets: Record<string, Record<string, string>> = {};
+  const defaults = defaultsFor(targetFqn, registry);
   for (const instance of instances) {
     const merged = mergePreset(instance, byId, []);
     if (isFailure(merged)) {
       return merged;
     }
     const name = literalString(instance.memberValues.name) ?? literalString(instance.id) ?? "preset";
-    const defaults = defaultsFor(instance.typeFqn, registry);
     const values: Record<string, string> = {};
     for (const [key, value] of Object.entries(merged)) {
       if (key === "name" || key === "basePresets") {
@@ -39,7 +44,7 @@ export function renderPresetFile(block: BlockDefinition, registry: Registry, out
   }
   const content = `${JSON.stringify({ fileFormatVersion: "1", parameterSets }, null, 2)}\n`;
   return {
-    files: [{ path: outputRelativePath.replace(/\.scad$/, ".json"), content }],
+    files: [{ path: outputRelativePath, content }],
   };
 }
 
@@ -78,18 +83,28 @@ function mergePreset(
 }
 
 function defaultsFor(typeFqn: string, registry: Registry): Map<string, string> {
-  const defaults = new Map<string, string>();
-  const definition = registry.get(typeFqn)?.block;
-  if (!definition) {
-    return defaults;
-  }
-  for (const member of definition.members) {
-    if (member.kind !== "property" || !member.value || member.value.kind !== "literal") {
-      continue;
+  const chain: BlockDefinition[] = [];
+  const seen = new Set<string>();
+  let fqn: string | undefined = typeFqn;
+  while (fqn && !seen.has(fqn)) {
+    seen.add(fqn);
+    const definition: BlockDefinition | undefined = registry.get(fqn)?.block;
+    if (!definition) {
+      break;
     }
-    const text = presetParameterValue(member.value);
-    if (text !== undefined) {
-      defaults.set(member.name, text);
+    chain.push(definition);
+    fqn = definition.baseType;
+  }
+  const defaults = new Map<string, string>();
+  for (const definition of chain.reverse()) {
+    for (const member of definition.members) {
+      if (member.kind !== "property" || !member.value || member.value.kind !== "literal") {
+        continue;
+      }
+      const text = presetParameterValue(member.value);
+      if (text !== undefined) {
+        defaults.set(member.name, text);
+      }
     }
   }
   return defaults;

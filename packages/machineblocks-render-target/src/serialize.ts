@@ -1,4 +1,4 @@
-import type { LiteralValue, TypeExpression } from "@blockml/bom";
+import type { BlockDefinition, LiteralValue, TypeExpression } from "@blockml/bom";
 import { collectBaseTypeChain, resolveEffectiveMembers, type TypeRegistry } from "@blockml/framework";
 import { compositionChildren } from "./composition.js";
 
@@ -419,7 +419,114 @@ function fieldTypeOf(
   if (!property || property.kind !== "property") {
     return axisFieldType(ownerFqn, field);
   }
-  return { typeFqn: property.typeFqn || undefined, type: property.type };
+  return substituteGenericField(ownerFqn, { typeFqn: property.typeFqn || undefined, type: property.type }, registry);
+}
+
+function substituteGenericField(
+  ownerFqn: string,
+  raw: { typeFqn?: string | undefined; type?: TypeExpression | undefined },
+  registry: TypeRegistry,
+): { typeFqn?: string | undefined; type?: TypeExpression | undefined } {
+  const paramName = genericParameterName(raw);
+  if (!paramName) {
+    return raw;
+  }
+  const bound = genericBindings(ownerFqn, registry).get(paramName);
+  if (!bound) {
+    return raw;
+  }
+  if (bound.kind === "named") {
+    return { typeFqn: bound.fqn, type: bound };
+  }
+  return { type: bound };
+}
+
+function genericParameterName(raw: {
+  typeFqn?: string | undefined;
+  type?: TypeExpression | undefined;
+}): string | undefined {
+  if (raw.type?.kind === "genericParam") {
+    return raw.type.name;
+  }
+  if (raw.type?.kind === "named" && !raw.type.fqn.includes(".")) {
+    return raw.type.fqn;
+  }
+  if (raw.typeFqn && !raw.typeFqn.includes(".")) {
+    return raw.typeFqn;
+  }
+  return undefined;
+}
+
+/** Bind a closed type's generic parameters, then its ancestors, child first. */
+function genericBindings(fqn: string, registry: TypeRegistry): Map<string, TypeExpression> {
+  const env = new Map<string, TypeExpression>();
+  const seen = new Set<string>();
+  let current: BlockDefinition | undefined = registry.get(fqn)?.block;
+  while (current && !seen.has(current.type)) {
+    seen.add(current.type);
+    applyOwnDefaults(current, env);
+    const parent = current.baseType ? registry.get(current.baseType)?.block : undefined;
+    applyBaseArguments(current, parent, env);
+    current = parent;
+  }
+  return env;
+}
+
+function applyOwnDefaults(block: BlockDefinition, env: Map<string, TypeExpression>): void {
+  for (const parameter of block.genericTypes ?? []) {
+    if (env.has(parameter.name)) {
+      continue;
+    }
+    const fallback = defaultTypeExpression(parameter.defaultType);
+    if (fallback) {
+      env.set(parameter.name, fallback);
+    }
+  }
+}
+
+function applyBaseArguments(
+  child: BlockDefinition,
+  parent: BlockDefinition | undefined,
+  env: Map<string, TypeExpression>,
+): void {
+  const parameters = parent?.genericTypes;
+  if (!parameters || parameters.length === 0) {
+    return;
+  }
+  const expr = child.baseTypeExpression;
+  if (!expr || expr.kind !== "named" || expr.fqn !== parent.type) {
+    return;
+  }
+  const args = expr.typeArguments ?? [];
+  parameters.forEach((parameter, index) => {
+    const arg = args[index];
+    const resolved = arg ? resolveBoundType(arg, env) : undefined;
+    const fallback = resolved ? undefined : defaultTypeExpression(parameter.defaultType);
+    const chosen = resolved ?? fallback;
+    if (chosen) {
+      env.set(parameter.name, chosen);
+    }
+  });
+}
+
+function resolveBoundType(expr: TypeExpression, env: ReadonlyMap<string, TypeExpression>): TypeExpression | undefined {
+  if (expr.kind === "named" || expr.kind === "union" || expr.kind === "anonymousStruct") {
+    return expr;
+  }
+  if (expr.kind === "genericParam") {
+    return env.get(expr.name);
+  }
+  if (expr.kind === "grouped") {
+    return resolveBoundType(expr.expression, env);
+  }
+  return undefined;
+}
+
+function defaultTypeExpression(defaultType: string | undefined): TypeExpression | undefined {
+  if (!defaultType?.includes(".")) {
+    return undefined;
+  }
+  return { kind: "named", fqn: defaultType };
 }
 
 function axisFieldType(ownerFqn: string, field: string): { typeFqn?: string | undefined } | undefined {

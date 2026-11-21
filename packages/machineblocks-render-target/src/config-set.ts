@@ -49,7 +49,7 @@ export function needsConfigSet(block: BlockDefinition, registry: Registry): bool
   if (!isRenderBlock(block, registry) || isConfigSet(block, registry)) {
     return false;
   }
-  return artifactExtension(block) !== "json";
+  return artifactExtension(block, registry) !== "json";
 }
 
 export function resolveConfigSet(

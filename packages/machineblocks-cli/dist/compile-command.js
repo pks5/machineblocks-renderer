@@ -5,7 +5,7 @@ import { bootstrapProjectTypeRegistry, loadConfig, writeOutputFiles } from "@blo
 import { compileToOutput, registerTarget } from "@blockml/compiler";
 import { scanTypes } from "@blockml/framework";
 import { BlockRenderEngine } from "@blockml/block-render-engine";
-import { CONFIG_SET_UNEXPECTED, MachineBlocksRenderTarget, SELECTOR_EMPTY, isConfigSet, needsConfigSet, requireConfigSet, resolveConfigSet, SOURCE_PACKAGE_ALONE, SOURCE_PACKAGE_REQUIRED, TARGET_COLLISION, artifactExtension, isRenderBlock, mapManifestation, pathForManifestation, } from "@machineblocks/render-target";
+import { CONFIG_SET_UNEXPECTED, MachineBlocksRenderTarget, SELECTOR_EMPTY, isConfigSet, needsConfigSet, requireConfigSet, resolveConfigSet, SOURCE_PACKAGE_ALONE, SOURCE_PACKAGE_REQUIRED, TARGET_COLLISION, isRenderBlock, mapManifestation, plannedOutputPath, } from "@machineblocks/render-target";
 import { sourcePackageFromSelector } from "./args.js";
 import { resolveOutputPath } from "./output-gate.js";
 const TARGET_NAME = "machineblocks-v3-scad";
@@ -58,7 +58,11 @@ export function runCompile(args, rootDir) {
         if (!manifested.ok) {
             return { code: 1, lines: [`${manifested.code}: ${manifested.message}`] };
         }
-        const outputPath = pathForManifestation(manifested.fqn, artifactExtension(document.block));
+        const output = plannedOutputPath(document.block, bootstrap.registry, mapping.mapping);
+        if (!output.ok) {
+            return { code: 1, lines: [`${output.code}: ${output.message}`] };
+        }
+        const outputPath = output.path;
         const targetClash = targetOwners.get(manifested.fqn);
         if (targetClash !== undefined) {
             return { code: 1, lines: [collision(TARGET_COLLISION, manifested.fqn, targetClash, document.block.type)] };

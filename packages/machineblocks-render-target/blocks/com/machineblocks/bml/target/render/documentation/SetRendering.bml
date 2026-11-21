@@ -19,12 +19,12 @@
     and settings and dispatches
     on mode. Total, Print, and Step each wrap their children in mb_block.
 
-    A MachineBlocks set uses three aggregations. _presets and _parts are
-    inherited. _steps is declared on Set.
+    A MachineBlocks set uses _parts, inherited from CompositeBlock, and _steps,
+    declared on Set. Preset catalogs are BlockPresets(T), not an aggregation
+    on Set.
 
-    - _presets — palette; configurations referenced by appliedPresets on _parts
-    - _parts — placed instances (direction, offset, appliedPresets; id becomes
-      the SCAD instance id)
+    - _parts — placed instances (direction, offset; id becomes the SCAD
+      instance id)
     - _steps — assembly order; optional; default is _parts document order.
       Repeating an id emits that same placement again. One instance module is
       emitted per distinct id. Its part type is the first placement with that id.

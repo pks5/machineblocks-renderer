@@ -46,7 +46,10 @@
     source package (an import or a child module) uses automatic mapping instead.
     If that automatic mapping fails, the compile fails and the host writes nothing.
 
-    Preset JSON uses the same manifestation with extension .json.
+    A closed BlockPresets(T) writes customizer JSON at the manifestation of T
+    with extension .json, beside T's .scad file. The catalog block's own FQN
+    is not that file name. An open T is BML_PRESET_TARGET_OPEN. Two catalogs
+    closed on the same T share the JSON path and are MB_TARGET_COLLISION.
     The output root is the configured blocks directory (srcDir), not a guessed
     dist, build, or scad directory.
 

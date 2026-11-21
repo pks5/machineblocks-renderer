@@ -2,18 +2,33 @@
   FQN: com.machineblocks.bml.target.render.documentation.Presets-->
 <rdoc:Presets xmlns="http://blockml.org/bml"
   xmlns:core="org.blockml.bml.core"
+  xmlns:mbcore="com.machineblocks.bml.core"
   xmlns:rdoc="com.machineblocks.bml.target.render.documentation">
 
   <baseType>
     core:Documentation
   </baseType>
   <is>
-    Preset blocks to OpenSCAD customizer JSON
+    BlockPresets catalogs to OpenSCAD customizer JSON
   </is>
   <documentation>
-    A preset block (for example com.machineblocks.bml.bricks.StandardPresets
-    with a _presets composition) may be rendered to an OpenSCAD customizer JSON
-    file. The compiler merges appliedPresets chains before serialization.
+    ScadBlockPresetsProcessor handles a block whose baseType chain includes
+    com.machineblocks.bml.core.BlockPresets. A concrete catalog closes T on the
+    target block, for example BlockPresets(com.machineblocks.bml.bricks.Standard)
+    as com.machineblocks.bml.bricks.StandardPresets. presets holds instances of T.
+    basePresets stays on Block and names sibling entries in that composition.
+
+    The compiler merges basePresets left to right. A later base overrides an
+    earlier one on the same property, then the entry's own literals override
+    the bases. A cycle returns files: [] and diagnostic BML_PRESET_CYCLE.
+    An open T, including the abstract BlockPresets type, returns files: [] and
+    diagnostic BML_PRESET_TARGET_OPEN.
+
+    The JSON file is the manifestation of T with extension .json, beside T's
+    .scad file. The catalog block's own FQN is not the file name.
+    StandardPresets writes com/machineblocks/scad/bricks/Standard.json.
+    Two catalogs that close on the same T share that path. The host reports
+    MB_TARGET_COLLISION and writes nothing.
 
     The JSON uses the preset name as the key (the label shown in the OpenSCAD UI):
 
@@ -21,30 +36,26 @@
           "fileFormatVersion": "1",
           "parameterSets": {
             "Brick 2x4": {
-              "size": "[2, 4, 3]",
-              "baseColor": "#EAC645",
-              "studs": "true"
+              "size": "[2, 4, 3]"
             },
-            "Brick 1x1": {
-              "size": "[1, 1, 3]",
-              "baseColor": "#EAC645"
+            "Brick 2x4 Blue": {
+              "size": "[2, 4, 3]",
+              "baseColor": "#5296D5"
             }
           }
         }
 
-    All parameter values are strings (OpenSCAD customizer requirement). Emit
-    only properties whose preset value differs from the block default. Omitted
-    properties fall back to those defaults when OpenSCAD loads the parameter
-    set.
-
-    A block whose only composition is presets is rendered to the manifestation
-    path with a .json suffix instead of a .scad file. basePresets chains are
-    merged left to right, then the instance's own values overlay them. The
-    parameter set key is the instance name. A basePresets cycle returns
-    files: [] and diagnostic BML_PRESET_CYCLE.
+    All parameter values are strings. Emit only properties whose preset value
+    differs from T's literal default, including defaults inherited by T. Omit
+    name and basePresets. Strings are stored unquoted. Numbers and booleans
+    are stored as text. A SizeXYZ value is stored as [x, y, z]. A value that
+    does not serialize is omitted. Omitted properties fall back to the
+    customizer defaults when OpenSCAD loads the parameter set.
 
   </documentation>
   <references>
+    <see type="mbcore:BlockPresets" relation="SeeAlso" />
+    <see type="rdoc:FqnNaming" relation="SeeAlso" />
     <see type="rdoc:SourceMaps" relation="ReadNext" />
   </references>
 </rdoc:Presets>

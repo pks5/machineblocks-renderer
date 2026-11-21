@@ -45,6 +45,41 @@ const DIRECTION = `<mbt:Direction xmlns="http://blockml.org/bml" xmlns:bml="org.
   </aggregations>
 </mbt:Direction>`;
 
+const AXIS_XY = `<mbt:AxisXY xmlns="http://blockml.org/bml" xmlns:mbt="com.machineblocks.bml.type" xmlns:type="org.blockml.bml.type">
+  <baseType>type:StructType</baseType>
+  <genericTypes>
+    <N baseType="type:ValueType" defaultType="org.blockml.bml.type.Decimal" />
+  </genericTypes>
+  <properties>
+    <x type="N" />
+    <y type="N" />
+  </properties>
+</mbt:AxisXY>`;
+
+const OFFSET_XY = `<mbt:OffsetXY xmlns="http://blockml.org/bml" xmlns:mbt="com.machineblocks.bml.type" xmlns:type="org.blockml.bml.type">
+  <baseType>mbt:AxisXY(N)</baseType>
+  <genericTypes>
+    <N baseType="type:Number" defaultType="org.blockml.bml.type.Decimal" />
+  </genericTypes>
+</mbt:OffsetXY>`;
+
+const CORNER_MAP = `<mbt:CornerMap xmlns="http://blockml.org/bml" xmlns:mbt="com.machineblocks.bml.type" xmlns:core="org.blockml.bml.core">
+  <baseType>core:ValueType</baseType>
+  <genericTypes>
+    <T baseType="core:ValueType" />
+  </genericTypes>
+  <properties>
+    <sw type="T" />
+    <nw type="T" />
+    <ne type="T" />
+    <se type="T" />
+  </properties>
+</mbt:CornerMap>`;
+
+const BEVEL_TYPE = `<mbt:Bevel xmlns="http://blockml.org/bml" xmlns:mbt="com.machineblocks.bml.type">
+  <baseType>mbt:CornerMap(mbt:OffsetXY)</baseType>
+</mbt:Bevel>`;
+
 const BRICK = `<bricks:Brick xmlns="http://blockml.org/bml" xmlns:bricks="com.machineblocks.bml.bricks" xmlns:mbt="com.machineblocks.bml.type">
   <properties>
     <size type="mbt:SizeXYZ"><value>{x:4,y:2,z:3}</value></size>
@@ -130,6 +165,24 @@ describe("emit gaps", () => {
     expect(content).toContain('tint = "#EAC645";');
     expect(content).toContain('faces = [["x-", 1], ["y+", 2]];');
     expect(content).toContain("grid = [[0, 0], [1, 2], true];");
+  });
+
+  it("serializes a closed Bevel as corner pairs in declaration order", () => {
+    const result = render(
+      leaf(
+        `<bevel type="mbt:Bevel"><value>{sw:{x:0,y:1},nw:{x:2,y:3},ne:{x:4,y:5},se:{x:6,y:7}}</value></bevel>`,
+        'bevel="${ bevel }"',
+      ),
+      "plate.bml",
+      [
+        document(AXIS_XY, "AxisXY.bml"),
+        document(OFFSET_XY, "OffsetXY.bml"),
+        document(CORNER_MAP, "CornerMap.bml"),
+        document(BEVEL_TYPE, "Bevel.bml"),
+      ],
+    );
+    expect(result.diagnostics ?? []).toEqual([]);
+    expect(result.files[0]?.content ?? "").toContain("bevel = [[0, 1], [2, 3], [4, 5], [6, 7]];");
   });
 
   it("writes no file when an enum id or a struct cannot be serialized", () => {

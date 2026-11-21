@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@blockml/core": "^1.4.6",
-    "@machineblocks/core": "^3.0.0-A7"
+    "@machineblocks/core": "^3.0.0-A9"
   },
   "devDependencies": {
     "@blockml/block-render-engine": "workspace:*",

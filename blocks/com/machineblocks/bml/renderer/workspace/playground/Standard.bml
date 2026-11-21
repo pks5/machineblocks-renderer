@@ -1,0 +1,167 @@
+<!--MachineBlocks.com Block File
+
+  Name: MachineBlock Standard Brick
+  Filename: Standard.bml
+  FQN: com.machineblocks.bml.renderer.workspace.playground.Standard
+
+  Copyright (c) 2022 - 2025 Jan Philipp Knoeller <pk@pksoftware.de>
+
+  Published under license:
+  Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International
+  https://creativecommons.org/licenses/by-nc-sa/4.0/-->
+<playground:Standard xmlns="http://blockml.org/bml"
+  xmlns:type="org.blockml.bml.type"
+  xmlns:unit="org.blockml.bml.unit"
+  xmlns:playground="com.machineblocks.bml.renderer.workspace.playground"
+  xmlns:mbcore="com.machineblocks.bml.core"
+  xmlns:mbt="com.machineblocks.bml.type"
+  xmlns:mbunit="com.machineblocks.bml.unit">
+
+  <baseType>
+    mbcore:CompositeBlock
+  </baseType>
+  <is>
+    A Lego brick
+  </is>
+  <properties>
+    <!--Size — types aligned to NativeBlock-->
+    <size type="mbt:SizeXYZ">
+      <value>{x:4,y:2,z:3}</value>
+    </size>
+    <!--Base-->
+    <baseCutoutType type="mbt:BaseCutout">
+      <value>Standard</value>
+    </baseCutoutType>
+    <pillars type="type:Boolean">
+      <value>true</value>
+    </pillars>
+    <baseReliefCut type="type:Boolean">
+      <value>false</value>
+    </baseReliefCut>
+    <baseReliefCutHeight type="type:Decimal(mbunit:MBU)">
+      <value>0.375</value>
+    </baseReliefCutHeight>
+    <baseReliefCutThickness type="type:Decimal(mbunit:MBU)">
+      <value>0.375</value>
+    </baseReliefCutThickness>
+    <baseRoundingRadius type="type:Decimal | mbt:RadiusAB | mbt:BaseRoundingMap">
+      <status>
+        Draft
+      </status>
+      <value>0</value>
+    </baseRoundingRadius>
+    <grille type="mbt:Grille">
+      <value>None</value>
+    </grille>
+    <grilleInverted type="type:Boolean">
+      <value>false</value>
+    </grilleInverted>
+    <grilleDepth type="type:Decimal(mbunit:MBU)">
+      <value>1</value>
+    </grilleDepth>
+    <grilleCount type="type:Integer">
+      <value>5</value>
+    </grilleCount>
+    <bevel type="mbt:Bevel">
+      <value>{sw:{x:0,y:0},nw:{x:0,y:0},ne:{x:0,y:0},se:{x:0,y:0}}</value>
+    </bevel>
+    <!--Studs-->
+    <studs type="type:Boolean">
+      <value>true</value>
+    </studs>
+    <studShift type="type:Boolean">
+      <value>false</value>
+    </studShift>
+    <studType type="mbt:StudType">
+      <value>Solid</value>
+    </studType>
+    <studPadding type="mbt:FaceMapXY(type:Decimal(mbunit:GridUnitXY))">
+      <value>{xNeg:0.2,xPos:0.2,yNeg:0.2,yPos:0.2}</value>
+    </studPadding>
+    <studBaseOverlap type="type:Decimal(mbunit:MBU)">
+      <value>0.25</value>
+    </studBaseOverlap>
+    <!--Holes — NativeBlock axis-unified API-->
+    <holeX type="type:Boolean">
+      <value>false</value>
+    </holeX>
+    <holeY type="type:Boolean">
+      <value>false</value>
+    </holeY>
+    <holeZ type="type:Boolean">
+      <value>false</value>
+    </holeZ>
+    <holeXYZType type="mbt:HoleType | mbt:AxisXYZ(mbt:HoleType)">
+      <value>Pin</value>
+    </holeXYZType>
+    <holeXYZShift type="type:Boolean | mbt:AxisXYZ(type:Boolean)">
+      <value>true</value>
+    </holeXYZShift>
+    <holeXYGridOffsetZ type="type:Decimal(mbunit:MBU) | mbt:AxisXY(type:Decimal(mbunit:MBU))">
+      <value>3.5</value>
+    </holeXYGridOffsetZ>
+    <!--Recess-->
+    <recess type="type:Boolean">
+      <value>false</value>
+    </recess>
+    <recessStuds type="type:Boolean">
+      <value>false</value>
+    </recessStuds>
+    <recessWallThickness type="mbt:FaceMapXY(type:Decimal(mbunit:GridUnitXY))">
+      <value>{xNeg:0.333,xPos:0.333,yNeg:0.333,yPos:0.333}</value>
+    </recessWallThickness>
+    <recessDepth type="mbt:Auto | type:Decimal(mbunit:GridUnitZ)">
+      <value>Auto</value>
+    </recessDepth>
+    <recessStudPadding type="mbt:FaceMapXY(type:Decimal(mbunit:GridUnitXY))">
+      <value>{xNeg:0.2,xPos:0.2,yNeg:0.2,yPos:0.2}</value>
+    </recessStudPadding>
+    <!--Slope-->
+    <slope type="type:Boolean.False | mbt:FaceMapXY(type:Decimal(mbunit:GridUnitXY))">
+      <value>false</value>
+    </slope>
+    <!--Text-->
+    <text type="type:Boolean.False | type:Text">
+      <value>false</value>
+    </text>
+    <textFace type="mbt:Face">
+      <value>ZPos</value>
+    </textFace>
+    <textDepth type="type:Decimal(mbunit:MBU)">
+      <value>0.5</value>
+    </textDepth>
+    <textSize type="type:Decimal(unit:Millimeter)">
+      <value>9</value>
+    </textSize>
+    <textFont type="type:Text">
+      <value>RBNo3.1 Black</value>
+    </textFont>
+    <textSpacing type="type:Decimal">
+      <value>1</value>
+    </textSpacing>
+    <textColor type="type:Color">
+      <value>#303D4E</value>
+    </textColor>
+    <!--Style-->
+    <baseColor type="type:Color">
+      <value>#EAC645</value>
+    </baseColor>
+    <surfacePattern type="type:Boolean.False | type:FilePath">
+      <value>false</value>
+    </surfacePattern>
+    <surfacePatternScale type="type:Decimal">
+      <value>0.2</value>
+    </surfacePatternScale>
+    <studIcon type="type:Boolean.False | type:FilePath">
+      <value>false</value>
+    </studIcon>
+  </properties>
+  <!--Single NativeBlock — no wrapper generated (1 child rule). Property names and types follow NativeBlock (SSOT).-->
+  <aggregations>
+    <_parts override="true">
+      <composition>
+        <mbcore:NativeBlock size="${ size }" baseCutoutType="${ baseCutoutType }" pillars="${ pillars }" reliefCut="${ baseReliefCut }" reliefCutHeight="${ baseReliefCutHeight }" reliefCutThickness="${ baseReliefCutThickness }" baseRoundingRadius="${ baseRoundingRadius }" grille="${ grille }" grilleInverted="${ grilleInverted }" grilleDepth="${ grilleDepth }" grilleCount="${ grilleCount }" bevel="${ bevel }" studs="${ studs }" studShift="${ studShift }" studType="${ studType }" studPadding="${ studPadding }" studBaseOverlap="${ studBaseOverlap }" holeX="${ holeX }" holeY="${ holeY }" holeZ="${ holeZ }" holeXYZType="${ holeXYZType }" holeXYZShift="${ holeXYZShift }" holeXYGridOffsetZ="${ holeXYGridOffsetZ }" recess="${ recess }" recessStuds="${ recessStuds }" recessWallThickness="${ recessWallThickness }" recessDepth="${ recessDepth }" recessStudPadding="${ recessStudPadding }" slope="${ slope }" text="${ text }" textFace="${ textFace }" textDepth="${ textDepth }" textSize="${ textSize }" textFont="${ textFont }" textSpacing="${ textSpacing }" textColor="${ textColor }" baseColor="${ baseColor }" surfacePattern="${ surfacePattern }" surfacePatternScale="${ surfacePatternScale }" studIcon="${ studIcon }" />
+      </composition>
+    </_parts>
+  </aggregations>
+</playground:Standard>

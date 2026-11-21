@@ -9,14 +9,16 @@ import {
   EMPTY_BLOCK,
   LEAF_VALUE_UNSUPPORTED,
   MB_LIB_PATH_MISSING,
+  PRESET_TARGET_OPEN,
   errorOutput,
 } from "./diagnostics.js";
 import { renderLeafFile } from "./leaf.js";
 import type { ManifestationMapping } from "./naming.js";
 import type { MachineBlocksTargetOptions } from "./options.js";
+import { plannedOutputPath, presetTarget } from "./preset-target.js";
 import { renderPresetFile } from "./presets.js";
 import { renderSetFile } from "./set-file.js";
-import { BLOCK_FQN, CONFIG_SET_FQN, NATIVE_BLOCK_FQN, SET_FQN } from "./version.js";
+import { BLOCK_FQN, BLOCK_PRESETS_FQN, CONFIG_SET_FQN, NATIVE_BLOCK_FQN, SET_FQN } from "./version.js";
 
 /** Reads options captured for the current render call. */
 export interface OptionSlot {
@@ -73,6 +75,32 @@ export class ScadConfigSetProcessor implements BlockProcessor {
   }
 }
 
+export class ScadBlockPresetsProcessor implements BlockProcessor {
+  readonly baseType = BLOCK_PRESETS_FQN;
+
+  constructor(private readonly options: OptionSlot) {}
+
+  process(block: CompileBlock, engine: RenderEngine, context: RenderContext): RenderOutput {
+    return engine.compile(block, this, context);
+  }
+
+  compile(block: CompileBlock, context: RenderContext): RenderOutput {
+    if (!isDefinition(block)) {
+      return errorOutput(LEAF_VALUE_UNSUPPORTED, "ScadBlockPresetsProcessor compiles a block definition.", blockSource(block));
+    }
+    const registry = context.session.typeRegistry;
+    const target = presetTarget(block, registry);
+    if (target.kind !== "closed") {
+      return errorOutput(PRESET_TARGET_OPEN, `${block.type} leaves BlockPresets parameter T open.`, blockSource(block));
+    }
+    const output = plannedOutputPath(block, registry, this.options.mapping);
+    if (!output.ok) {
+      return errorOutput(output.code, output.message, blockSource(block));
+    }
+    return renderPresetFile(block, registry, output.path, target.fqn);
+  }
+}
+
 export class ScadBlockProcessor implements BlockProcessor {
   readonly baseType = BLOCK_FQN;
 
@@ -91,10 +119,6 @@ export class ScadBlockProcessor implements BlockProcessor {
       return errorOutput(MB_LIB_PATH_MISSING, "targetOptions.machineblocks-v3-scad.mbLibPath is required.", blockSource(block));
     }
     const parts = compositionChildren(block, "parts");
-    const presets = compositionChildren(block, "presets");
-    if (presets.length > 0 && parts.length === 0) {
-      return renderPresetFile(block, context.session.typeRegistry, context.outputRelativePath);
-    }
     if (parts.length === 0) {
       return errorOutput(EMPTY_BLOCK, "A block with no children has nothing to render.", blockSource(block));
     }

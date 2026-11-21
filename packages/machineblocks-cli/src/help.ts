@@ -91,6 +91,9 @@ A package selector (a final .* or .** segment) supplies the source root when
 --target-package is set and --source-package is omitted. An exact block FQN does not.
 Automatic mapping replaces the one bml segment with scad.
 com.example.bml.bricks.MyBrick becomes blocks/com/example/scad/bricks/MyBrick.scad.
+A closed BlockPresets(T) writes JSON at the manifestation of T with extension .json,
+beside that block's .scad file. The catalog's own name is not the file name.
+An open T exits 1 (BML_PRESET_TARGET_OPEN).
 Explicit mapping swaps --source-package for --target-package and does not apply that replacement again.
 
 Flags:
@@ -123,6 +126,7 @@ One failure writes nothing. Mapping failures, collisions, and illegal paths exit
   MB_CONFIG_SET_UNEXPECTED — --config-set while the selection includes a ConfigSet.
   MB_CONFIG_SET_UNKNOWN — --config-set is not a concrete ConfigSet.
   MB_CONFIG_SET_MISSING — a geometry block or set needs a ConfigSet and none was found.
+  BML_PRESET_TARGET_OPEN — a BlockPresets catalog leaves parameter T open.
 
 blockml.config.json srcDir is the output root. mbLibPath defaults to the
 project root when package.json name is @machineblocks/core and

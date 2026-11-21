@@ -11,18 +11,21 @@
     V1 base types handled by this target
   </is>
   <documentation>
-    V1 supports three base types:
+    V1 supports four base types:
 
     - com.machineblocks.bml.core.Block — ScadBlockProcessor
       Standard SCAD block module.
+    - com.machineblocks.bml.core.BlockPresets — ScadBlockPresetsProcessor
+      Customizer JSON for a closed BlockPresets(T). The file is the
+      manifestation of T with extension .json.
     - com.machineblocks.bml.core.Set — ScadSetProcessor
       STEPS-based set with view submodules.
     - com.machineblocks.bml.core.ConfigSet — ScadConfigSetProcessor
       Profile functions. A concrete set extends ConfigSet and fills profiles.
 
     User types that inherit a base type use that processor.
-    ScadSetProcessor and ScadConfigSetProcessor are more specific than
-    ScadBlockProcessor. Dispatch picks the nearest baseType.
+    ScadSetProcessor, ScadConfigSetProcessor, and ScadBlockPresetsProcessor are
+    more specific than ScadBlockProcessor. Dispatch picks the nearest baseType.
     ScadBlockProcessor is the fallback for Block.
 
     A block whose baseType chain does not include
@@ -35,7 +38,10 @@
     transpilation) may be added. They are not required for V1 block and set emit.
     The engine allows them to use a different strategy in the same target.
 
-    ScadBlockProcessor emits a leaf, a composite module, or a preset JSON file.
+    ScadBlockProcessor emits a leaf or a composite module.
+    ScadBlockPresetsProcessor emits { fileFormatVersion: "1", parameterSets }
+    at the manifestation of T. An open T returns files: [] and diagnostic
+    BML_PRESET_TARGET_OPEN.
     ScadSetProcessor emits a SCAD file with a STEPS array and four view
     submodules. ScadConfigSetProcessor emits mb__…__func__config and one
     function per profile. The body is a ternary chain. The final branch returns

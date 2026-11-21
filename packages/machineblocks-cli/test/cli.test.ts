@@ -221,6 +221,43 @@ describe("machineblocks compile", () => {
     expect(existsSync(scad(root, "com/example/scad/Brick.scad"))).toBe(false);
   });
 
+  it("writes a BlockPresets catalog beside the target block", () => {
+    const root = project();
+
+    const result = execute(["compile", "com.machineblocks.bml.bricks.StandardPresets"], root);
+
+    expect(result.code).toBe(0, result.lines.join("\n"));
+    const jsonPath = scad(root, "com/machineblocks/scad/bricks/Standard.json");
+    expect(existsSync(jsonPath)).toBe(true);
+    expect(existsSync(scad(root, "com/machineblocks/scad/bricks/StandardPresets.json"))).toBe(false);
+    expect(existsSync(scad(root, "com/machineblocks/scad/bricks/StandardPresets.scad"))).toBe(false);
+    const json = JSON.parse(readFileSync(jsonPath, "utf8")) as {
+      fileFormatVersion: string;
+      parameterSets: Record<string, Record<string, string>>;
+    };
+    expect(json.fileFormatVersion).toBe("1");
+    expect(json.parameterSets["Brick 2x4"]).toEqual({ size: "[2, 4, 3]" });
+    expect(json.parameterSets["Brick 2x4 Blue"]).toEqual({ size: "[2, 4, 3]", baseColor: "#5296D5" });
+    expect(json.parameterSets["Brick 1x1 Red MB"]).toEqual({
+      size: "[1, 1, 3]",
+      baseColor: "#D65745",
+      text: "MB",
+      textColor: "#EDF0F1",
+    });
+  });
+
+  it("rejects two BlockPresets catalogs for the same target", () => {
+    const root = project();
+    writePresetCatalog(root, "com.machineblocks.bml.bricks.ExtraPresets");
+
+    const result = execute(["compile", "com.machineblocks.bml.bricks.**"], root);
+
+    expect(result.code).toBe(1);
+    expect(result.lines.join("\n")).toContain("MB_TARGET_COLLISION");
+    expect(result.lines.join("\n")).toContain("Standard.json");
+    expect(existsSync(scad(root, "com/machineblocks/scad/bricks/Standard.json"))).toBe(false);
+  });
+
   it("stops before writing when two blocks share a target", () => {
     const root = project();
     writeBlock(root, "com.example.bml.scad.Brick");
@@ -765,6 +802,34 @@ function project(options: { name?: string; mbLibPath?: string; coreLib?: boolean
     writeFileSync(join(root, "lib", "block.scad"), "");
   }
   return root;
+}
+
+function writePresetCatalog(root: string, fqn: string): void {
+  const parts = fqn.split(".");
+  const name = parts[parts.length - 1] ?? "Presets";
+  const packageFqn = parts.slice(0, -1).join(".");
+  const directory = join(root, "blocks", ...parts.slice(0, -1));
+  mkdirSync(directory, { recursive: true });
+  writeFileSync(
+    join(directory, `${name}.bml`),
+    `<?xml version="1.0"?>
+<t:${name} xmlns="http://blockml.org/bml"
+  xmlns:bml="org.blockml.bml.annotation.BmlAnnotation"
+  xmlns:mbcore="com.machineblocks.bml.core"
+  xmlns:bricks="com.machineblocks.bml.bricks"
+  xmlns:t="${packageFqn}">
+  <baseType>mbcore:BlockPresets(bricks:Standard)</baseType>
+  <is>Another catalog</is>
+  <aggregations>
+    <presets override="true">
+      <composition>
+        <bricks:Standard bml:id="wide" name="Wide" size="{x:8,y:2,z:3}" />
+      </composition>
+    </presets>
+  </aggregations>
+</t:${name}>
+`,
+  );
 }
 
 function writeBlock(root: string, fqn: string): void {

@@ -11,7 +11,7 @@ export function needsConfigSet(block, registry) {
     if (!isRenderBlock(block, registry) || isConfigSet(block, registry)) {
         return false;
     }
-    return artifactExtension(block) !== "json";
+    return artifactExtension(block, registry) !== "json";
 }
 export function resolveConfigSet(registry, projectRoot) {
     const project = firstConcrete(registry, projectRoot);

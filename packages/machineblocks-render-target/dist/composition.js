@@ -1,3 +1,4 @@
+import { presetTarget } from "./preset-target.js";
 export function compositionChildren(block, aggregationName) {
     const children = [];
     for (const composition of block.compositions) {
@@ -18,11 +19,9 @@ export function compositionChildren(block, aggregationName) {
     }
     return children;
 }
-/** Preset-only blocks are JSON. Every other emitted block is SCAD. */
-export function artifactExtension(block) {
-    const presets = compositionChildren(block, "presets");
-    const parts = compositionChildren(block, "parts");
-    return presets.length > 0 && parts.length === 0 ? "json" : "scad";
+/** A BlockPresets catalog is JSON. Every other emitted block is SCAD. */
+export function artifactExtension(block, registry) {
+    return presetTarget(block, registry).kind === "none" ? "scad" : "json";
 }
 export function hasDirectives(block) {
     for (const composition of block.compositions) {

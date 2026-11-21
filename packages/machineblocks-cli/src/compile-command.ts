@@ -17,10 +17,9 @@ import {
   SOURCE_PACKAGE_ALONE,
   SOURCE_PACKAGE_REQUIRED,
   TARGET_COLLISION,
-  artifactExtension,
   isRenderBlock,
   mapManifestation,
-  pathForManifestation,
+  plannedOutputPath,
   type ManifestationMapping,
 } from "@machineblocks/render-target";
 import { sourcePackageFromSelector, type CompileArgs } from "./args.js";
@@ -87,7 +86,11 @@ export function runCompile(args: CompileArgs, rootDir: string): HostResult {
     if (!manifested.ok) {
       return { code: 1, lines: [`${manifested.code}: ${manifested.message}`] };
     }
-    const outputPath = pathForManifestation(manifested.fqn, artifactExtension(document.block));
+    const output = plannedOutputPath(document.block, bootstrap.registry, mapping.mapping);
+    if (!output.ok) {
+      return { code: 1, lines: [`${output.code}: ${output.message}`] };
+    }
+    const outputPath = output.path;
     const targetClash = targetOwners.get(manifested.fqn);
     if (targetClash !== undefined) {
       return { code: 1, lines: [collision(TARGET_COLLISION, manifested.fqn, targetClash, document.block.type)] };

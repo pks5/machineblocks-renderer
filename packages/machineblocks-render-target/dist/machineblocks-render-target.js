@@ -2,7 +2,7 @@ import { selectProcessor } from "./dispatch.js";
 import { MB_LIB_PATH_MISSING, NO_TARGET, RENDER_DOCUMENT_NOT_FOUND, SETTINGS_FORMAT_UNSUPPORTED, errorOutput, } from "./diagnostics.js";
 import { isMappingFailure, mapManifestation, mappingFromPackages, pathForManifestation } from "./naming.js";
 import { readTargetOptions } from "./options.js";
-import { ScadBlockProcessor, ScadConfigSetProcessor, ScadSetProcessor } from "./processors.js";
+import { ScadBlockPresetsProcessor, ScadBlockProcessor, ScadConfigSetProcessor, ScadSetProcessor } from "./processors.js";
 import { TARGET_NAME } from "./version.js";
 export class MachineBlocksRenderTarget {
     name = TARGET_NAME;
@@ -16,6 +16,7 @@ export class MachineBlocksRenderTarget {
         this.processors = [
             new ScadSetProcessor(this.options),
             new ScadConfigSetProcessor(this.options),
+            new ScadBlockPresetsProcessor(this.options),
             new ScadBlockProcessor(this.options),
         ];
     }

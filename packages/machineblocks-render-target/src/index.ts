@@ -1,6 +1,7 @@
 export { MachineBlocksRenderTarget } from "./machineblocks-render-target.js";
 export type { MachineBlocksTargetOptions } from "./options.js";
 export { artifactExtension } from "./composition.js";
+export { plannedOutputPath } from "./preset-target.js";
 export { needsConfigSet, requireConfigSet, resolveConfigSet } from "./config-set.js";
 export { isConfigSet, isRenderBlock } from "./dispatch.js";
 export {
