@@ -4,7 +4,7 @@ import { compositionChildren } from "./composition.js";
 import { LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
 import { lowerExpression, propertyTypesOf } from "./lower.js";
 import { joinPosix, relativePosix, dirnamePosix } from "./paths.js";
-import { mapManifestation, moduleNameForManifestation } from "./naming.js";
+import { hiddenCustomizer, mapManifestation, moduleNameForManifestation } from "./naming.js";
 import { isIdentifier, serializeLiteral } from "./serialize.js";
 import { withSourceMap } from "./source-map.js";
 import { NATIVE_BLOCK_FQN, RENDER_TARGET_VERSION } from "./version.js";
@@ -160,7 +160,7 @@ ${config.hidden}
 
 /* Main Module Call */
 ${moduleName}(
-    config = mb_config,
+    config = ${hiddenCustomizer("config")},
     settings = [${settingsBody}]
 );
 

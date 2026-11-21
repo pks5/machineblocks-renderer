@@ -24,6 +24,12 @@
     customizer inputs before they are passed to the module. Internal module
     computations are never placed in the hidden section.
 
+    Every hidden customizer variable starts with hlp_. The prefix is
+    HIDDEN_CUSTOMIZER_PREFIX in the render target naming module. FqnNaming
+    defines it. The value is hlp_. The same prefix covers every kind: the
+    selected config (hlp_config), a recombined split, and a resolved
+    NoneOr value.
+
     OpenSCAD customizer supports only flat primitives. The processor splits
     complex properties into several customizer variables and recombines them in
     [Hidden]. Splitting follows NativeBlock type metadata and annotations.
@@ -34,14 +40,14 @@
         baseRoundingRadiusY = 0.5;
         baseRoundingRadiusZ = 0.5;
         /* [Hidden] */
-        baseRoundingRadius = [baseRoundingRadiusX, baseRoundingRadiusY, baseRoundingRadiusZ];
+        hlp_baseRoundingRadius = [baseRoundingRadiusX, baseRoundingRadiusY, baseRoundingRadiusZ];
 
     auto_toggle true — a NoneOr value becomes a boolean plus a value:
 
         recessDepthAuto = true;
         recessDepth = 0.5;
         /* [Hidden] */
-        recessDepthResolved = recessDepthAuto ? "auto" : recessDepth;
+        hlp_recessDepthResolved = recessDepthAuto ? "auto" : recessDepth;
 
     suggestions — a dropdown comment from the property suggestions. Each
     suggestion instance is serialized to its SCAD literal:

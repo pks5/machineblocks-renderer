@@ -19,7 +19,7 @@
     V1 — pseudo-map (the only format the current library understands):
 
         mb_block(
-            config = mb_config,
+            config = hlp_config,
             settings = [
                 ["size", size],
                 ["brick1SizeY", brick1SizeY]

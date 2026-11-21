@@ -19,11 +19,11 @@ configProfile = "preview"; // [preview:Preview, print:Print]
 baseColor = "#EAC645";
 
 /* [Hidden] */
-mb_config = mb__com__machineblocks__scad__renderer__workspace__playground__PlaygroundConfigSet__func__config(configProfile);
+hlp_config = mb__com__machineblocks__scad__renderer__workspace__playground__PlaygroundConfigSet__func__config(configProfile);
 
 /* Main Module Call */
 mb__com__machineblocks__scad__renderer__workspace__playground__Stack(
-    config = mb_config,
+    config = hlp_config,
     settings = [
         ["baseColor", baseColor]
     ]

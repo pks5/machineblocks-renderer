@@ -7,6 +7,7 @@ import { SET_PART_INCOMPLETE, errorOutput } from "./diagnostics.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
 import {
   generatedLocal,
+  hiddenCustomizer,
   mapManifestation,
   moduleNameForManifestation,
   pathForManifestation,
@@ -134,7 +135,7 @@ ${steps}
 
 /* Main Module Call */
 ${moduleName}(
-    config = mb_config,
+    config = ${hiddenCustomizer("config")},
     settings = [
         ["baseColor", baseColor],
         ["highlightColor", highlightColor],

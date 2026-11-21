@@ -23,12 +23,24 @@ export const AUTOMATIC_MAPPING: ManifestationMapping = { kind: "automatic" };
 /**
  * Prefix for SCAD locals the generator invents.
  * Property locals and customizer parameters stay unprefixed.
+ * Hidden customizer variables use HIDDEN_CUSTOMIZER_PREFIX.
  * Change this constant and recompile to rewrite every generated file.
  */
 export const GENERATED_LOCAL_PREFIX = "gen_";
 
 export function generatedLocal(name: string): string {
   return `${GENERATED_LOCAL_PREFIX}${name}`;
+}
+
+/**
+ * Prefix for every hidden customizer variable.
+ * Visible customizer parameters stay unprefixed.
+ * Change this constant and recompile to rewrite every generated file.
+ */
+export const HIDDEN_CUSTOMIZER_PREFIX = "hlp_";
+
+export function hiddenCustomizer(name: string): string {
+  return `${HIDDEN_CUSTOMIZER_PREFIX}${name}`;
 }
 
 export function mappingFromPackages(

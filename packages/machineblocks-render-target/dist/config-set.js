@@ -1,7 +1,7 @@
 import { artifactExtension, compositionChildren } from "./composition.js";
 import { CONFIG_PROFILE_INCOMPLETE, CONFIG_SET_MISSING, CONFIG_SET_UNKNOWN, errorOutput, } from "./diagnostics.js";
 import { isConfigSet, isRenderBlock } from "./dispatch.js";
-import { mapManifestation, moduleNameForManifestation, pathForManifestation } from "./naming.js";
+import { hiddenCustomizer, mapManifestation, moduleNameForManifestation, pathForManifestation, } from "./naming.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
 import { isIdentifier, serializeLiteral } from "./serialize.js";
 import { withSourceMap } from "./source-map.js";
@@ -101,7 +101,7 @@ export function loadConfigPrelude(registry, configSetFqn, outputRelativePath, ou
             dropdown: `/* [Config] */
 // Config profile
 configProfile = "${first.id}"; // [${options}]`,
-            hidden: `mb_config = ${functionName}(configProfile);`,
+            hidden: `${hiddenCustomizer("config")} = ${functionName}(configProfile);`,
         },
     };
 }

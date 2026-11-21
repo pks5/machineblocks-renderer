@@ -91,8 +91,20 @@
 
     Customizer parameters and property locals keep the property name:
     size, studs, baseColor, configProfile, and the set fields mode, step,
-    instanceId, highlightColor, and assembly. mb_config stays. Settings
-    keys stay the parameter name.
+    instanceId, highlightColor, and assembly. Settings keys stay the
+    parameter name.
+
+    Hidden customizer variables:
+
+    A hidden customizer variable carries a value derived from customizer
+    inputs before that value is passed into the module. Every kind starts
+    with one prefix. The prefix is HIDDEN_CUSTOMIZER_PREFIX in the render
+    target naming module. The value is hlp_. Change that constant and
+    recompile; the new prefix is written into every generated SCAD file.
+
+    The selected ConfigSet is hlp_config. A recombined vector is
+    hlp_baseRoundingRadius. A resolved NoneOr value is
+    hlp_recessDepthResolved. The same prefix applies to every later kind.
 
     Generated locals are gen_blockId, gen_assembly for the mb_assembly
     result, gen_renderGroups, gen_parts, gen_part_ plus the child id,

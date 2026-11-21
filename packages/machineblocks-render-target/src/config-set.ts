@@ -8,7 +8,13 @@ import {
   errorOutput,
 } from "./diagnostics.js";
 import { isConfigSet, isRenderBlock } from "./dispatch.js";
-import { mapManifestation, moduleNameForManifestation, pathForManifestation, type ManifestationMapping } from "./naming.js";
+import {
+  hiddenCustomizer,
+  mapManifestation,
+  moduleNameForManifestation,
+  pathForManifestation,
+  type ManifestationMapping,
+} from "./naming.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
 import { isIdentifier, serializeLiteral } from "./serialize.js";
 import { withSourceMap } from "./source-map.js";
@@ -22,7 +28,7 @@ export interface ConfigPrelude {
   useLine: string;
   /** [Config] tab and the configProfile assignment. */
   dropdown: string;
-  /** Assignment of mb_config from the selected set. */
+  /** Assignment of hlp_config from the selected set. */
   hidden: string;
 }
 
@@ -161,7 +167,7 @@ export function loadConfigPrelude(
       dropdown: `/* [Config] */
 // Config profile
 configProfile = "${first.id}"; // [${options}]`,
-      hidden: `mb_config = ${functionName}(configProfile);`,
+      hidden: `${hiddenCustomizer("config")} = ${functionName}(configProfile);`,
     },
   };
 }

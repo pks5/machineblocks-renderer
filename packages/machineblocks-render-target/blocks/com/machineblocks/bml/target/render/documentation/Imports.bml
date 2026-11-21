@@ -33,12 +33,12 @@
 
     The customizer dropdown is built from that set's profiles, in profile
     order. The default is the bml:id of the first profile. Each option is
-    bml:id:name. Hidden assigns mb_config once from that set's function:
+    bml:id:name. Hidden assigns hlp_config once from that set's function:
 
         /* [Config] */
         configProfile = "fine"; // [fine:Fine, standard:Standard]
         /* [Hidden] */
-        mb_config = mb__…__func__config(configProfile);
+        hlp_config = mb__…__func__config(configProfile);
 
     A different set writes its own ids, labels, and function name. A profile
     without name returns files: [] and diagnostic MB_CONFIG_PROFILE_INCOMPLETE.

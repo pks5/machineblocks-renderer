@@ -99,11 +99,11 @@ studs = true;
 grilleCount = 5;
 
 /* [Hidden] */
-mb_config = mb__com__example__scad__config__Shop__func__config(configProfile);
+hlp_config = mb__com__example__scad__config__Shop__func__config(configProfile);
 
 /* Main Module Call */
 mb__com__machineblocks__scad__bricks__Fixture(
-    config = mb_config,
+    config = hlp_config,
     settings = [
         ["studs", studs],
         ["grilleCount", grilleCount]

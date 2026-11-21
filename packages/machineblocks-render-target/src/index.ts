@@ -10,6 +10,8 @@ export {
   jsonOutputPath,
   GENERATED_LOCAL_PREFIX,
   generatedLocal,
+  HIDDEN_CUSTOMIZER_PREFIX,
+  hiddenCustomizer,
   mapManifestation,
   mappingFromPackages,
   moduleNameForManifestation,

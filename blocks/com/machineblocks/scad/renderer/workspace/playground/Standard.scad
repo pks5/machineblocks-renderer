@@ -58,11 +58,11 @@ surfacePatternScale = 0.2;
 studIcon = false;
 
 /* [Hidden] */
-mb_config = mb__com__machineblocks__scad__renderer__workspace__playground__PlaygroundConfigSet__func__config(configProfile);
+hlp_config = mb__com__machineblocks__scad__renderer__workspace__playground__PlaygroundConfigSet__func__config(configProfile);
 
 /* Main Module Call */
 mb__com__machineblocks__scad__renderer__workspace__playground__Standard(
-    config = mb_config,
+    config = hlp_config,
     settings = [
         ["size", size],
         ["baseCutoutType", baseCutoutType],

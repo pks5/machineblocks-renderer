@@ -6,7 +6,7 @@ export interface ConfigPrelude {
     useLine: string;
     /** [Config] tab and the configProfile assignment. */
     dropdown: string;
-    /** Assignment of mb_config from the selected set. */
+    /** Assignment of hlp_config from the selected set. */
     hidden: string;
 }
 export declare function needsConfigSet(block: BlockDefinition, registry: Registry): boolean;

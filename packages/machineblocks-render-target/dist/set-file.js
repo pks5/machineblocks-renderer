@@ -3,7 +3,7 @@ import { loadConfigPrelude } from "./config-set.js";
 import { compositionChildren } from "./composition.js";
 import { SET_PART_INCOMPLETE, errorOutput } from "./diagnostics.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
-import { generatedLocal, mapManifestation, moduleNameForManifestation, pathForManifestation, } from "./naming.js";
+import { generatedLocal, hiddenCustomizer, mapManifestation, moduleNameForManifestation, pathForManifestation, } from "./naming.js";
 import { serializeLiteral, serializeTyped } from "./serialize.js";
 import { withSourceMap } from "./source-map.js";
 import { RENDER_TARGET_VERSION } from "./version.js";
@@ -101,7 +101,7 @@ ${steps}
 
 /* Main Module Call */
 ${moduleName}(
-    config = mb_config,
+    config = ${hiddenCustomizer("config")},
     settings = [
         ["baseColor", baseColor],
         ["highlightColor", highlightColor],
