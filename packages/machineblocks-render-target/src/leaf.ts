@@ -4,7 +4,7 @@ import { resolveEffectiveMembers } from "@blockml/framework";
 import { loadConfigPrelude, type ConfigPrelude } from "./config-set.js";
 import { compositionChildren } from "./composition.js";
 import {
-  customizerText,
+  formatCustomizer,
   formatHidden,
   projectionsOf,
   readCustomizerRules,
@@ -175,7 +175,9 @@ function fileText(
   childScad: ReadonlyMap<string, string>,
   projections: ReadonlyMap<string, CustomizerProjection>,
 ): string {
-  const geometry = slots.map((slot) => customizerText(slot.name, slot.scad, projections.get(slot.name))).join("\n");
+  const geometry = formatCustomizer(
+    slots.map((slot) => ({ name: slot.name, scad: slot.scad, projection: projections.get(slot.name) })),
+  );
   const customizer = [config.dropdown, geometry].filter((part) => part.length > 0).join("\n\n");
   const passed = slots.map((slot) => `        ["${slot.name}", ${projections.get(slot.name)?.hiddenName ?? slot.name}]`).join(",\n");
   const settingsBody = slots.length === 0 ? "" : `\n${passed}\n    `;

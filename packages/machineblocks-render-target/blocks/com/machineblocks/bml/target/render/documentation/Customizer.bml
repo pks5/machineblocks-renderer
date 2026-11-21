@@ -31,11 +31,32 @@
     NoneOr value.
 
     OpenSCAD customizer supports only flat primitives, plus a vector of
-    numbers up to length 4. A union that matches a rule in
+    numbers up to length 4. A property that matches a rule in
     com.machineblocks.bml.target.render.CustomizerRules is projected into
     customizer fields. The render target reads that catalog from the type
-    registry. Axis rules are considered before sentinel rules. A union
-    with no matching rule stays one variable.
+    registry. Type splits are considered first, then axis rules, then
+    sentinel rules. A property with no matching rule stays one variable.
+
+    TypeSplit matches one struct type. Each property, in declaration order,
+    becomes {propertyName}0, {propertyName}1, and so on. The description at
+    the same index is the comment above the variable. range is the trailing
+    range on every field. The fields are written in the group tab after the
+    ungrouped parameters, so the tab does not capture the parameters that
+    follow the property in the block. The hidden variable hlp_ plus the
+    property name is the array of those fields. The module fallback stays
+    the serialized struct.
+
+        /* [Bevel] */
+        // Bevel X and Y for the corner [0,0] (grid)
+        bevel0 = [0, 0]; // [0:0.25:128]
+        // Bevel X and Y for the corner [0,1] (grid)
+        bevel1 = [0, 0]; // [0:0.25:128]
+        // Bevel X and Y for the corner [1,1] (grid)
+        bevel2 = [0, 0]; // [0:0.25:128]
+        // Bevel X and Y for the corner [1,0] (grid)
+        bevel3 = [0, 0]; // [0:0.25:128]
+        /* [Hidden] */
+        hlp_bevel = [bevel0, bevel1, bevel2, bevel3];
 
     AxisVector matches a number type with AxisXY or AxisXYZ of that same
     number. Decimal and Integer qualify. The variable keeps the property

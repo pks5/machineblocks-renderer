@@ -27,7 +27,6 @@ grille = "none";
 grilleInverted = false;
 grilleDepth = 1;
 grilleCount = 5;
-bevel = [[0, 0], [0, 0], [0, 0], [0, 0]];
 studs = true;
 studShift = false;
 studType = "solid";
@@ -61,8 +60,19 @@ surfacePatternScale = 0.2;
 studIconOn = false;
 studIcon = "";
 
+/* [Bevel] */
+// Bevel X and Y for the corner [0,0] (grid)
+bevel0 = [0, 0]; // [0:0.25:128]
+// Bevel X and Y for the corner [0,1] (grid)
+bevel1 = [0, 0]; // [0:0.25:128]
+// Bevel X and Y for the corner [1,1] (grid)
+bevel2 = [0, 0]; // [0:0.25:128]
+// Bevel X and Y for the corner [1,0] (grid)
+bevel3 = [0, 0]; // [0:0.25:128]
+
 /* [Hidden] */
 hlp_config = mb__com__machineblocks__scad__renderer__workspace__playground__PlaygroundConfigSet__func__config(configProfile);
+hlp_bevel = [bevel0, bevel1, bevel2, bevel3];
 hlp_recessDepthResolved = recessDepthAuto ? "auto" : recessDepth;
 hlp_textResolved = textOn ? text : false;
 hlp_surfacePatternResolved = surfacePatternOn ? surfacePattern : false;
@@ -83,7 +93,7 @@ mb__com__machineblocks__scad__renderer__workspace__playground__Standard(
         ["grilleInverted", grilleInverted],
         ["grilleDepth", grilleDepth],
         ["grilleCount", grilleCount],
-        ["bevel", bevel],
+        ["bevel", hlp_bevel],
         ["studs", studs],
         ["studShift", studShift],
         ["studType", studType],

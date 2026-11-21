@@ -78,6 +78,25 @@ export function serializeTyped(value: unknown, options: SerializeOptions = {}): 
   return writeValue(value, options.type, options.typeFqn, options.registry);
 }
 
+/** Property names of a struct, in declaration order. Undefined when the type is absent. */
+export function structPropertyNames(fqn: string, registry: TypeRegistry): string[] | undefined {
+  return declaredFields(fqn, registry);
+}
+
+/** Serialize one struct property the same way the struct writer does. */
+export function serializeStructProperty(
+  value: Record<string, unknown>,
+  field: string,
+  ownerFqn: string,
+  registry: TypeRegistry,
+): SerializeSuccess | SerializeFailure {
+  if (!(field in value)) {
+    return { ok: false, message: `Struct is missing ${field}.` };
+  }
+  const fieldType = fieldTypeOf(ownerFqn, field, registry);
+  return writeValue(value[field], fieldType?.type, fieldType?.typeFqn, registry);
+}
+
 function writeValue(
   value: unknown,
   type: TypeExpression | undefined,

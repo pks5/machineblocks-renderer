@@ -22,6 +22,28 @@ const AUTO = `<mbt:Auto xmlns="http://blockml.org/bml" xmlns:mbt="com.machineblo
 </mbt:Auto>
 `;
 
+const BEVEL = `<mbt:Bevel xmlns="http://blockml.org/bml" xmlns:mbt="com.machineblocks.bml.type" xmlns:type="org.blockml.bml.type">
+  <baseType>type:Block</baseType>
+  <is>Bevel</is>
+  <properties>
+    <sw type="mbt:OffsetXY" />
+    <nw type="mbt:OffsetXY" />
+    <ne type="mbt:OffsetXY" />
+    <se type="mbt:OffsetXY" />
+  </properties>
+</mbt:Bevel>
+`;
+
+const OFFSET_XY = `<mbt:OffsetXY xmlns="http://blockml.org/bml" xmlns:mbt="com.machineblocks.bml.type" xmlns:type="org.blockml.bml.type">
+  <baseType>type:Block</baseType>
+  <is>Offset</is>
+  <properties>
+    <x type="type:Decimal" />
+    <y type="type:Decimal" />
+  </properties>
+</mbt:OffsetXY>
+`;
+
 const FALSE = `<type:False xmlns="http://blockml.org/bml" xmlns:type="org.blockml.bml.type">
   <baseType>type:Block</baseType>
   <is>False</is>
@@ -46,6 +68,9 @@ const SAMPLE = `<bricks:Sample xmlns="http://blockml.org/bml"
     <plates type="mbt:Auto | type:Decimal">
       <value>2</value>
     </plates>
+    <bevel type="mbt:Bevel">
+      <value>{sw:{x:0,y:0},nw:{x:0,y:0},ne:{x:1,y:2},se:{x:3,y:4}}</value>
+    </bevel>
     <text type="type:Boolean.False | type:Text">
       <value>false</value>
     </text>
@@ -99,9 +124,12 @@ function render(): string {
   const registry = new TypeRegistry();
   registry.register(shopDocument());
   registry.register(document(AUTO, "auto.bml"));
+  registry.register(document(OFFSET_XY, "offset.bml"));
+  registry.register(document(BEVEL, "bevel.bml"));
   const falseConstant = document(FALSE, "false.bml");
   falseConstant.block.type = "org.blockml.bml.type.Boolean.False";
   registry.register(falseConstant);
+  registry.register(document(readFileSync(join(RULES, "TypeSplit.bml"), "utf8"), "TypeSplit.bml"));
   registry.register(document(readFileSync(join(RULES, "SentinelToggle.bml"), "utf8"), "SentinelToggle.bml"));
   registry.register(document(readFileSync(join(RULES, "CustomizerRules.bml"), "utf8"), "CustomizerRules.bml"));
   registry.register(document(SAMPLE, "sample.bml"));
@@ -118,13 +146,27 @@ function render(): string {
   return result.files?.[0]?.content ?? "";
 }
 
-describe("customizer sentinel rules", () => {
+describe("customizer rules", () => {
   it("splits a constant plus one flat value and leaves other unions alone", () => {
     const content = render();
     expect(content).toContain("recessDepthAuto = true;\nrecessDepth = 0;");
     expect(content).toContain('hlp_recessDepthResolved = recessDepthAuto ? "auto" : recessDepth;');
     expect(content).toContain('["recessDepth", hlp_recessDepthResolved]');
     expect(content).toContain("platesAuto = false;\nplates = 2;");
+    expect(content.indexOf('studIcon = "";')).toBeLessThan(content.indexOf("/* [Bevel] */"));
+    expect(content).toContain(`/* [Bevel] */
+// Bevel X and Y for the corner [0,0] (grid)
+bevel0 = [0, 0]; // [0:0.25:128]
+// Bevel X and Y for the corner [0,1] (grid)
+bevel1 = [0, 0]; // [0:0.25:128]
+// Bevel X and Y for the corner [1,1] (grid)
+bevel2 = [1, 2]; // [0:0.25:128]
+// Bevel X and Y for the corner [1,0] (grid)
+bevel3 = [3, 4]; // [0:0.25:128]`);
+    expect(content).toContain("hlp_bevel = [bevel0, bevel1, bevel2, bevel3];");
+    expect(content).toContain('["bevel", hlp_bevel]');
+    expect(content).toContain('bevel = mb_param(config, settings, "bevel", [[0, 0], [0, 0], [1, 2], [3, 4]]);');
+    expect(content).not.toContain("bevel = [[");
     expect(content).toContain('textOn = false;\ntext = "";');
     expect(content).toContain("hlp_textResolved = textOn ? text : false;");
     expect(content).toContain('labelOn = true;\nlabel = "Hi";');

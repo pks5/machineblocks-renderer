@@ -1,7 +1,7 @@
 import { parseExpression, resolveEffectiveMembers } from "@blockml/framework";
 import { loadConfigPrelude } from "./config-set.js";
 import { compositionChildren } from "./composition.js";
-import { customizerText, formatHidden, projectionsOf, readCustomizerRules, } from "./customizer-rules.js";
+import { formatCustomizer, formatHidden, projectionsOf, readCustomizerRules, } from "./customizer-rules.js";
 import { CUSTOMIZER_RULE_INVALID, DIRECTIVE_DEFERRED, FUNCTION_NO_RUNTIME, LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
 import { lowerExpression, propertyTypesOf } from "./lower.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
@@ -355,9 +355,9 @@ function fixedGetters(properties, skip = []) {
         .join("\n");
 }
 function customizerLines(properties, projections) {
-    return properties
-        .flatMap((property) => property.scad === undefined ? [] : [customizerText(property.name, property.scad, projections.get(property.name))])
-        .join("\n");
+    return formatCustomizer(properties.flatMap((property) => property.scad === undefined
+        ? []
+        : [{ name: property.name, scad: property.scad, projection: projections.get(property.name) }]));
 }
 function settingsBody(lines) {
     if (lines.length === 0) {

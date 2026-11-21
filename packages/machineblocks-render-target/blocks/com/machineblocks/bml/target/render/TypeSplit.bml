@@ -1,0 +1,53 @@
+<!--Render Target — TypeSplit
+  FQN: com.machineblocks.bml.target.render.TypeSplit-->
+<render:TypeSplit xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:type="org.blockml.bml.type"
+  xmlns:render="com.machineblocks.bml.target.render">
+
+  <baseType>
+    core:Block
+  </baseType>
+  <is>
+    Struct split into numbered customizer fields
+  </is>
+  <documentation>
+    One customizer rule. It matches a property whose type FQN is `type`.
+    The struct properties, in declaration order, become the variables
+    `{propertyName}0`, `{propertyName}1`, and so on. Each variable is that
+    field's serialized value. The description at the same index is the
+    comment above it. `range` is the trailing customizer range on every field,
+    including the brackets.
+
+    The fields open the `group` tab after the ungrouped parameters. The next
+    section closes that tab. The hidden variable `hlp_` plus the property
+    name is the array of those variables, in the same order the serializer
+    writes the struct. The main call passes that hidden name under the
+    property name. The module fallback stays the serialized struct.
+
+    `descriptions` is one customizer comment per line, in the struct's
+    declaration order. The line count must match the property count.
+  </documentation>
+  <properties>
+    <type type="type:Text">
+      <documentation>
+        FQN of the struct type, such as com.machineblocks.bml.type.Bevel.
+      </documentation>
+    </type>
+    <group type="type:Text">
+      <documentation>
+        Customizer tab name, without brackets.
+      </documentation>
+    </group>
+    <range type="type:Text">
+      <documentation>
+        Shared range comment, including the brackets, such as [0:0.25:128].
+      </documentation>
+    </range>
+    <descriptions type="type:Text">
+      <documentation>
+        One description per line, in the struct's declaration order.
+      </documentation>
+    </descriptions>
+  </properties>
+</render:TypeSplit>

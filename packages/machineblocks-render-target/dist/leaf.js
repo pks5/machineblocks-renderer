@@ -1,7 +1,7 @@
 import { resolveEffectiveMembers } from "@blockml/framework";
 import { loadConfigPrelude } from "./config-set.js";
 import { compositionChildren } from "./composition.js";
-import { customizerText, formatHidden, projectionsOf, readCustomizerRules, } from "./customizer-rules.js";
+import { formatCustomizer, formatHidden, projectionsOf, readCustomizerRules, } from "./customizer-rules.js";
 import { CUSTOMIZER_RULE_INVALID, LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
 import { lowerExpression, propertyTypesOf } from "./lower.js";
 import { joinPosix, relativePosix, dirnamePosix } from "./paths.js";
@@ -127,7 +127,7 @@ function nativeNamesOf(registry) {
     return names;
 }
 function fileText(block, filename, moduleName, blockImport, config, slots, childScad, projections) {
-    const geometry = slots.map((slot) => customizerText(slot.name, slot.scad, projections.get(slot.name))).join("\n");
+    const geometry = formatCustomizer(slots.map((slot) => ({ name: slot.name, scad: slot.scad, projection: projections.get(slot.name) })));
     const customizer = [config.dropdown, geometry].filter((part) => part.length > 0).join("\n\n");
     const passed = slots.map((slot) => `        ["${slot.name}", ${projections.get(slot.name)?.hiddenName ?? slot.name}]`).join(",\n");
     const settingsBody = slots.length === 0 ? "" : `\n${passed}\n    `;

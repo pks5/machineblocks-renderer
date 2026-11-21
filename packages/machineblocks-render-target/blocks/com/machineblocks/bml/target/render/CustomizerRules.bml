@@ -14,13 +14,27 @@
   <documentation>
     The render target reads this block from the type registry and projects matching properties into customizer fields.
 
-    - Axis rules are considered before sentinel rules.
-    - A union with no matching rule stays one variable.
+    - Type splits are considered first, then axis rules, then sentinel rules.
+    - A property with no matching rule stays one variable.
+    - A type split matches one struct type and opens a customizer tab of numbered fields. A hidden variable rebuilds the array.
     - Axis rules expand a number scalar into an AxisXY or AxisXYZ vector on the property name.
     - Sentinel rules cover a constant plus one flat value: Auto with Decimal, and Boolean.False with Text or FilePath.
     - Boolean axes, enum axes, and three-arm unions stay one variable.
   </documentation>
   <aggregations>
+    <splits type="render:TypeSplit[]">
+      <documentation>
+        Struct splits, considered before axis and sentinel rules.
+      </documentation>
+      <composition>
+        <render:TypeSplit bml:id="bevel" type="com.machineblocks.bml.type.Bevel" group="Bevel" range="[0:0.25:128]">
+          <descriptions><![CDATA[Bevel X and Y for the corner [0,0] (grid)
+Bevel X and Y for the corner [0,1] (grid)
+Bevel X and Y for the corner [1,1] (grid)
+Bevel X and Y for the corner [1,0] (grid)]]></descriptions>
+        </render:TypeSplit>
+      </composition>
+    </splits>
     <axes type="render:AxisVector[]">
       <documentation>
         Number scalar or axis vector, considered before sentinel toggles.

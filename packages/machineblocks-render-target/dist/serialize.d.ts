@@ -19,4 +19,8 @@ export declare function scadString(value: string): string;
 export declare function presetParameterValue(value: LiteralValue, options?: SerializeOptions): string | undefined;
 export declare function serializeLiteral(value: LiteralValue, options?: SerializeOptions): string | undefined;
 export declare function serializeTyped(value: unknown, options?: SerializeOptions): SerializeSuccess | SerializeFailure;
+/** Property names of a struct, in declaration order. Undefined when the type is absent. */
+export declare function structPropertyNames(fqn: string, registry: TypeRegistry): string[] | undefined;
+/** Serialize one struct property the same way the struct writer does. */
+export declare function serializeStructProperty(value: Record<string, unknown>, field: string, ownerFqn: string, registry: TypeRegistry): SerializeSuccess | SerializeFailure;
 //# sourceMappingURL=serialize.d.ts.map
