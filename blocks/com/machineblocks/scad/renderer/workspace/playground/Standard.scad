@@ -42,10 +42,12 @@ holeXYGridOffsetZ = 3.5;
 recess = false;
 recessStuds = false;
 recessWallThickness = 0.333;
-recessDepth = "auto";
+recessDepthAuto = true;
+recessDepth = 0;
 recessStudPadding = 0.2;
 slope = false;
-text = false;
+textOn = false;
+text = "";
 textFace = "z+";
 textDepth = 0.5;
 textSize = 9;
@@ -53,12 +55,18 @@ textFont = "RBNo3.1 Black";
 textSpacing = 1;
 textColor = "#303D4E";
 baseColor = "#EAC645";
-surfacePattern = false;
+surfacePatternOn = false;
+surfacePattern = "";
 surfacePatternScale = 0.2;
-studIcon = false;
+studIconOn = false;
+studIcon = "";
 
 /* [Hidden] */
 hlp_config = mb__com__machineblocks__scad__renderer__workspace__playground__PlaygroundConfigSet__func__config(configProfile);
+hlp_recessDepthResolved = recessDepthAuto ? "auto" : recessDepth;
+hlp_textResolved = textOn ? text : false;
+hlp_surfacePatternResolved = surfacePatternOn ? surfacePattern : false;
+hlp_studIconResolved = studIconOn ? studIcon : false;
 
 /* Main Module Call */
 mb__com__machineblocks__scad__renderer__workspace__playground__Standard(
@@ -90,10 +98,10 @@ mb__com__machineblocks__scad__renderer__workspace__playground__Standard(
         ["recess", recess],
         ["recessStuds", recessStuds],
         ["recessWallThickness", recessWallThickness],
-        ["recessDepth", recessDepth],
+        ["recessDepth", hlp_recessDepthResolved],
         ["recessStudPadding", recessStudPadding],
         ["slope", slope],
-        ["text", text],
+        ["text", hlp_textResolved],
         ["textFace", textFace],
         ["textDepth", textDepth],
         ["textSize", textSize],
@@ -101,9 +109,9 @@ mb__com__machineblocks__scad__renderer__workspace__playground__Standard(
         ["textSpacing", textSpacing],
         ["textColor", textColor],
         ["baseColor", baseColor],
-        ["surfacePattern", surfacePattern],
+        ["surfacePattern", hlp_surfacePatternResolved],
         ["surfacePatternScale", surfacePatternScale],
-        ["studIcon", studIcon]
+        ["studIcon", hlp_studIconResolved]
     ]
 );
 

@@ -24,5 +24,6 @@ export declare const CONFIG_SET_UNEXPECTED = "MB_CONFIG_SET_UNEXPECTED";
 export declare const CONFIG_SET_UNKNOWN = "MB_CONFIG_SET_UNKNOWN";
 export declare const CONFIG_SET_MISSING = "MB_CONFIG_SET_MISSING";
 export declare const CONFIG_PROFILE_INCOMPLETE = "MB_CONFIG_PROFILE_INCOMPLETE";
+export declare const CUSTOMIZER_RULE_INVALID = "MB_CUSTOMIZER_RULE_INVALID";
 export declare function errorOutput(code: string, message: string, source?: SourceLocation): RenderOutput;
 //# sourceMappingURL=diagnostics.d.ts.map

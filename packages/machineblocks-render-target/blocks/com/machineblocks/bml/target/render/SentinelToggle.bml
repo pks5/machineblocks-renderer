@@ -1,0 +1,59 @@
+<!--Render Target — SentinelToggle
+  FQN: com.machineblocks.bml.target.render.SentinelToggle-->
+<render:SentinelToggle xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:type="org.blockml.bml.type"
+  xmlns:render="com.machineblocks.bml.target.render">
+
+  <baseType>
+    core:Block
+  </baseType>
+  <is>
+    Checkbox plus one value for a two-arm union
+  </is>
+  <documentation>
+    One customizer rule. It matches a property union of exactly two named
+    alternatives: the sentinel type, and the value type. Type arguments on
+    the value arm are ignored, so Decimal(GridUnitZ) matches Decimal.
+
+    checkboxSelects is sentinel or value. sentinel means the checkbox shows
+    the constant (checked is "auto"). value means the checkbox shows that
+    the other arm is in use (checked is the text or the path).
+
+    checkboxSuffix is appended to the property name for the checkbox.
+    The value field keeps the property name. The hidden result is
+    hlp_ plus the property name plus Resolved.
+
+    inactiveDefault is the SCAD literal of the value field while the
+    property holds the sentinel. The sentinel literal itself is read from
+    the constant type and serialized like any other property value.
+  </documentation>
+  <properties>
+    <sentinel type="type:Text">
+      <documentation>
+        FQN of the constant alternative, such as com.machineblocks.bml.type.Auto.
+      </documentation>
+    </sentinel>
+    <valueType type="type:Text">
+      <documentation>
+        FQN of the other alternative, without type arguments.
+        The first catalog accepts Decimal, Text, and FilePath.
+      </documentation>
+    </valueType>
+    <checkboxSelects type="type:Text">
+      <documentation>
+        sentinel or value. Which arm is used when the checkbox is checked.
+      </documentation>
+    </checkboxSelects>
+    <checkboxSuffix type="type:Text">
+      <documentation>
+        Appended to the property name to form the checkbox variable.
+      </documentation>
+    </checkboxSuffix>
+    <inactiveDefault type="type:Text">
+      <documentation>
+        SCAD literal shown in the value field when the property holds the sentinel.
+      </documentation>
+    </inactiveDefault>
+  </properties>
+</render:SentinelToggle>

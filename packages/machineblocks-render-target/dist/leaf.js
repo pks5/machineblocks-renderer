@@ -1,7 +1,8 @@
 import { resolveEffectiveMembers } from "@blockml/framework";
 import { loadConfigPrelude } from "./config-set.js";
 import { compositionChildren } from "./composition.js";
-import { LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
+import { customizerText, formatHidden, projectionsOf, readCustomizerRules, } from "./customizer-rules.js";
+import { CUSTOMIZER_RULE_INVALID, LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
 import { lowerExpression, propertyTypesOf } from "./lower.js";
 import { joinPosix, relativePosix, dirnamePosix } from "./paths.js";
 import { hiddenCustomizer, mapManifestation, moduleNameForManifestation } from "./naming.js";
@@ -64,6 +65,11 @@ export function renderLeafFile(block, outputRelativePath, outputBasePath, mbLibP
     if (!config.ok) {
         return config.output;
     }
+    const rules = readCustomizerRules(registry);
+    if (!rules.ok) {
+        return errorOutput(CUSTOMIZER_RULE_INVALID, rules.message, source);
+    }
+    const projections = projectionsOf(block, rules.rules, registry);
     const filename = outputRelativePath.split("/").pop() ?? `${block.name}.scad`;
     const moduleName = moduleNameForManifestation(root.fqn);
     const ordered = [...slots.values()];
@@ -71,7 +77,7 @@ export function renderLeafFile(block, outputRelativePath, outputBasePath, mbLibP
         files: [
             withSourceMap(block, {
                 path: outputRelativePath,
-                content: fileText(block, filename, moduleName, blockImport, config.prelude, ordered, childScad),
+                content: fileText(block, filename, moduleName, blockImport, config.prelude, ordered, childScad, projections),
             }),
         ],
     };
@@ -120,10 +126,10 @@ function nativeNamesOf(registry) {
     }
     return names;
 }
-function fileText(block, filename, moduleName, blockImport, config, slots, childScad) {
-    const geometry = slots.map((slot) => `${slot.name} = ${slot.scad};`).join("\n");
+function fileText(block, filename, moduleName, blockImport, config, slots, childScad, projections) {
+    const geometry = slots.map((slot) => customizerText(slot.name, slot.scad, projections.get(slot.name))).join("\n");
     const customizer = [config.dropdown, geometry].filter((part) => part.length > 0).join("\n\n");
-    const passed = slots.map((slot) => `        ["${slot.name}", ${slot.name}]`).join(",\n");
+    const passed = slots.map((slot) => `        ["${slot.name}", ${projections.get(slot.name)?.hiddenName ?? slot.name}]`).join(",\n");
     const settingsBody = slots.length === 0 ? "" : `\n${passed}\n    `;
     const getterNames = new Set(slots.map((slot) => slot.name));
     const getters = [
@@ -156,7 +162,7 @@ ${config.useLine}
 ${customizer}
 
 /* [Hidden] */
-${config.hidden}
+${formatHidden(config.hidden, [...projections.values()])}
 
 /* Main Module Call */
 ${moduleName}(

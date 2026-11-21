@@ -10,7 +10,14 @@ import type { RenderContext, RenderOutput } from "@blockml/compiler";
 import { parseExpression, resolveEffectiveMembers } from "@blockml/framework";
 import { loadConfigPrelude } from "./config-set.js";
 import { compositionChildren } from "./composition.js";
-import { DIRECTIVE_DEFERRED, FUNCTION_NO_RUNTIME, LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
+import {
+  customizerText,
+  formatHidden,
+  projectionsOf,
+  readCustomizerRules,
+  type CustomizerProjection,
+} from "./customizer-rules.js";
+import { CUSTOMIZER_RULE_INVALID, DIRECTIVE_DEFERRED, FUNCTION_NO_RUNTIME, LEAF_VALUE_UNSUPPORTED, errorOutput } from "./diagnostics.js";
 import { lowerExpression, propertyTypesOf, type LowerScope, type PropertyType } from "./lower.js";
 import { dirnamePosix, joinPosix, relativePosix } from "./paths.js";
 import { generatedLocal, hiddenCustomizer, mapManifestation, moduleNameForManifestation, type ManifestationMapping } from "./naming.js";
@@ -61,6 +68,11 @@ export function renderCompositeFile(
   if (isOutput(ready)) {
     return ready;
   }
+  const rules = readCustomizerRules(registry);
+  if (!rules.ok) {
+    return errorOutput(CUSTOMIZER_RULE_INVALID, rules.message, source);
+  }
+  const projections = projectionsOf(block, rules.rules, registry);
   const root = mapManifestation(block.type, mapping, "selected");
   if (!root.ok) {
     return errorOutput(root.code, root.message, source);
@@ -121,15 +133,15 @@ use <${blockImport}>;
 ${config.prelude.useLine}
 
 /* Customization */
-${[config.prelude.dropdown, customizerLines(passed)].filter((part) => part.length > 0).join("\n\n")}
+${[config.prelude.dropdown, customizerLines(passed, projections)].filter((part) => part.length > 0).join("\n\n")}
 
 /* [Hidden] */
-${config.prelude.hidden}
+${formatHidden(config.prelude.hidden, [...projections.values()])}
 
 /* Main Module Call */
 ${moduleName}(
     config = ${hiddenCustomizer("config")},
-    settings = [${settingsBody(passed.map((property) => `        ["${property.name}", ${property.name}]`))}]
+    settings = [${settingsBody(passed.map((property) => `        ["${property.name}", ${projections.get(property.name)?.hiddenName ?? property.name}]`))}]
 );
 
 /* Main Module Definition */
@@ -455,9 +467,14 @@ function fixedGetters(properties: readonly PropertyDefinition[], skip: readonly 
     .join("\n");
 }
 
-function customizerLines(properties: readonly ReadyProperty[]): string {
+function customizerLines(
+  properties: readonly ReadyProperty[],
+  projections: ReadonlyMap<string, CustomizerProjection>,
+): string {
   return properties
-    .flatMap((property) => (property.scad === undefined ? [] : [`${property.name} = ${property.scad};`]))
+    .flatMap((property) =>
+      property.scad === undefined ? [] : [customizerText(property.name, property.scad, projections.get(property.name))],
+    )
     .join("\n");
 }
 

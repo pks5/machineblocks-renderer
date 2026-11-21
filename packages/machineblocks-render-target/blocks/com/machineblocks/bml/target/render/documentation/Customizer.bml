@@ -30,24 +30,38 @@
     selected config (hlp_config), a recombined split, and a resolved
     NoneOr value.
 
-    OpenSCAD customizer supports only flat primitives. The processor splits
-    complex properties into several customizer variables and recombines them in
-    [Hidden]. Splitting follows NativeBlock type metadata and annotations.
+    OpenSCAD customizer supports only flat primitives. A union that matches
+    a rule in com.machineblocks.bml.target.render.CustomizerRules is split
+    into customizer fields and recombined in [Hidden]. The render target
+    reads that catalog from the type registry. A union with no matching
+    rule stays one variable. The first matching rule wins.
 
-    split [x, y, z] — a vector becomes named scalars:
+    SentinelToggle matches a union of exactly two named alternatives: a
+    constant sentinel and one flat value type. Type arguments on the value
+    arm are ignored. checkboxSelects is sentinel or value. checkboxSuffix
+    is appended to the property name. The value field keeps the property
+    name. inactiveDefault is the SCAD literal of that field while the
+    property holds the sentinel. The sentinel literal is the constant
+    type's value, serialized like any other property value.
 
-        baseRoundingRadiusX = 0.5; // [0:0.1:2]
-        baseRoundingRadiusY = 0.5;
-        baseRoundingRadiusZ = 0.5;
-        /* [Hidden] */
-        hlp_baseRoundingRadius = [baseRoundingRadiusX, baseRoundingRadiusY, baseRoundingRadiusZ];
-
-    auto_toggle true — a NoneOr value becomes a boolean plus a value:
+    The current rules are Auto | Decimal (checkbox suffix Auto, checked
+    selects Auto, inactiveDefault 0), Boolean.False | Text, and
+    Boolean.False | FilePath (checkbox suffix On, checked selects the
+    text or the path, inactiveDefault "").
 
         recessDepthAuto = true;
-        recessDepth = 0.5;
+        recessDepth = 0;
         /* [Hidden] */
         hlp_recessDepthResolved = recessDepthAuto ? "auto" : recessDepth;
+
+        textOn = false;
+        text = "";
+        /* [Hidden] */
+        hlp_textResolved = textOn ? text : false;
+
+    The main call passes the hidden variable under the property name.
+    Three-arm unions and structs stay one variable until a further rule
+    type exists.
 
     suggestions — a dropdown comment from the property suggestions. Each
     suggestion instance is serialized to its SCAD literal:

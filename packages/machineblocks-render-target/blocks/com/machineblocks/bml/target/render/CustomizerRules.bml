@@ -1,0 +1,34 @@
+<!--Render Target — CustomizerRules
+  FQN: com.machineblocks.bml.target.render.CustomizerRules-->
+<render:CustomizerRules xmlns="http://blockml.org/bml"
+  xmlns:bml="org.blockml.bml.annotation.BmlAnnotation"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:render="com.machineblocks.bml.target.render">
+
+  <baseType>
+    core:Block
+  </baseType>
+  <is>
+    Catalog of customizer projections
+  </is>
+  <documentation>
+    The render target reads this block from the type registry and projects matching properties into customizer fields.
+
+    - A union with no matching rule stays one variable.
+    - The first matching rule wins.
+    - The current rules cover a constant plus one flat value: Auto with Decimal, and Boolean.False with Text or FilePath.
+    - Three-arm unions and structs stay one variable until a further rule type exists.
+  </documentation>
+  <aggregations>
+    <rules type="render:SentinelToggle[]">
+      <documentation>
+        Sentinel toggles, in match order.
+      </documentation>
+      <composition>
+        <render:SentinelToggle bml:id="auto-decimal" sentinel="com.machineblocks.bml.type.Auto" valueType="org.blockml.bml.type.Decimal" checkboxSelects="sentinel" checkboxSuffix="Auto" inactiveDefault="0" />
+        <render:SentinelToggle bml:id="false-text" sentinel="org.blockml.bml.type.Boolean.False" valueType="org.blockml.bml.type.Text" checkboxSelects="value" checkboxSuffix="On" inactiveDefault="&quot;&quot;" />
+        <render:SentinelToggle bml:id="false-file" sentinel="org.blockml.bml.type.Boolean.False" valueType="org.blockml.bml.type.FilePath" checkboxSelects="value" checkboxSuffix="On" inactiveDefault="&quot;&quot;" />
+      </composition>
+    </rules>
+  </aggregations>
+</render:CustomizerRules>
