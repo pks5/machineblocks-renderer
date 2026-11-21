@@ -1,0 +1,43 @@
+<!--Render Target — AxisComponents
+  FQN: com.machineblocks.bml.target.render.AxisComponents-->
+<render:AxisComponents xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:type="org.blockml.bml.type"
+  xmlns:render="com.machineblocks.bml.target.render">
+
+  <baseType>
+    core:Block
+  </baseType>
+  <is>
+    One checkbox per axis for a boolean-or-axis union
+  </is>
+  <documentation>
+    One customizer rule. It matches a property union of exactly two named
+    alternatives: Boolean, and AxisXY or AxisXYZ closed on Boolean.
+
+    Each axis becomes a checkbox. The name is the property name plus the
+    axis letter, so holeXYZShift becomes holeXYZShiftX, holeXYZShiftY, and
+    holeXYZShiftZ. A scalar default is copied onto every axis. An authored
+    { x, y } or { x, y, z } fills the checkboxes in that order.
+
+    The hidden variable is hlp_ plus the property name. Its value is the
+    array of those checkboxes at full length. The main call passes that
+    hidden name. The module fallback stays the serialized property value.
+
+    valueType is Boolean. The OpenSCAD customizer does not show a vector
+    of booleans, so the components stay separate checkboxes.
+  </documentation>
+  <properties>
+    <valueType type="type:Text">
+      <documentation>
+        FQN of the scalar alternative. Boolean.
+      </documentation>
+    </valueType>
+    <axis type="type:Text">
+      <documentation>
+        FQN of the axis alternative. AxisXY makes two checkboxes.
+        AxisXYZ makes three.
+      </documentation>
+    </axis>
+  </properties>
+</render:AxisComponents>

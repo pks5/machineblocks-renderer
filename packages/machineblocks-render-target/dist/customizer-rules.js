@@ -5,7 +5,9 @@ import { isIdentifier, serializeStructProperty, serializeTyped, structPropertyNa
 export const CUSTOMIZER_RULES_FQN = "com.machineblocks.bml.target.render.CustomizerRules";
 export const SENTINEL_TOGGLE_FQN = "com.machineblocks.bml.target.render.SentinelToggle";
 export const AXIS_VECTOR_FQN = "com.machineblocks.bml.target.render.AxisVector";
+export const AXIS_COMPONENTS_FQN = "com.machineblocks.bml.target.render.AxisComponents";
 export const TYPE_SPLIT_FQN = "com.machineblocks.bml.target.render.TypeSplit";
+const BOOLEAN_TYPE = "org.blockml.bml.type.Boolean";
 const AXIS_FIELDS = {
     "com.machineblocks.bml.type.AxisXY": ["x", "y"],
     "com.machineblocks.bml.type.AxisXYZ": ["x", "y", "z"],
@@ -25,7 +27,7 @@ const VALUE_KINDS = {
 export function readCustomizerRules(registry) {
     const document = registry.get(CUSTOMIZER_RULES_FQN);
     if (!document) {
-        return { ok: true, rules: { splits: [], axes: [], sentinels: [] } };
+        return { ok: true, rules: { splits: [], axes: [], components: [], sentinels: [] } };
     }
     const splits = [];
     for (const child of compositionChildren(document.block, "splits")) {
@@ -49,6 +51,17 @@ export function readCustomizerRules(registry) {
         }
         axes.push(rule.rule);
     }
+    const components = [];
+    for (const child of compositionChildren(document.block, "components")) {
+        if (child.kind !== "blockInstance" || child.instance.typeFqn !== AXIS_COMPONENTS_FQN) {
+            return { ok: false, message: "CustomizerRules.components contains a value that is not an AxisComponents." };
+        }
+        const rule = componentRuleOf(child.instance);
+        if (!rule.ok) {
+            return rule;
+        }
+        components.push(rule.rule);
+    }
     const sentinels = [];
     for (const child of compositionChildren(document.block, "rules")) {
         if (child.kind !== "blockInstance" || child.instance.typeFqn !== SENTINEL_TOGGLE_FQN) {
@@ -60,7 +73,7 @@ export function readCustomizerRules(registry) {
         }
         sentinels.push(rule.rule);
     }
-    return { ok: true, rules: { splits, axes, sentinels } };
+    return { ok: true, rules: { splits, axes, components, sentinels } };
 }
 export function projectCustomizer(input) {
     const split = projectTypeSplit(input.name, input.type, input.value, input.registry, input.rules.splits, input.names);
@@ -74,6 +87,10 @@ export function projectCustomizer(input) {
     const axis = projectAxis(input.name, input.value, alternatives, input.rules.axes);
     if (axis !== undefined) {
         return axis;
+    }
+    const components = projectComponents(input.name, input.value, alternatives, input.rules.components, input.names);
+    if (components !== undefined) {
+        return components;
     }
     for (const rule of input.rules.sentinels) {
         const sentinel = alternatives.find((alternative) => alternative.fqn === rule.sentinel);
@@ -230,15 +247,91 @@ function descriptionLines(value) {
         .map((line) => line.trim())
         .filter((line) => line.length > 0);
 }
-function projectAxis(name, value, alternatives, rules) {
+function projectComponents(name, value, alternatives, rules, names) {
     for (const rule of rules) {
-        const scalar = alternatives.find((alternative) => alternative.fqn === rule.valueType);
-        const axis = alternatives.find((alternative) => alternative.fqn === rule.axis);
-        if (!scalar || !axis || scalar === axis) {
+        if (!axisShape(alternatives, rule)) {
             continue;
         }
-        const argument = axis.typeArguments?.[0];
-        if (argument?.kind !== "named" || argument.fqn !== rule.valueType) {
+        const literals = booleanComponents(value, rule.fields);
+        if (!literals) {
+            return undefined;
+        }
+        const fieldNames = [];
+        const fields = [];
+        for (let index = 0; index < rule.fields.length; index += 1) {
+            const axis = rule.fields[index];
+            const literal = literals[index];
+            if (!axis || literal === undefined) {
+                return undefined;
+            }
+            const fieldName = `${name}${axisSuffix(axis)}`;
+            if (!isIdentifier(fieldName) || names.has(fieldName) || fieldNames.includes(fieldName)) {
+                return undefined;
+            }
+            fieldNames.push(fieldName);
+            fields.push({ name: fieldName, scad: literal });
+        }
+        const hiddenName = hiddenCustomizer(name);
+        if (!isIdentifier(hiddenName) || names.has(hiddenName)) {
+            return undefined;
+        }
+        return {
+            fields,
+            hiddenName,
+            expression: `[${fieldNames.join(", ")}]`,
+        };
+    }
+    return undefined;
+}
+function axisShape(alternatives, rule) {
+    const scalar = alternatives.find((alternative) => alternative.fqn === rule.valueType);
+    const axis = alternatives.find((alternative) => alternative.fqn === rule.axis);
+    if (!scalar || !axis || scalar === axis) {
+        return false;
+    }
+    const argument = axis.typeArguments?.[0];
+    return argument?.kind === "named" && argument.fqn === rule.valueType;
+}
+function booleanComponents(value, fields) {
+    if (typeof value === "boolean") {
+        const literal = value ? "true" : "false";
+        return fields.map(() => literal);
+    }
+    if (!isRecord(value)) {
+        return undefined;
+    }
+    const parts = [];
+    for (const field of fields) {
+        const component = value[field];
+        if (typeof component !== "boolean") {
+            return undefined;
+        }
+        parts.push(component ? "true" : "false");
+    }
+    return parts;
+}
+function axisSuffix(field) {
+    return field.length === 0 ? field : `${field[0]?.toUpperCase() ?? ""}${field.slice(1)}`;
+}
+function componentRuleOf(instance) {
+    const id = literalString(instance.id) ?? instance.typeFqn;
+    const valueType = literalString(instance.memberValues.valueType);
+    const axis = literalString(instance.memberValues.axis);
+    const fields = axis ? AXIS_FIELDS[axis] : undefined;
+    if (!valueType || !axis) {
+        return { ok: false, message: `AxisComponents ${id} is missing a field.` };
+    }
+    if (valueType !== BOOLEAN_TYPE) {
+        return { ok: false, message: `AxisComponents ${id} value type ${valueType} is not Boolean.` };
+    }
+    if (!fields) {
+        return { ok: false, message: `AxisComponents ${id} axis ${axis} is not AxisXY or AxisXYZ.` };
+    }
+    return { ok: true, rule: { id, valueType, axis, fields } };
+}
+function projectAxis(name, value, alternatives, rules) {
+    for (const rule of rules) {
+        if (!axisShape(alternatives, rule)) {
             continue;
         }
         const scad = axisLiteral(value, rule.fields);

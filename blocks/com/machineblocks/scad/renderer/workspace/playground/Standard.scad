@@ -36,7 +36,9 @@ holeX = false;
 holeY = false;
 holeZ = false;
 holeXYZType = "pin";
-holeXYZShift = true;
+holeXYZShiftX = true;
+holeXYZShiftY = true;
+holeXYZShiftZ = true;
 holeXYGridOffsetZ = [3.5, 3.5];
 recess = false;
 recessStuds = false;
@@ -73,6 +75,7 @@ bevel3 = [0, 0]; // [0:0.25:128]
 /* [Hidden] */
 hlp_config = mb__com__machineblocks__scad__renderer__workspace__playground__PlaygroundConfigSet__func__config(configProfile);
 hlp_bevel = [bevel0, bevel1, bevel2, bevel3];
+hlp_holeXYZShift = [holeXYZShiftX, holeXYZShiftY, holeXYZShiftZ];
 hlp_recessDepthResolved = recessDepthAuto ? "auto" : recessDepth;
 hlp_textResolved = textOn ? text : false;
 hlp_surfacePatternResolved = surfacePatternOn ? surfacePattern : false;
@@ -103,7 +106,7 @@ mb__com__machineblocks__scad__renderer__workspace__playground__Standard(
         ["holeY", holeY],
         ["holeZ", holeZ],
         ["holeXYZType", holeXYZType],
-        ["holeXYZShift", holeXYZShift],
+        ["holeXYZShift", hlp_holeXYZShift],
         ["holeXYGridOffsetZ", holeXYGridOffsetZ],
         ["recess", recess],
         ["recessStuds", recessStuds],

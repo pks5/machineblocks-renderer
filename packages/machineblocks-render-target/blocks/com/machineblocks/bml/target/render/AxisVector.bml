@@ -20,9 +20,9 @@
     repeated once per axis. An authored { x, y } or { x, y, z } is written
     in that order at full length. There is no hidden variable.
 
-    valueType is Decimal or Integer. Boolean and other non-numbers are
-    rejected: the OpenSCAD customizer shows a vector of numbers up to
-    length 4, and does not show a vector of booleans.
+    valueType is Decimal or Integer. A Boolean axis is an AxisComponents
+    rule. This rule writes a vector of numbers, which the customizer shows
+    up to length 4.
   </documentation>
   <properties>
     <valueType type="type:Text">

@@ -95,6 +95,9 @@ const SAMPLE = `<bricks:Sample xmlns="http://blockml.org/bml"
     <shift type="type:Boolean | mbt:AxisXYZ(type:Boolean)">
       <value>true</value>
     </shift>
+    <flags type="type:Boolean | mbt:AxisXY(type:Boolean)">
+      <value>{x:true,y:false}</value>
+    </flags>
     <holeXYZType type="mbt:HoleType | mbt:AxisXYZ(mbt:HoleType)">
       <value>Pin</value>
     </holeXYZType>
@@ -129,6 +132,7 @@ function render(): string {
   const falseConstant = document(FALSE, "false.bml");
   falseConstant.block.type = "org.blockml.bml.type.Boolean.False";
   registry.register(falseConstant);
+  registry.register(document(readFileSync(join(RULES, "AxisComponents.bml"), "utf8"), "AxisComponents.bml"));
   registry.register(document(readFileSync(join(RULES, "TypeSplit.bml"), "utf8"), "TypeSplit.bml"));
   registry.register(document(readFileSync(join(RULES, "SentinelToggle.bml"), "utf8"), "SentinelToggle.bml"));
   registry.register(document(readFileSync(join(RULES, "CustomizerRules.bml"), "utf8"), "CustomizerRules.bml"));
@@ -180,8 +184,15 @@ bevel3 = [3, 4]; // [0:0.25:128]`);
     expect(content).not.toContain("hlp_holeXYGridOffsetZ");
     expect(content).toContain("perAxis = [3, 4];");
     expect(content).toContain("thickness = [2, 2, 2];");
-    expect(content).toContain("shift = true;");
+    expect(content).toContain("shiftX = true;\nshiftY = true;\nshiftZ = true;");
+    expect(content).toContain("hlp_shift = [shiftX, shiftY, shiftZ];");
+    expect(content).toContain('["shift", hlp_shift]');
+    expect(content).toContain('shift = mb_param(config, settings, "shift", true);');
     expect(content).not.toContain("shift = [true");
+    expect(content).toContain("flagsX = true;\nflagsY = false;");
+    expect(content).toContain("hlp_flags = [flagsX, flagsY];");
+    expect(content).toContain('["flags", hlp_flags]');
+    expect(content).toContain('flags = mb_param(config, settings, "flags", [true, false]);');
     expect(content).toContain('holeXYZType = "Pin";');
     expect(content).toContain('diameter = "auto";');
     expect(content).toContain('holeXYGridOffsetZ = mb_param(config, settings, "holeXYGridOffsetZ", 3.5);');

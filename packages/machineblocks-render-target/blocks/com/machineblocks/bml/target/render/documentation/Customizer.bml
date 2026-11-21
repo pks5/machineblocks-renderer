@@ -34,8 +34,9 @@
     numbers up to length 4. A property that matches a rule in
     com.machineblocks.bml.target.render.CustomizerRules is projected into
     customizer fields. The render target reads that catalog from the type
-    registry. Type splits are considered first, then axis rules, then
-    sentinel rules. A property with no matching rule stays one variable.
+    registry. Type splits are considered first, then number axes and
+    boolean axes, then sentinel rules. A property with no matching rule
+    stays one variable.
 
     TypeSplit matches one struct type. Each property, in declaration order,
     becomes {propertyName}0, {propertyName}1, and so on. The description at
@@ -61,12 +62,23 @@
     AxisVector matches a number type with AxisXY or AxisXYZ of that same
     number. Decimal and Integer qualify. The variable keeps the property
     name and is the full vector. A scalar is repeated. An { x, y } or
-    { x, y, z } value is written in full. Boolean, text, and enum axes
-    stay one variable, because the customizer does not show those vectors.
-    There is no hidden variable.
+    { x, y, z } value is written in full. Text and enum axes stay one
+    variable. There is no hidden variable.
 
         holeXYGridOffsetZ = [3.5, 3.5];
         holeXYZAxleThickness = [1, 1, 1];
+
+    AxisComponents matches Boolean with AxisXY or AxisXYZ of Boolean.
+    Each axis is its own checkbox. The name is the property name plus
+    X, Y, and Z. A scalar is copied onto every axis. An { x, y } or
+    { x, y, z } value fills the checkboxes in that order. The hidden
+    variable is hlp_ plus the property name and is the full array.
+
+        holeXYZShiftX = true;
+        holeXYZShiftY = true;
+        holeXYZShiftZ = true;
+        /* [Hidden] */
+        hlp_holeXYZShift = [holeXYZShiftX, holeXYZShiftY, holeXYZShiftZ];
 
     SentinelToggle matches a union of exactly two named alternatives: a
     constant sentinel and one flat value type. Type arguments on the value

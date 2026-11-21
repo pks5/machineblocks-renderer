@@ -3,6 +3,7 @@ import { type TypeRegistry } from "@blockml/framework";
 export declare const CUSTOMIZER_RULES_FQN = "com.machineblocks.bml.target.render.CustomizerRules";
 export declare const SENTINEL_TOGGLE_FQN = "com.machineblocks.bml.target.render.SentinelToggle";
 export declare const AXIS_VECTOR_FQN = "com.machineblocks.bml.target.render.AxisVector";
+export declare const AXIS_COMPONENTS_FQN = "com.machineblocks.bml.target.render.AxisComponents";
 export declare const TYPE_SPLIT_FQN = "com.machineblocks.bml.target.render.TypeSplit";
 export interface CustomizerField {
     name: string;
@@ -23,6 +24,7 @@ export interface CustomizerProjection {
 export interface CustomizerRuleSet {
     splits: SplitRule[];
     axes: AxisRule[];
+    components: AxisRule[];
     sentinels: SentinelRule[];
 }
 interface SplitRule {
