@@ -35,6 +35,7 @@ const SAMPLE = `<bricks:Sample xmlns="http://blockml.org/bml"
   xmlns:bricks="com.machineblocks.bml.bricks"
   xmlns:mbcore="com.machineblocks.bml.core"
   xmlns:mbt="com.machineblocks.bml.type"
+  xmlns:mbunit="com.machineblocks.bml.unit"
   xmlns:type="org.blockml.bml.type">
   <baseType>mbcore:Block</baseType>
   <is>A customizer sample</is>
@@ -57,6 +58,24 @@ const SAMPLE = `<bricks:Sample xmlns="http://blockml.org/bml"
     <slope type="type:Boolean.False | mbt:FaceMapXY(type:Decimal)">
       <value>false</value>
     </slope>
+    <holeXYGridOffsetZ type="type:Decimal(mbunit:MBU) | mbt:AxisXY(type:Decimal(mbunit:MBU))">
+      <value>3.5</value>
+    </holeXYGridOffsetZ>
+    <perAxis type="type:Decimal | mbt:AxisXY(type:Decimal)">
+      <value>{x:3,y:4}</value>
+    </perAxis>
+    <thickness type="type:Decimal | mbt:AxisXYZ(type:Decimal)">
+      <value>2</value>
+    </thickness>
+    <shift type="type:Boolean | mbt:AxisXYZ(type:Boolean)">
+      <value>true</value>
+    </shift>
+    <holeXYZType type="mbt:HoleType | mbt:AxisXYZ(mbt:HoleType)">
+      <value>Pin</value>
+    </holeXYZType>
+    <diameter type="mbt:Auto | type:Decimal | mbt:AxisXYZ(type:Decimal)">
+      <value>Auto</value>
+    </diameter>
   </properties>
   <aggregations>
     <_parts override="true">
@@ -114,5 +133,15 @@ describe("customizer sentinel rules", () => {
     expect(content).toContain("slope = false;");
     expect(content).not.toContain("slopeOn");
     expect(content).not.toContain('recessDepth = "auto"');
+    expect(content).toContain("holeXYGridOffsetZ = [3.5, 3.5];");
+    expect(content).toContain('["holeXYGridOffsetZ", holeXYGridOffsetZ]');
+    expect(content).not.toContain("hlp_holeXYGridOffsetZ");
+    expect(content).toContain("perAxis = [3, 4];");
+    expect(content).toContain("thickness = [2, 2, 2];");
+    expect(content).toContain("shift = true;");
+    expect(content).not.toContain("shift = [true");
+    expect(content).toContain('holeXYZType = "Pin";');
+    expect(content).toContain('diameter = "auto";');
+    expect(content).toContain('holeXYGridOffsetZ = mb_param(config, settings, "holeXYGridOffsetZ", 3.5);');
   });
 });

@@ -1,4 +1,4 @@
-import type { BlockDefinition, BlockInstance, LiteralValue, TypeExpression } from "@blockml/bom";
+import type { BlockDefinition, BlockInstance, LiteralValue, NamedTypeReference, TypeExpression } from "@blockml/bom";
 import { resolveEffectiveMembers, type TypeRegistry } from "@blockml/framework";
 import { compositionChildren } from "./composition.js";
 import { hiddenCustomizer } from "./naming.js";
@@ -6,8 +6,19 @@ import { isIdentifier, serializeTyped } from "./serialize.js";
 
 export const CUSTOMIZER_RULES_FQN = "com.machineblocks.bml.target.render.CustomizerRules";
 export const SENTINEL_TOGGLE_FQN = "com.machineblocks.bml.target.render.SentinelToggle";
+export const AXIS_VECTOR_FQN = "com.machineblocks.bml.target.render.AxisVector";
 
-/** Value arms this interpreter can show as one customizer field. */
+const AXIS_FIELDS: Readonly<Record<string, readonly string[]>> = {
+  "com.machineblocks.bml.type.AxisXY": ["x", "y"],
+  "com.machineblocks.bml.type.AxisXYZ": ["x", "y", "z"],
+};
+
+const NUMBER_TYPES: ReadonlySet<string> = new Set([
+  "org.blockml.bml.type.Decimal",
+  "org.blockml.bml.type.Integer",
+]);
+
+/** Value arms a sentinel toggle can show as one customizer field. */
 const VALUE_KINDS: Readonly<Record<string, "number" | "string" | "boolean">> = {
   "org.blockml.bml.type.Decimal": "number",
   "org.blockml.bml.type.Integer": "number",
@@ -23,8 +34,21 @@ export interface CustomizerField {
 
 export interface CustomizerProjection {
   fields: CustomizerField[];
-  hiddenName: string;
-  expression: string;
+  /** Set when the property value is a hidden recombination. An axis vector keeps the property name. */
+  hiddenName?: string;
+  expression?: string;
+}
+
+export interface CustomizerRuleSet {
+  axes: AxisRule[];
+  sentinels: SentinelRule[];
+}
+
+interface AxisRule {
+  id: string;
+  valueType: string;
+  axis: string;
+  fields: readonly string[];
 }
 
 interface SentinelRule {
@@ -41,12 +65,23 @@ type Registry = TypeRegistry;
 
 export function readCustomizerRules(
   registry: Registry,
-): { ok: true; rules: SentinelRule[] } | { ok: false; message: string } {
+): { ok: true; rules: CustomizerRuleSet } | { ok: false; message: string } {
   const document = registry.get(CUSTOMIZER_RULES_FQN);
   if (!document) {
-    return { ok: true, rules: [] };
+    return { ok: true, rules: { axes: [], sentinels: [] } };
   }
-  const rules: SentinelRule[] = [];
+  const axes: AxisRule[] = [];
+  for (const child of compositionChildren(document.block, "axes")) {
+    if (child.kind !== "blockInstance" || child.instance.typeFqn !== AXIS_VECTOR_FQN) {
+      return { ok: false, message: "CustomizerRules.axes contains a value that is not an AxisVector." };
+    }
+    const rule = axisRuleOf(child.instance);
+    if (!rule.ok) {
+      return rule;
+    }
+    axes.push(rule.rule);
+  }
+  const sentinels: SentinelRule[] = [];
   for (const child of compositionChildren(document.block, "rules")) {
     if (child.kind !== "blockInstance" || child.instance.typeFqn !== SENTINEL_TOGGLE_FQN) {
       return { ok: false, message: "CustomizerRules.rules contains a value that is not a SentinelToggle." };
@@ -55,9 +90,9 @@ export function readCustomizerRules(
     if (!rule.ok) {
       return rule;
     }
-    rules.push(rule.rule);
+    sentinels.push(rule.rule);
   }
-  return { ok: true, rules };
+  return { ok: true, rules: { axes, sentinels } };
 }
 
 export function projectCustomizer(input: {
@@ -65,14 +100,18 @@ export function projectCustomizer(input: {
   type: TypeExpression | undefined;
   value: unknown;
   registry: Registry;
-  rules: readonly SentinelRule[];
+  rules: CustomizerRuleSet;
   names: ReadonlySet<string>;
 }): CustomizerProjection | undefined {
   const alternatives = namedPair(input.type);
   if (!alternatives) {
     return undefined;
   }
-  for (const rule of input.rules) {
+  const axis = projectAxis(input.name, input.value, alternatives, input.rules.axes);
+  if (axis !== undefined) {
+    return axis;
+  }
+  for (const rule of input.rules.sentinels) {
     const sentinel = alternatives.find((alternative) => alternative.fqn === rule.sentinel);
     const valueArm = alternatives.find((alternative) => alternative.fqn === rule.valueType);
     if (!sentinel || !valueArm || sentinel === valueArm) {
@@ -112,7 +151,11 @@ export function projectCustomizer(input: {
 }
 
 export function formatHidden(configAssignment: string, projections: readonly CustomizerProjection[]): string {
-  const lines = projections.map((projection) => `${projection.hiddenName} = ${projection.expression};`);
+  const lines = projections.flatMap((projection) =>
+    projection.hiddenName !== undefined && projection.expression !== undefined
+      ? [`${projection.hiddenName} = ${projection.expression};`]
+      : [],
+  );
   return lines.length === 0 ? configAssignment : `${configAssignment}\n${lines.join("\n")}`;
 }
 
@@ -121,6 +164,66 @@ export function customizerText(name: string, scad: string, projection: Customize
     return `${name} = ${scad};`;
   }
   return projection.fields.map((field) => `${field.name} = ${field.scad};`).join("\n");
+}
+
+function projectAxis(
+  name: string,
+  value: unknown,
+  alternatives: readonly NamedTypeReference[],
+  rules: readonly AxisRule[],
+): CustomizerProjection | undefined {
+  for (const rule of rules) {
+    const scalar = alternatives.find((alternative) => alternative.fqn === rule.valueType);
+    const axis = alternatives.find((alternative) => alternative.fqn === rule.axis);
+    if (!scalar || !axis || scalar === axis) {
+      continue;
+    }
+    const argument = axis.typeArguments?.[0];
+    if (argument?.kind !== "named" || argument.fqn !== rule.valueType) {
+      continue;
+    }
+    const scad = axisLiteral(value, rule.fields);
+    if (scad === undefined) {
+      return undefined;
+    }
+    return { fields: [{ name, scad }] };
+  }
+  return undefined;
+}
+
+function axisLiteral(value: unknown, fields: readonly string[]): string | undefined {
+  if (typeof value === "number") {
+    return `[${fields.map(() => String(value)).join(", ")}]`;
+  }
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  const parts: string[] = [];
+  for (const field of fields) {
+    const component = value[field];
+    if (typeof component !== "number") {
+      return undefined;
+    }
+    parts.push(String(component));
+  }
+  return `[${parts.join(", ")}]`;
+}
+
+function axisRuleOf(instance: BlockInstance): { ok: true; rule: AxisRule } | { ok: false; message: string } {
+  const id = literalString(instance.id) ?? instance.typeFqn;
+  const valueType = literalString(instance.memberValues.valueType);
+  const axis = literalString(instance.memberValues.axis);
+  const fields = axis ? AXIS_FIELDS[axis] : undefined;
+  if (!valueType || !axis) {
+    return { ok: false, message: `AxisVector ${id} is missing a field.` };
+  }
+  if (!NUMBER_TYPES.has(valueType)) {
+    return { ok: false, message: `AxisVector ${id} value type ${valueType} is not a number.` };
+  }
+  if (!fields) {
+    return { ok: false, message: `AxisVector ${id} axis ${axis} is not AxisXY or AxisXYZ.` };
+  }
+  return { ok: true, rule: { id, valueType, axis, fields } };
 }
 
 function ruleOf(
@@ -171,14 +274,16 @@ function sentinelScad(fqn: string, registry: Registry): string | undefined {
   return written.ok ? written.scad : undefined;
 }
 
-function namedPair(type: TypeExpression | undefined): { fqn: string }[] | undefined {
+function namedPair(type: TypeExpression | undefined): NamedTypeReference[] | undefined {
   if (type?.kind !== "union" || type.alternatives.length !== 2) {
     return undefined;
   }
-  const named = type.alternatives.flatMap((alternative) =>
-    alternative.kind === "named" ? [{ fqn: alternative.fqn }] : [],
-  );
+  const named = type.alternatives.filter((alternative): alternative is NamedTypeReference => alternative.kind === "named");
   return named.length === 2 ? named : undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function serializedAs(
@@ -214,7 +319,7 @@ function literalString(value: BlockInstance["id"] | BlockInstance["memberValues"
   return (value as LiteralValue).value as string;
 }
 
-export function projectionsOf(block: BlockDefinition, rules: readonly SentinelRule[], registry: Registry): Map<string, CustomizerProjection> {
+export function projectionsOf(block: BlockDefinition, rules: CustomizerRuleSet, registry: Registry): Map<string, CustomizerProjection> {
   const names = new Set(
     block.members.flatMap((member) => (member.kind === "property" ? [member.name] : [])),
   );

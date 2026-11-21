@@ -4,7 +4,16 @@ import { hiddenCustomizer } from "./naming.js";
 import { isIdentifier, serializeTyped } from "./serialize.js";
 export const CUSTOMIZER_RULES_FQN = "com.machineblocks.bml.target.render.CustomizerRules";
 export const SENTINEL_TOGGLE_FQN = "com.machineblocks.bml.target.render.SentinelToggle";
-/** Value arms this interpreter can show as one customizer field. */
+export const AXIS_VECTOR_FQN = "com.machineblocks.bml.target.render.AxisVector";
+const AXIS_FIELDS = {
+    "com.machineblocks.bml.type.AxisXY": ["x", "y"],
+    "com.machineblocks.bml.type.AxisXYZ": ["x", "y", "z"],
+};
+const NUMBER_TYPES = new Set([
+    "org.blockml.bml.type.Decimal",
+    "org.blockml.bml.type.Integer",
+]);
+/** Value arms a sentinel toggle can show as one customizer field. */
 const VALUE_KINDS = {
     "org.blockml.bml.type.Decimal": "number",
     "org.blockml.bml.type.Integer": "number",
@@ -15,9 +24,20 @@ const VALUE_KINDS = {
 export function readCustomizerRules(registry) {
     const document = registry.get(CUSTOMIZER_RULES_FQN);
     if (!document) {
-        return { ok: true, rules: [] };
+        return { ok: true, rules: { axes: [], sentinels: [] } };
     }
-    const rules = [];
+    const axes = [];
+    for (const child of compositionChildren(document.block, "axes")) {
+        if (child.kind !== "blockInstance" || child.instance.typeFqn !== AXIS_VECTOR_FQN) {
+            return { ok: false, message: "CustomizerRules.axes contains a value that is not an AxisVector." };
+        }
+        const rule = axisRuleOf(child.instance);
+        if (!rule.ok) {
+            return rule;
+        }
+        axes.push(rule.rule);
+    }
+    const sentinels = [];
     for (const child of compositionChildren(document.block, "rules")) {
         if (child.kind !== "blockInstance" || child.instance.typeFqn !== SENTINEL_TOGGLE_FQN) {
             return { ok: false, message: "CustomizerRules.rules contains a value that is not a SentinelToggle." };
@@ -26,16 +46,20 @@ export function readCustomizerRules(registry) {
         if (!rule.ok) {
             return rule;
         }
-        rules.push(rule.rule);
+        sentinels.push(rule.rule);
     }
-    return { ok: true, rules };
+    return { ok: true, rules: { axes, sentinels } };
 }
 export function projectCustomizer(input) {
     const alternatives = namedPair(input.type);
     if (!alternatives) {
         return undefined;
     }
-    for (const rule of input.rules) {
+    const axis = projectAxis(input.name, input.value, alternatives, input.rules.axes);
+    if (axis !== undefined) {
+        return axis;
+    }
+    for (const rule of input.rules.sentinels) {
         const sentinel = alternatives.find((alternative) => alternative.fqn === rule.sentinel);
         const valueArm = alternatives.find((alternative) => alternative.fqn === rule.valueType);
         if (!sentinel || !valueArm || sentinel === valueArm) {
@@ -74,7 +98,9 @@ export function projectCustomizer(input) {
     return undefined;
 }
 export function formatHidden(configAssignment, projections) {
-    const lines = projections.map((projection) => `${projection.hiddenName} = ${projection.expression};`);
+    const lines = projections.flatMap((projection) => projection.hiddenName !== undefined && projection.expression !== undefined
+        ? [`${projection.hiddenName} = ${projection.expression};`]
+        : []);
     return lines.length === 0 ? configAssignment : `${configAssignment}\n${lines.join("\n")}`;
 }
 export function customizerText(name, scad, projection) {
@@ -82,6 +108,58 @@ export function customizerText(name, scad, projection) {
         return `${name} = ${scad};`;
     }
     return projection.fields.map((field) => `${field.name} = ${field.scad};`).join("\n");
+}
+function projectAxis(name, value, alternatives, rules) {
+    for (const rule of rules) {
+        const scalar = alternatives.find((alternative) => alternative.fqn === rule.valueType);
+        const axis = alternatives.find((alternative) => alternative.fqn === rule.axis);
+        if (!scalar || !axis || scalar === axis) {
+            continue;
+        }
+        const argument = axis.typeArguments?.[0];
+        if (argument?.kind !== "named" || argument.fqn !== rule.valueType) {
+            continue;
+        }
+        const scad = axisLiteral(value, rule.fields);
+        if (scad === undefined) {
+            return undefined;
+        }
+        return { fields: [{ name, scad }] };
+    }
+    return undefined;
+}
+function axisLiteral(value, fields) {
+    if (typeof value === "number") {
+        return `[${fields.map(() => String(value)).join(", ")}]`;
+    }
+    if (!isRecord(value)) {
+        return undefined;
+    }
+    const parts = [];
+    for (const field of fields) {
+        const component = value[field];
+        if (typeof component !== "number") {
+            return undefined;
+        }
+        parts.push(String(component));
+    }
+    return `[${parts.join(", ")}]`;
+}
+function axisRuleOf(instance) {
+    const id = literalString(instance.id) ?? instance.typeFqn;
+    const valueType = literalString(instance.memberValues.valueType);
+    const axis = literalString(instance.memberValues.axis);
+    const fields = axis ? AXIS_FIELDS[axis] : undefined;
+    if (!valueType || !axis) {
+        return { ok: false, message: `AxisVector ${id} is missing a field.` };
+    }
+    if (!NUMBER_TYPES.has(valueType)) {
+        return { ok: false, message: `AxisVector ${id} value type ${valueType} is not a number.` };
+    }
+    if (!fields) {
+        return { ok: false, message: `AxisVector ${id} axis ${axis} is not AxisXY or AxisXYZ.` };
+    }
+    return { ok: true, rule: { id, valueType, axis, fields } };
 }
 function ruleOf(instance, registry) {
     const id = literalString(instance.id) ?? instance.typeFqn;
@@ -128,8 +206,11 @@ function namedPair(type) {
     if (type?.kind !== "union" || type.alternatives.length !== 2) {
         return undefined;
     }
-    const named = type.alternatives.flatMap((alternative) => alternative.kind === "named" ? [{ fqn: alternative.fqn }] : []);
+    const named = type.alternatives.filter((alternative) => alternative.kind === "named");
     return named.length === 2 ? named : undefined;
+}
+function isRecord(value) {
+    return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 function serializedAs(value, alternative, registry) {
     const written = serializeTyped(value, {

@@ -1,0 +1,40 @@
+<!--Render Target — AxisVector
+  FQN: com.machineblocks.bml.target.render.AxisVector-->
+<render:AxisVector xmlns="http://blockml.org/bml"
+  xmlns:core="org.blockml.bml.core"
+  xmlns:type="org.blockml.bml.type"
+  xmlns:render="com.machineblocks.bml.target.render">
+
+  <baseType>
+    core:Block
+  </baseType>
+  <is>
+    Number vector for a scalar-or-axis union
+  </is>
+  <documentation>
+    One customizer rule. It matches a property union of exactly two named
+    alternatives: a number type, and AxisXY or AxisXYZ closed on that same
+    number type. Type arguments that only carry a unit are ignored.
+
+    The customizer variable keeps the property name. A scalar default is
+    repeated once per axis. An authored { x, y } or { x, y, z } is written
+    in that order at full length. There is no hidden variable.
+
+    valueType is Decimal or Integer. Boolean and other non-numbers are
+    rejected: the OpenSCAD customizer shows a vector of numbers up to
+    length 4, and does not show a vector of booleans.
+  </documentation>
+  <properties>
+    <valueType type="type:Text">
+      <documentation>
+        FQN of the scalar alternative. Decimal or Integer.
+      </documentation>
+    </valueType>
+    <axis type="type:Text">
+      <documentation>
+        FQN of the axis alternative. AxisXY repeats the scalar twice.
+        AxisXYZ repeats it three times.
+      </documentation>
+    </axis>
+  </properties>
+</render:AxisVector>

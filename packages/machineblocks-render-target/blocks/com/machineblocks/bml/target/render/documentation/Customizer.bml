@@ -30,11 +30,22 @@
     selected config (hlp_config), a recombined split, and a resolved
     NoneOr value.
 
-    OpenSCAD customizer supports only flat primitives. A union that matches
-    a rule in com.machineblocks.bml.target.render.CustomizerRules is split
-    into customizer fields and recombined in [Hidden]. The render target
-    reads that catalog from the type registry. A union with no matching
-    rule stays one variable. The first matching rule wins.
+    OpenSCAD customizer supports only flat primitives, plus a vector of
+    numbers up to length 4. A union that matches a rule in
+    com.machineblocks.bml.target.render.CustomizerRules is projected into
+    customizer fields. The render target reads that catalog from the type
+    registry. Axis rules are considered before sentinel rules. A union
+    with no matching rule stays one variable.
+
+    AxisVector matches a number type with AxisXY or AxisXYZ of that same
+    number. Decimal and Integer qualify. The variable keeps the property
+    name and is the full vector. A scalar is repeated. An { x, y } or
+    { x, y, z } value is written in full. Boolean, text, and enum axes
+    stay one variable, because the customizer does not show those vectors.
+    There is no hidden variable.
+
+        holeXYGridOffsetZ = [3.5, 3.5];
+        holeXYZAxleThickness = [1, 1, 1];
 
     SentinelToggle matches a union of exactly two named alternatives: a
     constant sentinel and one flat value type. Type arguments on the value
@@ -60,8 +71,8 @@
         hlp_textResolved = textOn ? text : false;
 
     The main call passes the hidden variable under the property name.
-    Three-arm unions and structs stay one variable until a further rule
-    type exists.
+    A three-arm union, such as Auto | Decimal | AxisXYZ(Decimal), matches
+    neither rule and stays one variable.
 
     suggestions — a dropdown comment from the property suggestions. Each
     suggestion instance is serialized to its SCAD literal:

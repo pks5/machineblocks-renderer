@@ -14,12 +14,24 @@
   <documentation>
     The render target reads this block from the type registry and projects matching properties into customizer fields.
 
+    - Axis rules are considered before sentinel rules.
     - A union with no matching rule stays one variable.
-    - The first matching rule wins.
-    - The current rules cover a constant plus one flat value: Auto with Decimal, and Boolean.False with Text or FilePath.
-    - Three-arm unions and structs stay one variable until a further rule type exists.
+    - Axis rules expand a number scalar into an AxisXY or AxisXYZ vector on the property name.
+    - Sentinel rules cover a constant plus one flat value: Auto with Decimal, and Boolean.False with Text or FilePath.
+    - Boolean axes, enum axes, and three-arm unions stay one variable.
   </documentation>
   <aggregations>
+    <axes type="render:AxisVector[]">
+      <documentation>
+        Number scalar or axis vector, considered before sentinel toggles.
+      </documentation>
+      <composition>
+        <render:AxisVector bml:id="decimal-xy" valueType="org.blockml.bml.type.Decimal" axis="com.machineblocks.bml.type.AxisXY" />
+        <render:AxisVector bml:id="decimal-xyz" valueType="org.blockml.bml.type.Decimal" axis="com.machineblocks.bml.type.AxisXYZ" />
+        <render:AxisVector bml:id="integer-xy" valueType="org.blockml.bml.type.Integer" axis="com.machineblocks.bml.type.AxisXY" />
+        <render:AxisVector bml:id="integer-xyz" valueType="org.blockml.bml.type.Integer" axis="com.machineblocks.bml.type.AxisXYZ" />
+      </composition>
+    </axes>
     <rules type="render:SentinelToggle[]">
       <documentation>
         Sentinel toggles, in match order.
