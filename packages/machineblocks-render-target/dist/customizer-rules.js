@@ -1,13 +1,14 @@
 import { resolveEffectiveMembers } from "@blockml/framework";
 import { compositionChildren } from "./composition.js";
 import { hiddenCustomizer } from "./naming.js";
-import { enumDropdown, isIdentifier, serializeStructProperty, serializeTyped, structPropertyNames } from "./serialize.js";
+import { enumDropdown, enumOptions, isIdentifier, scadString, serializeStructProperty, serializeTyped, structPropertyNames } from "./serialize.js";
 export const CUSTOMIZER_RULES_FQN = "com.machineblocks.bml.target.render.CustomizerRules";
 export const SENTINEL_TOGGLE_FQN = "com.machineblocks.bml.target.render.SentinelToggle";
 export const AXIS_VECTOR_FQN = "com.machineblocks.bml.target.render.AxisVector";
 export const AXIS_COMPONENTS_FQN = "com.machineblocks.bml.target.render.AxisComponents";
 export const TYPE_SPLIT_FQN = "com.machineblocks.bml.target.render.TypeSplit";
 const BOOLEAN_TYPE = "org.blockml.bml.type.Boolean";
+const ENUM_MARKER = "enum";
 const AXIS_FIELDS = {
     "com.machineblocks.bml.type.AxisXY": ["x", "y"],
     "com.machineblocks.bml.type.AxisXYZ": ["x", "y", "z"],
@@ -88,7 +89,7 @@ export function projectCustomizer(input) {
     if (axis !== undefined) {
         return axis;
     }
-    const components = projectComponents(input.name, input.value, alternatives, input.rules.components, input.names);
+    const components = projectComponents(input.name, input.value, alternatives, input.rules.components, input.names, input.registry);
     if (components !== undefined) {
         return components;
     }
@@ -251,12 +252,15 @@ function descriptionLines(value) {
         .map((line) => line.trim())
         .filter((line) => line.length > 0);
 }
-function projectComponents(name, value, alternatives, rules, names) {
+function projectComponents(name, value, alternatives, rules, names, registry) {
     for (const rule of rules) {
-        if (!axisShape(alternatives, rule)) {
+        const valueFqn = componentType(alternatives, rule, registry);
+        if (!valueFqn) {
             continue;
         }
-        const literals = booleanComponents(value, rule.fields);
+        const literals = rule.valueType === ENUM_MARKER
+            ? enumComponents(value, rule.fields, valueFqn, registry)
+            : booleanComponents(value, rule.fields);
         if (!literals) {
             return undefined;
         }
@@ -286,6 +290,48 @@ function projectComponents(name, value, alternatives, rules, names) {
         };
     }
     return undefined;
+}
+function componentType(alternatives, rule, registry) {
+    const axis = alternatives.find((alternative) => alternative.fqn === rule.axis);
+    const argument = axis?.typeArguments?.[0];
+    if (!axis || argument?.kind !== "named") {
+        return undefined;
+    }
+    const valueFqn = rule.valueType === ENUM_MARKER ? argument.fqn : rule.valueType;
+    const scalar = alternatives.find((alternative) => alternative !== axis && alternative.fqn === valueFqn);
+    if (!scalar || argument.fqn !== valueFqn) {
+        return undefined;
+    }
+    if (rule.valueType === ENUM_MARKER && !enumOptions(valueFqn, registry)?.length) {
+        return undefined;
+    }
+    return valueFqn;
+}
+function enumComponents(value, fields, fqn, registry) {
+    if (typeof value === "string") {
+        const literal = enumLiteral(fqn, value, registry);
+        return literal === undefined ? undefined : fields.map(() => literal);
+    }
+    if (!isRecord(value)) {
+        return undefined;
+    }
+    const parts = [];
+    for (const field of fields) {
+        const component = value[field];
+        if (typeof component !== "string") {
+            return undefined;
+        }
+        const literal = enumLiteral(fqn, component, registry);
+        if (literal === undefined) {
+            return undefined;
+        }
+        parts.push(literal);
+    }
+    return parts;
+}
+function enumLiteral(fqn, member, registry) {
+    const option = enumOptions(fqn, registry)?.find((candidate) => candidate.id === member || candidate.token === member);
+    return option ? scadString(option.token) : undefined;
 }
 function axisShape(alternatives, rule) {
     const scalar = alternatives.find((alternative) => alternative.fqn === rule.valueType);
@@ -325,8 +371,8 @@ function componentRuleOf(instance) {
     if (!valueType || !axis) {
         return { ok: false, message: `AxisComponents ${id} is missing a field.` };
     }
-    if (valueType !== BOOLEAN_TYPE) {
-        return { ok: false, message: `AxisComponents ${id} value type ${valueType} is not Boolean.` };
+    if (valueType !== BOOLEAN_TYPE && valueType !== ENUM_MARKER) {
+        return { ok: false, message: `AxisComponents ${id} value type ${valueType} is not Boolean or enum.` };
     }
     if (!fields) {
         return { ok: false, message: `AxisComponents ${id} axis ${axis} is not AxisXY or AxisXYZ.` };

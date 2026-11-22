@@ -9,33 +9,36 @@
     core:Block
   </baseType>
   <is>
-    One checkbox per axis for a boolean-or-axis union
+    One customizer field per axis for a scalar-or-axis union
   </is>
   <documentation>
     One customizer rule. It matches a property union of exactly two named
-    alternatives: Boolean, and AxisXY or AxisXYZ closed on Boolean.
+    alternatives: a scalar type, and AxisXY or AxisXYZ closed on that same
+    type.
 
-    Each axis becomes a checkbox. The name is the property name plus the
-    axis letter, so holeXYZShift becomes holeXYZShiftX, holeXYZShiftY, and
-    holeXYZShiftZ. A scalar default is copied onto every axis. An authored
-    { x, y } or { x, y, z } fills the checkboxes in that order.
+    Each axis becomes its own variable. The name is the property name plus
+    the axis letter, so holeXYZShift becomes holeXYZShiftX, holeXYZShiftY,
+    and holeXYZShiftZ. A scalar default is copied onto every axis. An
+    authored { x, y } or { x, y, z } fills the fields in that order.
 
     The hidden variable is hlp_ plus the property name. Its value is the
-    array of those checkboxes at full length. The main call passes that
-    hidden name. The module fallback stays the serialized property value.
+    array of those fields at full length. The main call passes that hidden
+    name. The module fallback stays the serialized property value.
 
-    valueType is Boolean. The OpenSCAD customizer does not show a vector
-    of booleans, so the components stay separate checkboxes.
+    valueType Boolean makes one checkbox per axis. valueType enum matches
+    any enum, so HoleType and Align use the same rows. Each enum field is
+    the SCAD token. The enum dropdown comment is attached because the field
+    value is one token of that enum.
   </documentation>
   <properties>
     <valueType type="type:Text">
       <documentation>
-        FQN of the scalar alternative. Boolean.
+        FQN of the scalar alternative, or enum for any enum closed on the same axis.
       </documentation>
     </valueType>
     <axis type="type:Text">
       <documentation>
-        FQN of the axis alternative. AxisXY makes two checkboxes.
+        FQN of the axis alternative. AxisXY makes two fields.
         AxisXYZ makes three.
       </documentation>
     </axis>

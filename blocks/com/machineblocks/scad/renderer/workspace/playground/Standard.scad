@@ -35,7 +35,9 @@ studBaseOverlap = 0.25;
 holeX = false;
 holeY = false;
 holeZ = false;
-holeXYZType = "pin"; // [axle:Axle, pin:Pin]
+holeXYZTypeX = "pin"; // [axle:Axle, pin:Pin]
+holeXYZTypeY = "pin"; // [axle:Axle, pin:Pin]
+holeXYZTypeZ = "pin"; // [axle:Axle, pin:Pin]
 holeXYZShiftX = true;
 holeXYZShiftY = true;
 holeXYZShiftZ = true;
@@ -75,6 +77,7 @@ bevel3 = [0, 0]; // [0:0.25:128]
 /* [Hidden] */
 hlp_config = mb__com__machineblocks__scad__renderer__workspace__playground__PlaygroundConfigSet__func__config(configProfile);
 hlp_bevel = [bevel0, bevel1, bevel2, bevel3];
+hlp_holeXYZType = [holeXYZTypeX, holeXYZTypeY, holeXYZTypeZ];
 hlp_holeXYZShift = [holeXYZShiftX, holeXYZShiftY, holeXYZShiftZ];
 hlp_recessDepthResolved = recessDepthAuto ? "auto" : recessDepth;
 hlp_textResolved = textOn ? text : false;
@@ -105,7 +108,7 @@ mb__com__machineblocks__scad__renderer__workspace__playground__Standard(
         ["holeX", holeX],
         ["holeY", holeY],
         ["holeZ", holeZ],
-        ["holeXYZType", holeXYZType],
+        ["holeXYZType", hlp_holeXYZType],
         ["holeXYZShift", hlp_holeXYZShift],
         ["holeXYGridOffsetZ", holeXYGridOffsetZ],
         ["recess", recess],

@@ -34,8 +34,8 @@
     numbers up to length 4. A property that matches a rule in
     com.machineblocks.bml.target.render.CustomizerRules is projected into
     customizer fields. The render target reads that catalog from the type
-    registry. Type splits are considered first, then number axes and
-    boolean axes, then sentinel rules. A property with no matching rule
+    registry. Type splits are considered first, then number axes,
+    boolean axes, and enum axes, then sentinel rules. A property with no matching rule
     stays one variable.
 
     TypeSplit matches one struct type. Each property, in declaration order,
@@ -62,23 +62,31 @@
     AxisVector matches a number type with AxisXY or AxisXYZ of that same
     number. Decimal and Integer qualify. The variable keeps the property
     name and is the full vector. A scalar is repeated. An { x, y } or
-    { x, y, z } value is written in full. Text and enum axes stay one
-    variable. There is no hidden variable.
+    { x, y, z } value is written in full. Text axes stay one variable.
+    There is no hidden variable.
 
         holeXYGridOffsetZ = [3.5, 3.5];
         holeXYZAxleThickness = [1, 1, 1];
 
-    AxisComponents matches Boolean with AxisXY or AxisXYZ of Boolean.
-    Each axis is its own checkbox. The name is the property name plus
-    X, Y, and Z. A scalar is copied onto every axis. An { x, y } or
-    { x, y, z } value fills the checkboxes in that order. The hidden
-    variable is hlp_ plus the property name and is the full array.
+    AxisComponents matches Boolean, or any enum, with AxisXY or AxisXYZ
+    closed on that same type. Each axis is its own variable. The name is
+    the property name plus X, Y, and Z. A scalar is copied onto every
+    axis. An { x, y } or { x, y, z } value fills the fields in that order.
+    Boolean fields are checkboxes. Enum fields are the SCAD token, and
+    each one keeps the enum dropdown. The hidden variable is hlp_ plus
+    the property name and is the full array.
 
         holeXYZShiftX = true;
         holeXYZShiftY = true;
         holeXYZShiftZ = true;
         /* [Hidden] */
         hlp_holeXYZShift = [holeXYZShiftX, holeXYZShiftY, holeXYZShiftZ];
+
+        holeXYZTypeX = "pin"; // [axle:Axle, pin:Pin]
+        holeXYZTypeY = "pin"; // [axle:Axle, pin:Pin]
+        holeXYZTypeZ = "pin"; // [axle:Axle, pin:Pin]
+        /* [Hidden] */
+        hlp_holeXYZType = [holeXYZTypeX, holeXYZTypeY, holeXYZTypeZ];
 
     SentinelToggle matches a union of exactly two named alternatives: a
     constant sentinel and one flat value type. Type arguments on the value
@@ -111,11 +119,10 @@
     values aggregation, in that order. The token is the SCAD value and the
     member id is the dropdown label, the same shape as the config profile
     comment. The comment is added when the whole field is one of those
-    tokens, including a union that shows its enum arm. An axis array of
-    enum tokens stays without the comment.
+    tokens. A plain enum stays one variable. An enum axis is split first,
+    and each resulting field receives this comment.
 
         studType = "solid"; // [solid:Solid, hollow:Hollow]
-        holeXYZType = "pin"; // [axle:Axle, pin:Pin]
 
     suggestions — a dropdown comment from the property suggestions. Each
     suggestion instance is serialized to its SCAD literal:

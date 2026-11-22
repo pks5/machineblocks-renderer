@@ -14,13 +14,14 @@
   <documentation>
     The render target reads this block from the type registry and projects matching properties into customizer fields.
 
-    - Type splits are considered first, then number axes and boolean axes, then sentinel rules.
+    - Type splits are considered first, then number axes, boolean axes, and enum axes, then sentinel rules.
     - A property with no matching rule stays one variable.
     - A type split matches one struct type and opens a customizer tab of numbered fields. A hidden variable rebuilds the array.
     - Number axis rules expand a number scalar into an AxisXY or AxisXYZ vector on the property name.
     - Boolean axis rules split a Boolean scalar into one checkbox per axis. A hidden variable rebuilds the array.
+    - Enum axis rules split an enum scalar into one token per axis. Each field keeps the enum dropdown. A hidden variable rebuilds the array.
     - Sentinel rules cover a constant plus one flat value: Auto with Decimal, and Boolean.False with Text or FilePath.
-    - Enum axes and three-arm unions stay one variable.
+    - Three-arm unions stay one variable.
   </documentation>
   <aggregations>
     <splits type="render:TypeSplit[]">
@@ -49,11 +50,13 @@ Bevel X and Y for the corner [1,0] (grid)]]></descriptions>
     </axes>
     <components type="render:AxisComponents[]">
       <documentation>
-        Boolean scalar or axis, one checkbox per axis.
+        Boolean or enum scalar, one field per axis.
       </documentation>
       <composition>
         <render:AxisComponents bml:id="boolean-xy" valueType="org.blockml.bml.type.Boolean" axis="com.machineblocks.bml.type.AxisXY" />
         <render:AxisComponents bml:id="boolean-xyz" valueType="org.blockml.bml.type.Boolean" axis="com.machineblocks.bml.type.AxisXYZ" />
+        <render:AxisComponents bml:id="enum-xy" valueType="enum" axis="com.machineblocks.bml.type.AxisXY" />
+        <render:AxisComponents bml:id="enum-xyz" valueType="enum" axis="com.machineblocks.bml.type.AxisXYZ" />
       </composition>
     </components>
     <rules type="render:SentinelToggle[]">

@@ -44,6 +44,19 @@ const OFFSET_XY = `<mbt:OffsetXY xmlns="http://blockml.org/bml" xmlns:mbt="com.m
 </mbt:OffsetXY>
 `;
 
+const HOLE_TYPE = `<mbt:HoleType xmlns="http://blockml.org/bml" xmlns:bml="org.blockml.bml.annotation.BmlAnnotation" xmlns:mbt="com.machineblocks.bml.type">
+  <baseType>mbt:MBEnum(org.blockml.bml.type.Text)</baseType>
+  <aggregations>
+    <values override="true">
+      <composition>
+        <mbt:HoleType bml:id="Axle" value="axle" />
+        <mbt:HoleType bml:id="Pin" value="pin" />
+      </composition>
+    </values>
+  </aggregations>
+</mbt:HoleType>
+`;
+
 const FALSE = `<type:False xmlns="http://blockml.org/bml" xmlns:type="org.blockml.bml.type">
   <baseType>type:Block</baseType>
   <is>False</is>
@@ -101,6 +114,9 @@ const SAMPLE = `<bricks:Sample xmlns="http://blockml.org/bml"
     <holeXYZType type="mbt:HoleType | mbt:AxisXYZ(mbt:HoleType)">
       <value>Pin</value>
     </holeXYZType>
+    <edge type="mbt:HoleType | mbt:AxisXY(mbt:HoleType)">
+      <value>{x:"Pin",y:"Axle"}</value>
+    </edge>
     <diameter type="mbt:Auto | type:Decimal | mbt:AxisXYZ(type:Decimal)">
       <value>Auto</value>
     </diameter>
@@ -129,6 +145,7 @@ function render(): string {
   registry.register(document(AUTO, "auto.bml"));
   registry.register(document(OFFSET_XY, "offset.bml"));
   registry.register(document(BEVEL, "bevel.bml"));
+  registry.register(document(HOLE_TYPE, "hole-type.bml"));
   const falseConstant = document(FALSE, "false.bml");
   falseConstant.block.type = "org.blockml.bml.type.Boolean.False";
   registry.register(falseConstant);
@@ -193,7 +210,14 @@ bevel3 = [3, 4]; // [0:0.25:128]`);
     expect(content).toContain("hlp_flags = [flagsX, flagsY];");
     expect(content).toContain('["flags", hlp_flags]');
     expect(content).toContain('flags = mb_param(config, settings, "flags", [true, false]);');
-    expect(content).toContain('holeXYZType = "Pin";');
+    const holeType = '"pin"; // [axle:Axle, pin:Pin]';
+    expect(content).toContain(`holeXYZTypeX = ${holeType}\nholeXYZTypeY = ${holeType}\nholeXYZTypeZ = ${holeType}`);
+    expect(content).toContain("hlp_holeXYZType = [holeXYZTypeX, holeXYZTypeY, holeXYZTypeZ];");
+    expect(content).toContain('["holeXYZType", hlp_holeXYZType]');
+    expect(content).toContain('holeXYZType = mb_param(config, settings, "holeXYZType", "pin");');
+    expect(content).toContain('edgeX = "pin"; // [axle:Axle, pin:Pin]\nedgeY = "axle"; // [axle:Axle, pin:Pin]');
+    expect(content).toContain("hlp_edge = [edgeX, edgeY];");
+    expect(content).toContain('["edge", hlp_edge]');
     expect(content).toContain('diameter = "auto";');
     expect(content).toContain('holeXYGridOffsetZ = mb_param(config, settings, "holeXYGridOffsetZ", 3.5);');
   });
